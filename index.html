@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,24 +8,88 @@
   @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
 
   :root {
-    --bg:         #0d0d16;
-    --panel-bg:   #0a0a14;
-    --toolbar-bg: #130d24;
-    --hdr-bg:     #1a0f30;
-    --border:     #2a1f45;
-    --accent:     #4c1d95;
-    --accent-hi:  #7c3aed;
-    --accent-br:  #a855f7;
-    --text-lo:    #3d2b5a;
-    --text-mid:   #7c6d9a;
-    --text-hi:    #9d8ec0;
-    --text-main:  #e8dff5;
-    --lavender:   #c4b5fd;
-    --lavender-br:#d8b4fe;
-    --tube-fill:  #3b2070;
-    --tube-stk:   #c4b5fd;
-    --err:        #f87171;
     --font: 'Courier Prime', 'Courier New', monospace;
+    --err: #f87171;
+  }
+
+  /* ── DARK (default) ── */
+  [data-theme="dark"] {
+    --input-bg:    #1a1230;
+    --input-fg:    #d8b4fe;
+    --bg:          #0d0d16;
+    --panel-bg:    #0a0a14;
+    --toolbar-bg:  #130d24;
+    --hdr-bg:      #1a0f30;
+    --border:      #2a1f45;
+    --accent:      #4c1d95;
+    --accent-hi:   #7c3aed;
+    --accent-br:   #a855f7;
+    --text-lo:     #3d2b5a;
+    --text-mid:    #7c6d9a;
+    --text-hi:     #9d8ec0;
+    --text-main:   #e8dff5;
+    --lavender:    #c4b5fd;
+    --lavender-br: #d8b4fe;
+  }
+
+  /* ── LIGHT ── */
+  [data-theme="light"] {
+    --input-bg:    #ffffff;
+    --input-fg:    #1a1030;
+    --bg:          #f0eef8;
+    --panel-bg:    #e8e4f4;
+    --toolbar-bg:  #ddd8f0;
+    --hdr-bg:      #d0c8e8;
+    --border:      #b8b0d4;
+    --accent:      #6d28d9;
+    --accent-hi:   #7c3aed;
+    --accent-br:   #8b5cf6;
+    --text-lo:     #a89cc8;
+    --text-mid:    #5b4f7a;
+    --text-hi:     #3b2f5a;
+    --text-main:   #1a1030;
+    --lavender:    #5b21b6;
+    --lavender-br: #4c1d95;
+  }
+
+  /* ── GREEN ── */
+  [data-theme="green"] {
+    --input-bg:    #0a1e0d;
+    --input-fg:    #86efac;
+    --bg:          #080f0a;
+    --panel-bg:    #060d08;
+    --toolbar-bg:  #0a1a0d;
+    --hdr-bg:      #0f2a14;
+    --border:      #1a3d20;
+    --accent:      #166534;
+    --accent-hi:   #16a34a;
+    --accent-br:   #22c55e;
+    --text-lo:     #14532d;
+    --text-mid:    #4ade80;
+    --text-hi:     #86efac;
+    --text-main:   #dcfce7;
+    --lavender:    #4ade80;
+    --lavender-br: #86efac;
+  }
+
+  /* ── ORANGE ── */
+  [data-theme="orange"] {
+    --input-bg:    #1e1005;
+    --input-fg:    #fde68a;
+    --bg:          #0f0a04;
+    --panel-bg:    #0d0902;
+    --toolbar-bg:  #1a1005;
+    --hdr-bg:      #2a1a08;
+    --border:      #3d2810;
+    --accent:      #92400e;
+    --accent-hi:   #d97706;
+    --accent-br:   #f59e0b;
+    --text-lo:     #78350f;
+    --text-mid:    #d97706;
+    --text-hi:     #fbbf24;
+    --text-main:   #fef3c7;
+    --lavender:    #fbbf24;
+    --lavender-br: #fde68a;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -196,8 +260,8 @@
 
   .param-input {
     width: 72px;
-    background: #1a1230;
-    color: var(--lavender-br);
+    background: var(--input-bg);
+    color: var(--input-fg);
     border: 1px solid var(--accent);
     border-radius: 2px;
     padding: 2px 5px;
@@ -211,8 +275,8 @@
 
   .param-select {
     width: 90px;
-    background: #1a1230;
-    color: var(--lavender-br);
+    background: var(--input-bg);
+    color: var(--input-fg);
     border: 1px solid var(--accent);
     border-radius: 2px;
     padding: 2px 4px;
@@ -330,8 +394,8 @@
   .preset-row label { font-size: 10px; color: var(--text-mid); width: 32px; }
   .preset-row select {
     flex: 1;
-    background: #1a1230;
-    color: var(--lavender);
+    background: var(--input-bg);
+    color: var(--input-fg);
     border: 1px solid var(--accent);
     border-radius: 2px;
     font-family: var(--font);
@@ -366,6 +430,22 @@
     transition: background 0.15s;
   }
   #resizer:hover { background: var(--accent-hi); }
+
+  /* theme selector */
+  #theme-sel {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text-mid);
+    font-family: var(--font);
+    font-size: 11px;
+    padding: 4px 6px;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  #theme-sel:hover { border-color: var(--accent-br); color: var(--lavender); }
+  #theme-sel option { background: var(--toolbar-bg); color: var(--text-main); }
 </style>
 </head>
 <body>
@@ -377,6 +457,12 @@
     <span id="logo-sub">bike designer</span>
   </div>
   <div class="tb-sep"></div>
+  <select id="theme-sel" onchange="setTheme(this.value)">
+    <option value="dark">dark</option>
+    <option value="light" selected>light</option>
+    <option value="green">green</option>
+    <option value="orange">orange</option>
+  </select>
   <button class="tb-btn on"  id="btn-grid"    onclick="toggleVis('grid')"   >grid</button>
   <button class="tb-btn on"  id="btn-wheels"  onclick="toggleVis('wheels')" >wheels</button>
   <button class="tb-btn on"  id="btn-fork"    onclick="toggleVis('fork')"   >fork</button>
@@ -571,6 +657,100 @@ const WHEEL_SIZES = {
   '650b':584,  '24"':507,   '20"':406, '18"':355,
 };
 const BB_STANDARDS = {'BSA':38.3, 'T47':38.3};
+
+
+// ═══════════════════════════════════════════════════════
+//  THEME SYSTEM
+// ═══════════════════════════════════════════════════════
+const THEMES = {
+  dark: {
+    bg:        '#0d0d16',
+    grid:      '#2d1b4e',
+    ground:    '#2a1f45',
+    wheel:     '#888888',
+    wheelLbl:  '#555555',
+    tubeFill:  '#3b2070',
+    tubeStk:   '#c4b5fd',
+    lugFill:   '#2a1a50',
+    lugStk:    '#c4b5fd',
+    bbBore:    '#0d0d16',
+    crDash:    '#3a2a5a',
+    forkFill:  '#4a1d80',
+    forkStk:   '#7c3aed',
+    forkAnn:   '#c084fc',
+    ann:       '#a855f7',
+    ann2:      '#7c3aed',
+    errFill:   '#1a0820',
+  },
+  light: {
+    bg:        '#f0eef8',
+    grid:      '#c8c0e0',
+    ground:    '#9b8fc0',
+    wheel:     '#6655aa',
+    wheelLbl:  '#9b8fc0',
+    tubeFill:  '#c4b5fd',
+    tubeStk:   '#4c1d95',
+    lugFill:   '#ddd6fe',
+    lugStk:    '#4c1d95',
+    bbBore:    '#f0eef8',
+    crDash:    '#a78bfa',
+    forkFill:  '#a78bfa',
+    forkStk:   '#4c1d95',
+    forkAnn:   '#6d28d9',
+    ann:       '#6d28d9',
+    ann2:      '#8b5cf6',
+    errFill:   '#fee2e2',
+  },
+  green: {
+    bg:        '#080f0a',
+    grid:      '#0d2e14',
+    ground:    '#1a3d20',
+    wheel:     '#4ade80',
+    wheelLbl:  '#166534',
+    tubeFill:  '#0f4a20',
+    tubeStk:   '#4ade80',
+    lugFill:   '#0a3018',
+    lugStk:    '#22c55e',
+    bbBore:    '#080f0a',
+    crDash:    '#1a4d28',
+    forkFill:  '#15803d',
+    forkStk:   '#22c55e',
+    forkAnn:   '#86efac',
+    ann:       '#22c55e',
+    ann2:      '#4ade80',
+    errFill:   '#1a0808',
+  },
+  orange: {
+    bg:        '#0f0a04',
+    grid:      '#2a1a08',
+    ground:    '#3d2810',
+    wheel:     '#f59e0b',
+    wheelLbl:  '#78350f',
+    tubeFill:  '#7c2d12',
+    tubeStk:   '#fbbf24',
+    lugFill:   '#4a1a08',
+    lugStk:    '#f59e0b',
+    bbBore:    '#0f0a04',
+    crDash:    '#5c2d0e',
+    forkFill:  '#c2410c',
+    forkStk:   '#f97316',
+    forkAnn:   '#fdba74',
+    ann:       '#f59e0b',
+    ann2:      '#fbbf24',
+    errFill:   '#1a0808',
+  },
+};
+
+let currentTheme = 'light';
+
+function setTheme(name) {
+  currentTheme = name;
+  document.documentElement.setAttribute('data-theme', name);
+  document.getElementById('theme-sel').value = name;
+  redraw();
+}
+
+function T(key) { return THEMES[currentTheme][key] || THEMES.dark[key]; }
 
 // ═══════════════════════════════════════════════════════
 //  GEOMETRY ENGINE
@@ -844,7 +1024,7 @@ function drawPoly(mmPts, fill, stroke, lw=1) {
   if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw;ctx.stroke();}
 }
 
-function tubePoly(pt1,pt2,od,fill='#3b2070',stroke='#c4b5fd',cap1=true,cap2=true,cap1_inset=0,cap2_inset=0){
+function tubePoly(pt1,pt2,od,fill,stroke,cap1=true,cap2=true,cap1_inset=0,cap2_inset=0){
   const dx=pt2[0]-pt1[0], dy=pt2[1]-pt1[1];
   const L=Math.hypot(dx,dy);
   if(L<0.5) return;
@@ -929,7 +1109,7 @@ function drawGrid(g){
   const step=50*scale;
   if(step<4) return;
   const cx=canvas.width/2+offset[0], cy=canvas.height/2+offset[1];
-  ctx.strokeStyle='#2d1b4e'; ctx.lineWidth=1;
+  ctx.strokeStyle=T('grid'); ctx.lineWidth=1;
   const xi0=Math.floor(-cx/step)-1;
   for(let xi=xi0; xi*step+cx<w+step; xi++){
     const x=xi*step+cx;
@@ -942,16 +1122,16 @@ function drawGrid(g){
   }
   // Ground line
   const [,gy]=mmToScreen(0,g.ground_y);
-  ctx.strokeStyle='#2a1f45'; ctx.lineWidth=1.5;
+  ctx.strokeStyle=T('ground'); ctx.lineWidth=1.5;
   ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(w,gy); ctx.stroke();
-  label(w-8,gy-5,'ground','#2a1f45','right','bottom',9);
+  label(w-8,gy-5,'ground',T('ground'),'right','bottom',9);
 }
 
 // ═══════════════════════════════════════════════════════
 //  DRAW WHEELS
 // ═══════════════════════════════════════════════════════
 function drawWheels(g){
-  const WCOL='#888888';
+  const WCOL=T('wheel');
   for(const [cx_mm,cy_mm,r_mm] of [
     [g.rear_axle[0],  g.rear_axle[1],  g.rwd],
     [g.front_axle[0], g.front_axle[1], g.fwd],
@@ -966,7 +1146,7 @@ function drawWheels(g){
   // Tyre label
   const rwStr = Object.entries(WHEEL_SIZES).find(([,v])=>Math.abs(v-params.rear_wheel_dia)<1)?.[0]||'';
   const [rsx,rsy]=mmToScreen(g.rear_axle[0], g.rear_axle[1]);
-  if(rwStr) label(rsx,rsy-px(g.rwd)-6,rwStr,'#555555','center','bottom',8);
+  if(rwStr) label(rsx,rsy-px(g.rwd)-6,rwStr,T('wheelLbl'),'center','bottom',8);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -974,7 +1154,7 @@ function drawWheels(g){
 // ═══════════════════════════════════════════════════════
 function drawTubes(g){
   const p=params;
-  const TFILL='#3b2070', TSTK='#c4b5fd', LFILL='#2a1a50', LSTK='#c4b5fd';
+  const TFILL=T('tubeFill'), TSTK=T('tubeStk'), LFILL=T('lugFill'), LSTK=T('lugStk');
   const ra=g.rear_axle, sc=g.seat_cluster;
   const ht_t=g.ht_top, ht_b=g.ht_bot, bb=[0,0];
   const tt_od=p.tt_OD, ss_od=p.ss_OD, st_od=p.st_OD;
@@ -1082,13 +1262,13 @@ function drawTubes(g){
   ctx.fillStyle=LFILL; ctx.fill();
   ctx.strokeStyle=LSTK; ctx.lineWidth=1; ctx.stroke();
   ctx.beginPath(); ctx.arc(bsx,bsy,bore_r,0,Math.PI*2);
-  ctx.fillStyle='#0d0d16'; ctx.fill();
+  ctx.fillStyle=T('bbBore'); ctx.fill();
   ctx.strokeStyle=LSTK; ctx.lineWidth=1; ctx.stroke();
 
   // Chainring dashed
   const cr_r=px(chainringRadius(p.max_chainring)+15);
   ctx.beginPath(); ctx.arc(bsx,bsy,cr_r,0,Math.PI*2);
-  ctx.strokeStyle='#3a2a5a'; ctx.lineWidth=1;
+  ctx.strokeStyle=T('crDash'); ctx.lineWidth=1;
   ctx.setLineDash([5,4]); ctx.stroke(); ctx.setLineDash([]);
 
   // Dropout
@@ -1107,7 +1287,7 @@ function drawTubes(g){
 // ═══════════════════════════════════════════════════════
 function drawFork(g){
   const p=params;
-  const FCOL='#4a1d80', FSTK='#7c3aed', FANN='#c084fc';
+  const FCOL=T('forkFill'), FSTK=T('forkStk'), FANN=T('forkAnn');
   const fa  =g.front_axle, fc=g.fork_crown;
   const f_ax=g.fork_axis,  f_perp=g.fork_perp;
   const fo  =p.fork_offset;
@@ -1171,7 +1351,7 @@ function drawFork(g){
 
   // Fork crown dot
   const [fcs,fcs2]=mmToScreen(fc[0],fc[1]);
-  drawDot(fcs,fcs2,4,FCOL,'#4c1d95');
+  drawDot(fcs,fcs2,4,FCOL,T('forkStk'));
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1179,7 +1359,7 @@ function drawFork(g){
 // ═══════════════════════════════════════════════════════
 function drawCockpit(g){
   const p=params;
-  const WCOL='#888888';
+  const WCOL=T('wheel');
   const ha=d2r(p.ht_angle);
   const fa_x=g.fork_axis;
   const sd=[-fa_x[0],-fa_x[1]];
@@ -1213,7 +1393,7 @@ function drawCockpit(g){
 // ═══════════════════════════════════════════════════════
 function drawAnnotations(g){
   const p=params;
-  const ANN ='#a855f7', ANN2='#7c3aed';
+  const ANN=T('ann'), ANN2=T('ann2');
   const [bbx,bby]=mmToScreen(0,0);
   const [htx,hty]=mmToScreen(g.ht_top[0],g.ht_top[1]);
   const [rax,ray]=mmToScreen(g.rear_axle[0],g.rear_axle[1]);
@@ -1256,7 +1436,7 @@ function drawAnnotations(g){
 function redraw(){
   if(canvas.width===0 || canvas.height===0) return;
   ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle='#0d0d16';
+  ctx.fillStyle=T('bg');
   ctx.fillRect(0,0,canvas.width,canvas.height);
 
   let g;
@@ -1280,7 +1460,7 @@ function redraw(){
 }
 
 function showError(msg, err){
-  ctx.fillStyle='#1a0820';
+  ctx.fillStyle=T('errFill');
   ctx.fillRect(10,10,canvas.width-20,120);
   ctx.strokeStyle='#f87171'; ctx.lineWidth=1;
   ctx.strokeRect(10,10,canvas.width-20,120);
@@ -1565,12 +1745,12 @@ window.addEventListener('mouseup',()=>rsz=null);
 // Global error catcher — shows any uncaught error on canvas
 window.addEventListener('error', e=>{
   if(canvas.width>0){
-    ctx.fillStyle='#1a0820'; ctx.fillRect(10,10,600,80);
+    ctx.fillStyle=T('errFill'); ctx.fillRect(10,10,600,80);
     ctx.strokeStyle='#f87171'; ctx.lineWidth=1; ctx.strokeRect(10,10,600,80);
     ctx.fillStyle='#f87171'; ctx.font='bold 12px Courier New';
     ctx.textAlign='left'; ctx.textBaseline='top';
     ctx.fillText('JS ERROR: '+e.message, 20, 24);
-    ctx.fillStyle='#9d8ec0'; ctx.font='10px Courier New';
+    ctx.fillStyle=T('text-hi'); ctx.font='10px Courier New';
     ctx.fillText('File: '+e.filename+' Line: '+e.lineno, 20, 44);
   }
 });
