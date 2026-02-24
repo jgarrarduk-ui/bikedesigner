@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Creature Cycles — Bike Designer</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
+
+  :root {
+    --bg:         #0d0d16;
+    --panel-bg:   #0a0a14;
+    --toolbar-bg: #130d24;
+    --hdr-bg:     #1a0f30;
+    --border:     #2a1f45;
+    --accent:     #4c1d95;
+    --accent-hi:  #7c3aed;
+    --accent-br:  #a855f7;
+    --text-lo:    #3d2b5a;
+    --text-mid:   #7c6d9a;
+    --text-hi:    #9d8ec0;
+    --text-main:  #e8dff5;
+    --lavender:   #c4b5fd;
+    --lavender-br:#d8b4fe;
+    --tube-fill:  #3b2070;
+    --tube-stk:   #c4b5fd;
+    --err:        #f87171;
+    --font: 'Courier Prime', 'Courier New', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text-main);
+    font-family: var(--font);
+    font-size: 13px;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Toolbar ── */
+  #toolbar {
+    background: var(--toolbar-bg);
+    border-bottom: 1px solid var(--border);
+    height: 54px;
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 0;
+    flex-shrink: 0;
+  }
+
+  #logo-area {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-right: 20px;
+  }
+
+  #logo-text {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--lavender);
+    letter-spacing: 3px;
+    font-style: normal;
+    text-transform: uppercase;
+    font-family: 'Courier New', monospace;
+  }
+
+  #logo-sub {
+    font-size: 10px;
+    color: var(--text-lo);
+    letter-spacing: 2px;
+    text-transform: lowercase;
+  }
+
+  .tb-sep {
+    width: 1px;
+    height: 28px;
+    background: var(--border);
+    margin: 0 10px;
+  }
+
+  .tb-btn {
+    background: none;
+    border: none;
+    color: var(--text-mid);
+    font-family: var(--font);
+    font-size: 11px;
+    padding: 5px 10px;
+    cursor: pointer;
+    border-radius: 3px;
+    transition: background 0.15s, color 0.15s;
+    letter-spacing: 0.5px;
+  }
+  .tb-btn:hover { background: var(--hdr-bg); color: var(--lavender); }
+  .tb-btn.on { color: var(--accent-br); }
+
+  #tb-right {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    font-size: 10px;
+    color: var(--text-lo);
+  }
+
+  /* ── Main layout ── */
+  #main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── Param panel ── */
+  #panel {
+    width: 290px;
+    min-width: 200px;
+    background: var(--panel-bg);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  #panel-scroll {
+    overflow-y: auto;
+    flex: 1;
+    padding-bottom: 8px;
+  }
+
+  #panel-scroll::-webkit-scrollbar { width: 6px; }
+  #panel-scroll::-webkit-scrollbar-track { background: var(--panel-bg); }
+  #panel-scroll::-webkit-scrollbar-thumb { background: var(--hdr-bg); border-radius: 3px; }
+  #panel-scroll::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  .group-wrap { margin: 0; }
+
+  .group-hdr {
+    display: flex;
+    align-items: stretch;
+    cursor: pointer;
+    margin-top: 4px;
+    user-select: none;
+  }
+
+  .group-accent {
+    width: 3px;
+    background: var(--accent);
+    flex-shrink: 0;
+  }
+
+  .group-btn {
+    flex: 1;
+    background: var(--hdr-bg);
+    color: var(--lavender-br);
+    font-family: var(--font);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .group-btn:hover { background: #200d40; }
+
+  .group-body {
+    padding: 2px 8px 4px 11px;
+    background: var(--panel-bg);
+  }
+  .group-body.collapsed { display: none; }
+
+  .param-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 0;
+    gap: 6px;
+  }
+
+  .param-label {
+    color: var(--text-hi);
+    font-size: 11px;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .param-input {
+    width: 72px;
+    background: #1a1230;
+    color: var(--lavender-br);
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+    padding: 2px 5px;
+    font-family: var(--font);
+    font-size: 11px;
+    text-align: right;
+    outline: none;
+    flex-shrink: 0;
+  }
+  .param-input:focus { border-color: var(--accent-br); }
+
+  .param-select {
+    width: 90px;
+    background: #1a1230;
+    color: var(--lavender-br);
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+    padding: 2px 4px;
+    font-family: var(--font);
+    font-size: 11px;
+    outline: none;
+    flex-shrink: 0;
+  }
+
+  /* Derived readout */
+  .derived-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 8px 3px 11px;
+    font-size: 10px;
+    color: var(--text-mid);
+    border-top: 1px solid var(--border);
+    margin-top: 2px;
+  }
+  .derived-val { color: var(--lavender-br); font-weight: 700; }
+
+  /* Panel buttons */
+  #panel-btns {
+    display: flex;
+    gap: 6px;
+    padding: 8px 10px;
+    border-top: 1px solid var(--border);
+    background: var(--panel-bg);
+    flex-shrink: 0;
+  }
+
+  .panel-btn {
+    flex: 1;
+    background: var(--hdr-bg);
+    color: var(--lavender);
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+    font-family: var(--font);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 4px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.1s, color 0.1s;
+  }
+  .panel-btn:hover { background: var(--accent); color: #fff; }
+
+  /* Status bar */
+  #statusbar {
+    background: var(--panel-bg);
+    border-top: 1px solid var(--border);
+    color: var(--text-lo);
+    font-size: 10px;
+    padding: 3px 12px;
+    flex-shrink: 0;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  /* ── Canvas area ── */
+  #canvas-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  #canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+  }
+  #canvas:active { cursor: grabbing; }
+
+  /* ── Preset panel (floating bottom-right) ── */
+  #preset-panel {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    background: #0d0820;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    min-width: 180px;
+    z-index: 10;
+  }
+
+  #preset-toggle {
+    background: var(--hdr-bg);
+    color: var(--text-mid);
+    border: none;
+    font-family: var(--font);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 7px 12px;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 4px 4px 0 0;
+    text-transform: uppercase;
+    transition: color 0.15s;
+  }
+  #preset-toggle:hover { color: var(--lavender); }
+  #preset-toggle.open { color: var(--lavender-br); }
+
+  #preset-body { padding: 8px; display: none; }
+  #preset-body.open { display: block; }
+
+  .preset-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 5px;
+  }
+  .preset-row label { font-size: 10px; color: var(--text-mid); width: 32px; }
+  .preset-row select {
+    flex: 1;
+    background: #1a1230;
+    color: var(--lavender);
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+    font-family: var(--font);
+    font-size: 10px;
+    padding: 2px 4px;
+    outline: none;
+  }
+
+  #preset-load {
+    width: 100%;
+    background: var(--hdr-bg);
+    color: var(--accent-br);
+    border: none;
+    font-family: var(--font);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px;
+    cursor: pointer;
+    border-radius: 2px;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+    transition: background 0.15s;
+  }
+  #preset-load:hover { background: var(--accent); color: #fff; }
+
+  /* Resizer */
+  #resizer {
+    width: 4px;
+    background: var(--border);
+    cursor: col-resize;
+    flex-shrink: 0;
+    transition: background 0.15s;
+  }
+  #resizer:hover { background: var(--accent-hi); }
+</style>
+</head>
+<body>
+
+<!-- Toolbar -->
+<div id="toolbar">
+  <div id="logo-area">
+    <span id="logo-text">CREATURE</span>
+    <span id="logo-sub">bike designer</span>
+  </div>
+  <div class="tb-sep"></div>
+  <button class="tb-btn on"  id="btn-grid"    onclick="toggleVis('grid')"   >grid</button>
+  <button class="tb-btn on"  id="btn-wheels"  onclick="toggleVis('wheels')" >wheels</button>
+  <button class="tb-btn on"  id="btn-fork"    onclick="toggleVis('fork')"   >fork</button>
+  <button class="tb-btn on"  id="btn-cockpit" onclick="toggleVis('cockpit')">cockpit</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" onclick="resetView()">reset view</button>
+  <div id="tb-right">scroll: zoom &nbsp;·&nbsp; drag: pan</div>
+</div>
+
+<!-- Main -->
+<div id="main">
+  <!-- Param panel -->
+  <div id="panel">
+    <div id="panel-scroll">
+      <!-- generated by JS -->
+    </div>
+    <div class="derived-row">
+      <span>Stack (derived)</span>
+      <span class="derived-val" id="derived-stack">—</span>
+    </div>
+    <div class="derived-row">
+      <span>Wheelbase</span>
+      <span class="derived-val" id="derived-wb">—</span>
+    </div>
+    <div class="derived-row">
+      <span>Trail</span>
+      <span class="derived-val" id="derived-trail">—</span>
+    </div>
+    <div id="panel-btns">
+      <button class="panel-btn" onclick="resetParams()">Reset</button>
+      <button class="panel-btn" onclick="exportJSON()">Export</button>
+      <button class="panel-btn" onclick="importJSON()">Import</button>
+    </div>
+  </div>
+
+  <div id="resizer"></div>
+
+  <!-- Canvas -->
+  <div id="canvas-wrap">
+    <canvas id="canvas"></canvas>
+    <!-- Preset panel -->
+    <div id="preset-panel">
+      <button id="preset-toggle" onclick="togglePresets()">Presets ▸</button>
+      <div id="preset-body">
+        <div class="preset-row">
+          <label>type</label>
+          <select id="preset-cat" onchange="updatePresetSizes()"></select>
+        </div>
+        <div class="preset-row">
+          <label>size</label>
+          <select id="preset-size"></select>
+        </div>
+        <button id="preset-load" onclick="loadPreset()">load preset</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="statusbar">ready</div>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════════
+//  MATHS HELPERS
+// ═══════════════════════════════════════════════════════
+const DEG = Math.PI / 180;
+const r2d = a => a / DEG;
+const d2r = a => a * DEG;
+const add = (a,b) => [a[0]+b[0], a[1]+b[1]];
+const sub = (a,b) => [a[0]-b[0], a[1]-b[1]];
+const mul = (v,s) => [v[0]*s, v[1]*s];
+const dot = (a,b) =>  a[0]*b[0] + a[1]*b[1];
+const hypot = (a,b) => Math.hypot(a,b);
+const norm = v => { const d=hypot(v[0],v[1]); return d>0?[v[0]/d,v[1]/d]:v; };
+const perp_cw  = v => [ v[1],-v[0]];
+const perp_ccw = v => [-v[1], v[0]];
+
+function arcPts(cx,cy,r,a0,a1,n=12) {
+  const pts=[];
+  for(let i=0;i<=n;i++){
+    const a = a0+(a1-a0)*i/n;
+    pts.push([cx+r*Math.cos(a), cy+r*Math.sin(a)]);
+  }
+  return pts;
+}
+
+function semicap(tip,ax,hw,cw=true,n=8) {
+  const ba=Math.atan2(ax[1],ax[0]), sign=cw?-1:1;
+  return arcPts(tip[0],tip[1],hw, ba+sign*Math.PI/2, ba-sign*Math.PI/2, n);
+}
+
+function bez(p0,p1,p2,p3,n=16) {
+  const pts=[];
+  for(let i=0;i<=n;i++){
+    const t=i/n,mt=1-t;
+    pts.push([
+      mt**3*p0[0]+3*mt**2*t*p1[0]+3*mt*t**2*p2[0]+t**3*p3[0],
+      mt**3*p0[1]+3*mt**2*t*p1[1]+3*mt*t**2*p2[1]+t**3*p3[1],
+    ]);
+  }
+  return pts;
+}
+
+function chainringRadius(teeth) {
+  return (teeth*12.7)/(2*Math.PI) + 4.0;
+}
+
+// ═══════════════════════════════════════════════════════
+//  DEFAULTS & GROUPS
+// ═══════════════════════════════════════════════════════
+const DEFAULTS = {
+  reach:450, fork_atc:455, bb_drop:70,
+  ht_angle:68, ht_length:120, ht_OD:46.5,
+  dt_weld_clearance:12, tt_weld_clearance:14,
+  fork_offset:55, lower_headset_height:12,
+  st_angle:76, st_length:450, st_OD:34.95, st_WT:1.0,
+  st_forward_offset:26, st_bend_radius:230,
+  st_bent_section_length:121, st_top_to_tt_intersection:40,
+  st_tt_clearance:45,
+  tt_OD:32, tt_WT:0.8,
+  dt_OD:38.1, dt_WT:1.0,
+  chainstay_length:440, cs_ds_drop_angle:6,
+  max_chainring:36,
+  cs_OD:20, cs_WT:0.8,
+  ss_OD:14, ss_WT:0.8,
+  bb_diameter:38.3, bb_width:73,
+  front_wheel_dia:736.6, rear_wheel_dia:736.6,
+  stem_length:90, stem_angle:6, bar_diameter:31.8, steerer_height:40,
+};
+
+// ── GEOMETRY section (top-level key params) ─────────────────
+const GEOM_FIELDS = [
+  ['reach',            'Reach (mm)'],
+  ['chainstay_length', 'CS Length (mm)'],
+  ['ht_angle',         'HT Angle (°)'],
+  ['st_angle',         'ST Angle (°)'],
+  ['bb_drop',          'BB Drop (mm)'],
+];
+
+// ── TUBE PARAMETERS groups ────────────────────────────────────
+const GROUPS = [
+  {name:'Head Tube', fields:[
+    ['ht_length',         'HT Length (mm)'],
+    ['ht_OD',             'HT OD (mm)'],
+    ['dt_weld_clearance', 'DT Weld Clearance (mm)'],
+    ['tt_weld_clearance', 'TT Weld Clearance (mm)'],
+    ['fork_atc',          'Fork ATC (mm)'],
+    ['fork_offset',       'Fork Rake (mm)'],
+    ['lower_headset_height','Lower Headset (mm)'],
+  ]},
+  {name:'Seat Tube', fields:[
+    ['st_length',                 'ST Length (mm)'],
+    ['st_OD',                     'ST OD (mm)'],
+    ['st_WT',                     'ST Wall (mm)'],
+    ['st_forward_offset',         'ST Fwd Offset (mm)'],
+    ['st_bend_radius',            'ST Bend Radius (mm)'],
+    ['st_bent_section_length',    'ST Bent Length (mm)'],
+    ['st_top_to_tt_intersection', 'ST Top→TT (mm)'],
+    ['st_tt_clearance',           'ST/TT Clearance (mm)'],
+  ]},
+  {name:'Top Tube', fields:[
+    ['tt_OD', 'TT Side Width (mm)'],
+    ['tt_WT', 'TT Wall (mm)'],
+  ]},
+  {name:'Down Tube', fields:[
+    ['dt_OD', 'DT OD (mm)'],
+    ['dt_WT', 'DT Wall (mm)'],
+  ]},
+  {name:'Chainstays', fields:[
+    ['cs_ds_drop_angle', 'DS Drop Angle (°)'],
+    ['max_chainring',    'Max Chainring (teeth)'],
+    ['cs_OD',            'CS OD (mm)'],
+    ['cs_WT',            'CS Wall (mm)'],
+  ]},
+  {name:'Seat Stays', fields:[
+    ['ss_OD', 'SS OD (mm)'],
+    ['ss_WT', 'SS Wall (mm)'],
+  ]},
+  {name:'Bottom Bracket', fields:[
+    ['bb_width', 'BB Width (mm)'],
+  ]},
+  {name:'Cockpit', fields:[
+    ['stem_length',    'Stem Length (mm)'],
+    ['stem_angle',     'Stem Angle (°)'],
+    ['bar_diameter',   'Bar Diameter (mm)'],
+    ['steerer_height', 'Steerer Above HT (mm)'],
+  ]},
+];
+
+const WHEEL_SIZES = {
+  '29"':736.6, '27.5"':686, '26"':559, '700c':622,
+  '650b':584,  '24"':507,   '20"':406, '18"':355,
+};
+const BB_STANDARDS = {'BSA':38.3, 'T47':38.3};
+
+// ═══════════════════════════════════════════════════════
+//  GEOMETRY ENGINE
+// ═══════════════════════════════════════════════════════
+function computeGeometry(p) {
+  const ha  = d2r(p.ht_angle);
+  const sa  = d2r(p.st_angle);
+  const rwd = p.rear_wheel_dia/2;
+  const fwd = p.front_wheel_dia/2;
+  const bb  = [0,0];
+
+  const cs      = p.chainstay_length;
+  const cs_horiz= Math.sqrt(Math.max(cs*cs - p.bb_drop*p.bb_drop, 0));
+  const rear_axle = [-cs_horiz, p.bb_drop];
+
+  const seat_cluster = [
+    -p.st_length*Math.cos(sa),
+     p.st_length*Math.sin(sa),
+  ];
+
+  const fork_axis = [ Math.cos(ha), -Math.sin(ha)];
+  const fork_perp = [ Math.sin(ha),  Math.cos(ha)];
+  const fo  = p.fork_offset;
+  const atc = p.fork_atc;
+  const lhh = p.lower_headset_height;
+
+  const ground_y    = p.bb_drop - rwd;
+  const front_axle_y= ground_y + fwd;
+  const f_along     = Math.sqrt(Math.max(0, atc*atc - fo*fo));
+
+  const front_axle_x = p.reach + (f_along+lhh+p.ht_length)*Math.cos(ha) + fo*Math.sin(ha);
+  const front_axle   = [front_axle_x, front_axle_y];
+
+  const fork_crown = [
+    front_axle[0] - f_along*fork_axis[0] - fo*fork_perp[0],
+    front_axle[1] - f_along*fork_axis[1] - fo*fork_perp[1],
+  ];
+  const ht_bot = [
+    fork_crown[0] - lhh*fork_axis[0],
+    fork_crown[1] - lhh*fork_axis[1],
+  ];
+  const ht_top = [
+    ht_bot[0] - p.ht_length*fork_axis[0],
+    ht_bot[1] - p.ht_length*fork_axis[1],
+  ];
+  const stack = ht_top[1];
+
+  const t_to_gnd   = (ht_bot[1]-ground_y)/Math.sin(ha);
+  const steer_gnd_x= ht_bot[0]+t_to_gnd*fork_axis[0];
+  const trail      = steer_gnd_x - front_axle[0];
+  const wheelbase  = front_axle[0] - rear_axle[0];
+  const front_centre=Math.hypot(front_axle[0], p.bb_drop);
+
+  const hb_d = Math.hypot(...ht_bot);
+  const dt_ax= hb_d>0 ? [ht_bot[0]/hb_d, ht_bot[1]/hb_d] : [1,0];
+
+  const ra_d    = Math.hypot(...rear_axle);
+  const cs_ax_bs= ra_d>0 ? [rear_axle[0]/ra_d,rear_axle[1]/ra_d] : [-1,0];
+  const bs_dir  = [-cs_ax_bs[0],-cs_ax_bs[1]];
+
+  const drop_a = d2r(p.cs_ds_drop_angle||6);
+  const ca=Math.cos(-drop_a), s2=Math.sin(-drop_a);
+  const ds_dir = [bs_dir[0]*ca-bs_dir[1]*s2, bs_dir[0]*s2+bs_dir[1]*ca];
+  const cs_ax_ds = [-ds_dir[0],-ds_dir[1]];
+
+  const ds_t  = p.chainstay_length*0.80;
+  const ds_end= [rear_axle[0]+ds_dir[0]*ds_t, rear_axle[1]+ds_dir[1]*ds_t];
+
+  const st_ax = [-Math.cos(sa), Math.sin(sa)];
+
+  return {
+    bb, rear_axle, seat_cluster, ht_top, ht_bot,
+    fork_crown, front_axle, fork_axis, fork_perp,
+    fork_atc:atc, fork_along:f_along, stack,
+    ground_y, rwd, fwd, trail, wheelbase, front_centre,
+    dt_ax, cs_ax:cs_ax_bs, cs_ax_bs, cs_ax_ds, bs_dir, ds_dir,
+    bs_end:[0,0], ds_end, st_ax,
+  };
+}
+
+// ═══════════════════════════════════════════════════════
+//  BB YOKE (translated from Python)
+// ═══════════════════════════════════════════════════════
+function bbYokeDsMM(g, p) {
+  // DS yoke: tangent lines from CS tube shoulders at ds_end to BB shell arc
+  const ds_end = g.ds_end;
+  const ds_dir = g.ds_dir;
+  const cs_od  = p.cs_OD;
+  const bb_r   = p.bb_diameter / 2;
+
+  const perp_up = perp_ccw(ds_dir);
+  const perp_dn = perp_cw(ds_dir);
+  const P_top = [ds_end[0]+perp_up[0]*cs_od/2, ds_end[1]+perp_up[1]*cs_od/2];
+  const P_bot = [ds_end[0]+perp_dn[0]*cs_od/2, ds_end[1]+perp_dn[1]*cs_od/2];
+
+  function tangentPts(P, r) {
+    const d = Math.hypot(P[0], P[1]);
+    if (d <= r + 0.1) return [null, null];
+    const ang   = Math.atan2(P[1], P[0]);
+    const alpha = Math.acos(Math.min(1.0, r / d));
+    return [
+      [r*Math.cos(ang+alpha), r*Math.sin(ang+alpha)],
+      [r*Math.cos(ang-alpha), r*Math.sin(ang-alpha)],
+    ];
+  }
+
+  function cross2d(a, b) { return a[0]*b[1] - a[1]*b[0]; }
+
+  const [T_top_1, T_top_2] = tangentPts(P_top, bb_r);
+  if (!T_top_1) return [];
+  const to_o_top = [-P_top[0], -P_top[1]];
+  const v1 = [T_top_1[0]-P_top[0], T_top_1[1]-P_top[1]];
+  const T_top = cross2d(to_o_top, v1) > 0 ? T_top_1 : T_top_2;
+
+  const [T_bot_1, T_bot_2] = tangentPts(P_bot, bb_r);
+  if (!T_bot_1) return [];
+  const to_o_bot = [-P_bot[0], -P_bot[1]];
+  const v2 = [T_bot_1[0]-P_bot[0], T_bot_1[1]-P_bot[1]];
+  const T_bot = cross2d(to_o_bot, v2) < 0 ? T_bot_1 : T_bot_2;
+
+  let ang_top = Math.atan2(T_top[1], T_top[0]);
+  let ang_bot = Math.atan2(T_bot[1], T_bot[0]);
+  while (ang_bot > ang_top) ang_bot -= 2*Math.PI;
+  const bb_arc = arcPts(0, 0, bb_r, ang_top, ang_bot, 20);
+
+  const outline = [P_top, T_top, ...bb_arc.slice(1), P_bot];
+  return outline;
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  CANVAS STATE
+// ═══════════════════════════════════════════════════════
+let scale  = 0.47;
+let offset = [-120, 110];
+let drag   = null;
+let vis    = {grid:true, wheels:true, fork:true, cockpit:true};
+let params = {...DEFAULTS};
+
+const canvas  = document.getElementById('canvas');
+const ctx     = canvas.getContext('2d');
+const wrap    = document.getElementById('canvas-wrap');
+
+function mmToScreen(x,y) {
+  const cx=canvas.width/2+offset[0], cy=canvas.height/2+offset[1];
+  return [cx+x*scale, cy-y*scale];
+}
+function px(mm){ return Math.max(0.5, mm*scale); }
+
+// ── Resize ──
+function resizeCanvas(){
+  const w = wrap.clientWidth;
+  const h = wrap.clientHeight;
+  if(w > 0 && h > 0){
+    canvas.width  = w;
+    canvas.height = h;
+  }
+  redraw();
+}
+window.addEventListener('resize', resizeCanvas);
+
+// ── Zoom / Pan ──
+canvas.addEventListener('wheel', e=>{
+  e.preventDefault();
+  const f = e.deltaY<0?1.1:1/1.1;
+  scale *= f;
+  redraw();
+}, {passive:false});
+
+canvas.addEventListener('mousedown', e=>{ drag=[e.clientX,e.clientY,...offset]; canvas.style.cursor='grabbing'; });
+window.addEventListener('mousemove', e=>{
+  if(!drag) return;
+  offset=[drag[2]+(e.clientX-drag[0]), drag[3]+(e.clientY-drag[1])];
+  redraw();
+});
+window.addEventListener('mouseup', ()=>{ drag=null; canvas.style.cursor='grab'; });
+
+// Touch
+canvas.addEventListener('touchstart',e=>{ const t=e.touches[0]; drag=[t.clientX,t.clientY,...offset]; },{passive:true});
+canvas.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(!drag) return;
+  const t=e.touches[0];
+  offset=[drag[2]+(t.clientX-drag[0]),drag[3]+(t.clientY-drag[1])];
+  redraw();
+},{passive:false});
+canvas.addEventListener('touchend',()=>drag=null,{passive:true});
+
+// ═══════════════════════════════════════════════════════
+//  DRAWING HELPERS
+// ═══════════════════════════════════════════════════════
+
+// Fill-only rectangle for a tube segment (no caps, no stroke) — used as mask
+function tubeRect(pt1, pt2, od, fill) {
+  const dx=pt2[0]-pt1[0], dy=pt2[1]-pt1[1];
+  const L=Math.hypot(dx,dy);
+  if(L<0.5) return;
+  const p_=[-dy/L, dx/L];
+  const hw=od/2;
+  const c1a=add(pt1,mul(p_, hw));
+  const c1b=add(pt1,mul(p_,-hw));
+  const c2a=add(pt2,mul(p_, hw));
+  const c2b=add(pt2,mul(p_,-hw));
+  const pts=[c1a,c2a,c2b,c1b];
+  ctx.beginPath();
+  const [x0,y0]=mmToScreen(pts[0][0],pts[0][1]);
+  ctx.moveTo(x0,y0);
+  for(let i=1;i<pts.length;i++){
+    const [x,y]=mmToScreen(pts[i][0],pts[i][1]);
+    ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fillStyle=fill;
+  ctx.fill();
+}
+
+
+// Sutherland-Hodgman clip of polygon against a single half-plane.
+// Keeps points where dot(pt - planePoint, planeNormal) <= 0.
+function clipHalfPlane(poly, planeNormal, planePoint) {
+  if (poly.length === 0) return [];
+  const out = [];
+  for (let i = 0; i < poly.length; i++) {
+    const curr = poly[i];
+    const next = poly[(i + 1) % poly.length];
+    const dc = dot(sub(curr, planePoint), planeNormal);
+    const dn = dot(sub(next, planePoint), planeNormal);
+    if (dc <= 0) out.push(curr);           // curr inside → keep
+    if ((dc < 0 && dn > 0) || (dc > 0 && dn < 0)) {
+      // Edge crosses plane → add intersection
+      const t = dc / (dc - dn);
+      out.push(add(curr, mul(sub(next, curr), t)));
+    }
+  }
+  return out;
+}
+
+// Return the 4 corner points of a tube rectangle in mm (no caps).
+function tubeCorners(pt1, pt2, od) {
+  const dx=pt2[0]-pt1[0], dy=pt2[1]-pt1[1];
+  const L=Math.hypot(dx,dy);
+  if (L < 0.5) return [];
+  const p_=[-dy/L, dx/L];
+  const hw = od / 2;
+  return [
+    add(pt1, mul(p_, hw)),
+    add(pt2, mul(p_, hw)),
+    add(pt2, mul(p_,-hw)),
+    add(pt1, mul(p_,-hw)),
+  ];
+}
+
+// Draw a clipped tube: compute rect corners, clip, draw polygon.
+function tubePolyClipped(pt1, pt2, od, fill, stroke, clipNormal, clipPoint) {
+  let poly = tubeCorners(pt1, pt2, od);
+  poly = clipHalfPlane(poly, clipNormal, clipPoint);
+  if (poly.length >= 3) drawPoly(poly, fill, stroke, 1);
+}
+
+function drawPoly(mmPts, fill, stroke, lw=1) {
+  if(mmPts.length<2) return;
+  ctx.beginPath();
+  const [x0,y0]=mmToScreen(mmPts[0][0],mmPts[0][1]);
+  ctx.moveTo(x0,y0);
+  for(let i=1;i<mmPts.length;i++){
+    const [x,y]=mmToScreen(mmPts[i][0],mmPts[i][1]);
+    ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  if(fill){ctx.fillStyle=fill;ctx.fill();}
+  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=lw;ctx.stroke();}
+}
+
+function tubePoly(pt1,pt2,od,fill='#3b2070',stroke='#c4b5fd',cap1=true,cap2=true,cap1_inset=0,cap2_inset=0){
+  const dx=pt2[0]-pt1[0], dy=pt2[1]-pt1[1];
+  const L=Math.hypot(dx,dy);
+  if(L<0.5) return;
+  const ax=[dx/L,dy/L];
+  const hw=od/2;
+  const p_=[- dy/L, dx/L];
+
+  const c1a=add(pt1,mul(p_, hw));
+  const c1b=add(pt1,mul(p_,-hw));
+  const c2a=add(pt2,mul(p_, hw));
+  const c2b=add(pt2,mul(p_,-hw));
+  drawPoly([c1a,c2a,c2b,c1b],fill,stroke,1);
+
+  if(cap1){
+    const cp1=add(pt1,mul(ax, cap1_inset));
+    drawPoly(semicap(cp1,[-ax[0],-ax[1]],hw,false,8),fill,stroke,1);
+  }
+  if(cap2){
+    const cp2=add(pt2,mul(ax,-cap2_inset));
+    drawPoly(semicap(cp2,ax,hw,true,8),fill,stroke,1);
+  }
+}
+
+function line(x1,y1,x2,y2,col,lw=1,dash=[]){
+  const [sx1,sy1]=mmToScreen(x1,y1);
+  const [sx2,sy2]=mmToScreen(x2,y2);
+  ctx.beginPath();
+  ctx.setLineDash(dash);
+  ctx.strokeStyle=col; ctx.lineWidth=lw;
+  ctx.moveTo(sx1,sy1); ctx.lineTo(sx2,sy2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function lineS(sx1,sy1,sx2,sy2,col,lw=1,dash=[]){
+  ctx.beginPath();
+  ctx.setLineDash(dash);
+  ctx.strokeStyle=col; ctx.lineWidth=lw;
+  ctx.moveTo(sx1,sy1); ctx.lineTo(sx2,sy2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function arrowH(sx1,sx2,sy,col,lw=1){
+  lineS(sx1,sy,sx2,sy,col,lw);
+  // arrowheads
+  const d=5;
+  lineS(sx1,sy, sx1+d,sy-d, col,lw);
+  lineS(sx1,sy, sx1+d,sy+d, col,lw);
+  lineS(sx2,sy, sx2-d,sy-d, col,lw);
+  lineS(sx2,sy, sx2-d,sy+d, col,lw);
+}
+
+function arrowV(sy1,sy2,sx,col,lw=1){
+  lineS(sx,sy1,sx,sy2,col,lw);
+  const d=5;
+  lineS(sx,sy1, sx-d,sy1+d, col,lw);
+  lineS(sx,sy1, sx+d,sy1+d, col,lw);
+  lineS(sx,sy2, sx-d,sy2-d, col,lw);
+  lineS(sx,sy2, sx+d,sy2-d, col,lw);
+}
+
+function label(sx,sy,text,col,align='center',baseline='middle',size=10){
+  ctx.fillStyle=col;
+  ctx.font=`${size}px 'Courier Prime','Courier New',monospace`;
+  ctx.textAlign=align; ctx.textBaseline=baseline;
+  ctx.fillText(text,sx,sy);
+}
+
+function drawDot(sx,sy,r,fill,stroke){
+  ctx.beginPath();
+  ctx.arc(sx,sy,r,0,Math.PI*2);
+  if(fill){ctx.fillStyle=fill;ctx.fill();}
+  if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=1;ctx.stroke();}
+}
+
+// ═══════════════════════════════════════════════════════
+//  DRAW GRID
+// ═══════════════════════════════════════════════════════
+function drawGrid(g){
+  const w=canvas.width, h=canvas.height;
+  const step=50*scale;
+  if(step<4) return;
+  const cx=canvas.width/2+offset[0], cy=canvas.height/2+offset[1];
+  ctx.strokeStyle='#2d1b4e'; ctx.lineWidth=1;
+  const xi0=Math.floor(-cx/step)-1;
+  for(let xi=xi0; xi*step+cx<w+step; xi++){
+    const x=xi*step+cx;
+    ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+  }
+  const yi0=Math.floor(-cy/step)-1;
+  for(let yi=yi0; yi*step+cy<h+step; yi++){
+    const y=yi*step+cy;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+  }
+  // Ground line
+  const [,gy]=mmToScreen(0,g.ground_y);
+  ctx.strokeStyle='#2a1f45'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(w,gy); ctx.stroke();
+  label(w-8,gy-5,'ground','#2a1f45','right','bottom',9);
+}
+
+// ═══════════════════════════════════════════════════════
+//  DRAW WHEELS
+// ═══════════════════════════════════════════════════════
+function drawWheels(g){
+  const WCOL='#888888';
+  for(const [cx_mm,cy_mm,r_mm] of [
+    [g.rear_axle[0],  g.rear_axle[1],  g.rwd],
+    [g.front_axle[0], g.front_axle[1], g.fwd],
+  ]){
+    const [sx,sy]=mmToScreen(cx_mm,cy_mm);
+    const r=px(r_mm);
+    ctx.beginPath(); ctx.arc(sx,sy,r,0,Math.PI*2);
+    ctx.strokeStyle=WCOL; ctx.lineWidth=2; ctx.stroke();
+    // Axle dot
+    drawDot(sx,sy,3,WCOL,WCOL);
+  }
+  // Tyre label
+  const rwStr = Object.entries(WHEEL_SIZES).find(([,v])=>Math.abs(v-params.rear_wheel_dia)<1)?.[0]||'';
+  const [rsx,rsy]=mmToScreen(g.rear_axle[0], g.rear_axle[1]);
+  if(rwStr) label(rsx,rsy-px(g.rwd)-6,rwStr,'#555555','center','bottom',8);
+}
+
+// ═══════════════════════════════════════════════════════
+//  DRAW TUBES
+// ═══════════════════════════════════════════════════════
+function drawTubes(g){
+  const p=params;
+  const TFILL='#3b2070', TSTK='#c4b5fd', LFILL='#2a1a50', LSTK='#c4b5fd';
+  const ra=g.rear_axle, sc=g.seat_cluster;
+  const ht_t=g.ht_top, ht_b=g.ht_bot, bb=[0,0];
+  const tt_od=p.tt_OD, ss_od=p.ss_OD, st_od=p.st_OD;
+
+  // BS chainstay
+  tubePoly(ra, g.bs_end, p.cs_OD, TFILL, TSTK, false, false);
+  // DS chainstay
+  tubePoly(ra, g.ds_end, p.cs_OD, TFILL, TSTK, false, false);
+
+  // ── HT junction ──
+  const ht_od=p.ht_OD, fa_x=g.fork_axis;
+  const ht_perp_cw=perp_cw(fa_x);
+  const to_bb=sub(bb,ht_b);
+  const ht_dt_side = dot(to_bb,ht_perp_cw)>0 ? ht_perp_cw : mul(ht_perp_cw,-1);
+  const ht_tt_side = ht_dt_side;
+  const dt_clr=p.dt_weld_clearance;
+  const Q_dt=[ht_b[0]-fa_x[0]*dt_clr+ht_dt_side[0]*ht_od/2,
+              ht_b[1]-fa_x[1]*dt_clr+ht_dt_side[1]*ht_od/2];
+  const dt_ax=g.dt_ax;
+  const dt_perp_cw=perp_cw(dt_ax);
+  const fa_dt_dot=dot(fa_x,dt_perp_cw);
+  const dt_bot_perp=fa_dt_dot>0?dt_perp_cw:mul(dt_perp_cw,-1);
+  const dt_ht=[Q_dt[0]-dt_bot_perp[0]*p.dt_OD/2, Q_dt[1]-dt_bot_perp[1]*p.dt_OD/2];
+  const dt_ht_ext=[dt_ht[0]+dt_ax[0]*ht_od, dt_ht[1]+dt_ax[1]*ht_od];
+
+  const tt_clr=p.tt_weld_clearance;
+  const Q_tt=[ht_t[0]+fa_x[0]*tt_clr+ht_tt_side[0]*ht_od/2,
+              ht_t[1]+fa_x[1]*tt_clr+ht_tt_side[1]*ht_od/2];
+  const tt_vec=norm(sub(sc,ht_t));
+  const tt_perp_cw=perp_cw(tt_vec);
+  const nfa_tt_dot=dot(mul(fa_x,-1),tt_perp_cw);
+  const tt_top_perp=nfa_tt_dot>0?tt_perp_cw:mul(tt_perp_cw,-1);
+  const tt_ht=[Q_tt[0]-tt_top_perp[0]*tt_od/2, Q_tt[1]-tt_top_perp[1]*tt_od/2];
+  const tt_ht_ext=[tt_ht[0]-tt_vec[0]*ht_od, tt_ht[1]-tt_vec[1]*ht_od];
+
+  // ST junction
+  const st_tt_clr=p.st_tt_clearance;
+  const st_ax=g.st_ax;
+  const st_perp_cw=perp_cw(st_ax);
+  const to_ra=sub(ra,sc);
+  const st_rear_side=dot(to_ra,st_perp_cw)>0?st_perp_cw:mul(st_perp_cw,-1);
+  const Q_tt_st=[sc[0]-st_ax[0]*st_tt_clr+st_rear_side[0]*st_od/2,
+                 sc[1]-st_ax[1]*st_tt_clr+st_rear_side[1]*st_od/2];
+
+  const tt_vec_st=norm(sub(ht_t,sc));
+  const tt_perp_st_raw=perp_cw(tt_vec_st);
+  const tt_perp_st=((sc[0]-Q_tt_st[0])*tt_perp_st_raw[0]+(sc[1]-Q_tt_st[1])*tt_perp_st_raw[1])<0
+    ?mul(tt_perp_st_raw,-1):tt_perp_st_raw;
+  const tt_sc=[Q_tt_st[0]-tt_perp_st[0]*tt_od/2, Q_tt_st[1]-tt_perp_st[1]*tt_od/2];
+
+  const ss_vec_st=norm(sub(ra,sc));
+  const ss_perp_st_raw=perp_cw(ss_vec_st);
+  const ss_perp_st=((sc[0]-Q_tt_st[0])*ss_perp_st_raw[0]+(sc[1]-Q_tt_st[1])*ss_perp_st_raw[1])<0
+    ?mul(ss_perp_st_raw,-1):ss_perp_st_raw;
+  const ss_sc=[Q_tt_st[0]-ss_perp_st[0]*ss_od/2, Q_tt_st[1]-ss_perp_st[1]*ss_od/2];
+
+  const tt_sc_ext=add(tt_sc,mul(tt_vec_st,st_od/2));
+  const ss_sc_ext=add(ss_sc,mul(ss_vec_st,-st_od/2));
+
+  // ── HT clip planes ──
+  // Both DT and TT enter the HT from the same lateral side (ht_dt_side).
+  // Clip each tube rect to stop exactly at the HT outer face on that side.
+  // clipNormal = ht_dt_side (pointing INTO the HT body = inward normal)
+  // clipPoint  = the HT face point on that side
+  const ht_face_pt = add(ht_b, mul(ht_dt_side, ht_od / 2));  // point on HT face
+
+  // ── Draw order: back → front ──
+  // DT: clipped at HT face, capped at BB end only
+  {
+    let dtPoly = tubeCorners(dt_ht_ext, bb, p.dt_OD);
+    dtPoly = clipHalfPlane(dtPoly, mul(ht_dt_side,-1), ht_face_pt);
+    if (dtPoly.length >= 3) {
+      drawPoly(dtPoly, TFILL, TSTK, 1);
+      // BB-end semicap
+      const dt_bb_cap = semicap(bb, mul(dt_ax,-1), p.dt_OD/2, true, 8);
+      drawPoly(dt_bb_cap, TFILL, TSTK, 1);
+    }
+  }
+
+  tubePoly(ra, ss_sc_ext, ss_od, TFILL, TSTK, false, false);
+
+  // TT: clipped at HT face, no caps (both ends buried in other tubes)
+  {
+    let ttPoly = tubeCorners(tt_sc_ext, tt_ht_ext, tt_od);
+    ttPoly = clipHalfPlane(ttPoly, mul(ht_dt_side,-1), ht_face_pt);
+    if (ttPoly.length >= 3) drawPoly(ttPoly, TFILL, TSTK, 1);
+  }
+
+  tubePoly(bb, sc, st_od, TFILL, TSTK, false, false);
+
+  // BB yoke
+  try {
+    const yoke=bbYokeDsMM(g,p);
+    if(yoke.length>=3) drawPoly(yoke,LFILL,LSTK,1);
+  } catch(e){}
+
+  // HT drawn last — clean, no masking needed now tubes are clipped
+  tubePoly(ht_t, ht_b, ht_od, TFILL, TSTK, false, false);
+
+  // BB shell
+  const [bsx,bsy]=mmToScreen(0,0);
+  const bb_r=px(p.bb_diameter/2);
+  const bore_r=px(p.bb_diameter<50?35/2:49/2);
+  ctx.beginPath(); ctx.arc(bsx,bsy,bb_r,0,Math.PI*2);
+  ctx.fillStyle=LFILL; ctx.fill();
+  ctx.strokeStyle=LSTK; ctx.lineWidth=1; ctx.stroke();
+  ctx.beginPath(); ctx.arc(bsx,bsy,bore_r,0,Math.PI*2);
+  ctx.fillStyle='#0d0d16'; ctx.fill();
+  ctx.strokeStyle=LSTK; ctx.lineWidth=1; ctx.stroke();
+
+  // Chainring dashed
+  const cr_r=px(chainringRadius(p.max_chainring)+15);
+  ctx.beginPath(); ctx.arc(bsx,bsy,cr_r,0,Math.PI*2);
+  ctx.strokeStyle='#3a2a5a'; ctx.lineWidth=1;
+  ctx.setLineDash([5,4]); ctx.stroke(); ctx.setLineDash([]);
+
+  // Dropout
+  const [rax,ray]=mmToScreen(g.rear_axle[0],g.rear_axle[1]);
+  const do_r=px((p.cs_OD+p.ss_OD)*0.55);
+  ctx.beginPath(); ctx.arc(rax,ray,do_r,0,Math.PI*2);
+  ctx.fillStyle=LFILL; ctx.fill();
+  ctx.strokeStyle=LSTK; ctx.lineWidth=1; ctx.stroke();
+  ctx.beginPath(); ctx.arc(rax,ray,px(5),0,Math.PI*2);
+  ctx.fillStyle='#0d0d16'; ctx.fill();
+  ctx.strokeStyle=LSTK; ctx.lineWidth=1; ctx.stroke();
+}
+
+// ═══════════════════════════════════════════════════════
+//  DRAW FORK
+// ═══════════════════════════════════════════════════════
+function drawFork(g){
+  const p=params;
+  const FCOL='#4a1d80', FSTK='#7c3aed', FANN='#c084fc';
+  const fa  =g.front_axle, fc=g.fork_crown;
+  const f_ax=g.fork_axis,  f_perp=g.fork_perp;
+  const fo  =p.fork_offset;
+
+  // ── Fork rake geometry diagram ──────────────────────────────
+  // The classic right-angle rake triangle:
+  //   • Long dashed line: HT centreline extended down through fork crown to axle height
+  //   • Short dashed line: 90° offset from that line to the front axle (= rake)
+  //   • Bold fork blade: hypotenuse of the triangle (crown → axle)
+
+  // fork_axis points crown→axle direction (along steerer, downward)
+  // f_perp is perpendicular to fork axis (= rake direction)
+  const fa_dir = f_ax;  // unit vector along steerer axis (top→bottom)
+
+  // Point on steerer axis at same height as front axle (foot of perpendicular)
+  // front_axle = fc + f_along*fa_dir + fo*f_perp
+  // The foot is: fc + f_along*fa_dir  (the mid point before the offset)
+  const f_along = g.fork_along;
+  const foot = [fc[0] + fa_dir[0]*f_along, fc[1] + fa_dir[1]*f_along];
+
+  // 1. Long dashed line: fork crown → foot (along steerer CL extended)
+  line(fc[0], fc[1], foot[0], foot[1], FANN, 1, [6, 4]);
+
+  // 2. Short dashed line: foot → front axle (perpendicular offset = rake)
+  line(foot[0], foot[1], fa[0], fa[1], FANN, 1, [6, 4]);
+
+  // Small right-angle square at foot
+  const sq = 6 / scale;  // 6px in mm
+  const sqA = add(foot, mul(fa_dir, -sq));
+  const sqB = add(sqA,  mul(f_perp,  sq));
+  const sqC = add(foot, mul(f_perp,  sq));
+  const [sax,say]=mmToScreen(sqA[0],sqA[1]);
+  const [sbx,sby]=mmToScreen(sqB[0],sqB[1]);
+  const [scx,scy]=mmToScreen(sqC[0],sqC[1]);
+  const [sfx,sfy]=mmToScreen(foot[0],foot[1]);
+  ctx.beginPath();
+  ctx.moveTo(sax,say); ctx.lineTo(sbx,sby); ctx.lineTo(scx,scy); ctx.lineTo(sfx,sfy);
+  ctx.strokeStyle=FANN; ctx.lineWidth=1; ctx.setLineDash([]); ctx.stroke();
+
+  // 3. Fork blade (hypotenuse): fork crown → front axle — drawn on top
+  tubePoly(fc, fa, 26, FCOL, FSTK, false, true);
+
+  // Rake label — below the short offset line, near the axle end
+  // Position: 80% along the offset (close to axle), then offset downward (in screen space)
+  const rake_near = add(foot, mul(f_perp, fo * 0.8));
+  const [rnx, rny] = mmToScreen(rake_near[0], rake_near[1]);
+  label(rnx, rny + 14, `rake  ${fo.toFixed(0)}`, FANN, 'center', 'top', 9);
+
+  // ATC label — beside the long dashed line
+  const atc_mid = add(fc, mul(fa_dir, f_along*0.5));
+  const [amx,amy] = mmToScreen(atc_mid[0], atc_mid[1]);
+  label(amx - 8, amy, `A/C  ${g.fork_atc.toFixed(0)}`, FANN, 'right', 'middle', 9);
+
+  // Headset x line
+  const lhh=p.lower_headset_height;
+  const hx1=[g.ht_bot[0]-f_perp[0]*25, g.ht_bot[1]-f_perp[1]*25];
+  const hx2=[g.ht_bot[0]+f_perp[0]*25, g.ht_bot[1]+f_perp[1]*25];
+  line(hx1[0],hx1[1],hx2[0],hx2[1],FANN,2,[4,3]);
+  const [hxm,hym]=mmToScreen((hx1[0]+hx2[0])/2+5,(hx1[1]+hx2[1])/2);
+  label(hxm+6,hym,`x=${lhh.toFixed(0)}`,FANN,'left','middle',9);
+
+  // Fork crown dot
+  const [fcs,fcs2]=mmToScreen(fc[0],fc[1]);
+  drawDot(fcs,fcs2,4,FCOL,'#4c1d95');
+}
+
+// ═══════════════════════════════════════════════════════
+//  DRAW COCKPIT
+// ═══════════════════════════════════════════════════════
+function drawCockpit(g){
+  const p=params;
+  const WCOL='#888888';
+  const ha=d2r(p.ht_angle);
+  const fa_x=g.fork_axis;
+  const sd=[-fa_x[0],-fa_x[1]];
+  const steer_h=p.steerer_height;
+  const stem_len=p.stem_length;
+  const stem_ang=d2r(p.stem_angle);
+  const bar_r=p.bar_diameter/2;
+
+  const stem_bot=[g.ht_top[0]+sd[0]*(steer_h-10), g.ht_top[1]+sd[1]*(steer_h-10)];
+  const sfb=[Math.sin(ha), Math.cos(ha)];
+  const stem_dir=[sfb[0]*Math.cos(stem_ang)-sfb[1]*Math.sin(stem_ang),
+                  sfb[0]*Math.sin(stem_ang)+sfb[1]*Math.cos(stem_ang)];
+  const stem_end=[stem_bot[0]+stem_dir[0]*stem_len, stem_bot[1]+stem_dir[1]*stem_len];
+
+  // Stem line
+  const [smx1,smy1]=mmToScreen(stem_bot[0],stem_bot[1]);
+  const [smx2,smy2]=mmToScreen(stem_end[0],stem_end[1]);
+  ctx.beginPath(); ctx.strokeStyle=WCOL; ctx.lineWidth=3;
+  ctx.lineCap='round'; ctx.moveTo(smx1,smy1); ctx.lineTo(smx2,smy2); ctx.stroke();
+  ctx.lineCap='butt';
+
+  // Bar circle
+  const [bx,by]=mmToScreen(stem_end[0],stem_end[1]);
+  const br=px(bar_r);
+  ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI*2);
+  ctx.strokeStyle=WCOL; ctx.lineWidth=2; ctx.stroke();
+}
+
+// ═══════════════════════════════════════════════════════
+//  DRAW ANNOTATIONS
+// ═══════════════════════════════════════════════════════
+function drawAnnotations(g){
+  const p=params;
+  const ANN ='#a855f7', ANN2='#7c3aed';
+  const [bbx,bby]=mmToScreen(0,0);
+  const [htx,hty]=mmToScreen(g.ht_top[0],g.ht_top[1]);
+  const [rax,ray]=mmToScreen(g.rear_axle[0],g.rear_axle[1]);
+  const [fax,fay]=mmToScreen(g.front_axle[0],g.front_axle[1]);
+  const rwpx=px(g.rwd);
+
+  // Reach
+  const reach_y=Math.min(bby,hty)-52;
+  arrowH(bbx,htx,reach_y,ANN);
+  label((bbx+htx)/2, reach_y-6, `reach  ${p.reach.toFixed(0)}`, ANN,'center','bottom',10);
+  lineS(bbx,reach_y-8,bbx,bby+6,ANN,1,[3,3]);
+  lineS(htx,reach_y-8,htx,hty+6,ANN,1,[3,3]);
+
+  // Stack
+  const stack_x=fax+rwpx+46;
+  arrowV(bby,hty,stack_x,ANN);
+  label(stack_x+8,(bby+hty)/2,`stack  ${g.stack.toFixed(0)}`,ANN,'left','middle',10);
+  lineS(stack_x-8,bby,bbx-2,bby,ANN,1,[3,3]);
+  lineS(stack_x-8,hty,htx+2,hty,ANN,1,[3,3]);
+
+  // BB Drop
+  const drop_x=rax-rwpx-46;
+  arrowV(ray,bby,drop_x,ANN2);
+  label(drop_x-8,(ray+bby)/2,`bb drop  ${p.bb_drop.toFixed(0)}`,ANN2,'right','middle',9);
+
+  // Wheelbase
+  const wb_y=Math.max(ray,fay)+rwpx+20;
+  arrowH(rax,fax,wb_y,ANN2);
+  label((rax+fax)/2,wb_y+6,`wheelbase  ${g.wheelbase.toFixed(0)}`,ANN2,'center','top',9);
+
+  // Chainstay
+  const cs_y=wb_y-22;
+  lineS(rax,cs_y,bbx,cs_y,ANN2,1);
+  label((rax+bbx)/2,cs_y-4,`cs  ${p.chainstay_length.toFixed(0)}`,ANN2,'center','bottom',8);
+}
+
+// ═══════════════════════════════════════════════════════
+//  MAIN REDRAW
+// ═══════════════════════════════════════════════════════
+function redraw(){
+  if(canvas.width===0 || canvas.height===0) return;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle='#0d0d16';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  let g;
+  try {
+    g = computeGeometry(params);
+  } catch(e) {
+    showError('Geometry: '+e.message, e);
+    return;
+  }
+  try {
+    if(vis.grid)    drawGrid(g);
+    if(vis.wheels)  drawWheels(g);
+    drawTubes(g);
+    if(vis.fork)    drawFork(g);
+    if(vis.cockpit) drawCockpit(g);
+    drawAnnotations(g);
+    updateStatus(g);
+  } catch(e) {
+    showError('Draw: '+e.message, e);
+  }
+}
+
+function showError(msg, err){
+  ctx.fillStyle='#1a0820';
+  ctx.fillRect(10,10,canvas.width-20,120);
+  ctx.strokeStyle='#f87171'; ctx.lineWidth=1;
+  ctx.strokeRect(10,10,canvas.width-20,120);
+  ctx.fillStyle='#f87171';
+  ctx.font='bold 12px Courier New';
+  ctx.textAlign='left'; ctx.textBaseline='top';
+  ctx.fillText('ERROR: '+msg, 20, 24);
+  ctx.fillStyle='#9d8ec0';
+  ctx.font='10px Courier New';
+  if(err && err.stack){
+    const lines=err.stack.split('\n').slice(0,6);
+    lines.forEach((l,i)=>ctx.fillText(l.trim().slice(0,100), 20, 44+i*13));
+  }
+  console.error(err);
+}
+
+// ═══════════════════════════════════════════════════════
+//  STATUS BAR
+// ═══════════════════════════════════════════════════════
+function updateStatus(g){
+  document.getElementById('statusbar').textContent =
+    `Wheelbase: ${g.wheelbase.toFixed(1)} mm  ·  `+
+    `Front Centre: ${g.front_centre.toFixed(1)} mm  ·  `+
+    `Trail: ${g.trail.toFixed(1)} mm  ·  `+
+    `Stack (derived): ${g.stack.toFixed(1)} mm`;
+  document.getElementById('derived-stack').textContent=g.stack.toFixed(1)+' mm';
+  document.getElementById('derived-wb').textContent   =g.wheelbase.toFixed(1)+' mm';
+  document.getElementById('derived-trail').textContent=g.trail.toFixed(1)+' mm';
+}
+
+// ═══════════════════════════════════════════════════════
+//  TOGGLES
+// ═══════════════════════════════════════════════════════
+function resetView(){
+  scale  = 0.47;
+  offset = [-120, 110];
+  redraw();
+}
+
+function toggleVis(key){
+  vis[key]=!vis[key];
+  const btn=document.getElementById('btn-'+key);
+  btn.classList.toggle('on',vis[key]);
+  redraw();
+}
+
+// ═══════════════════════════════════════════════════════
+//  PARAM PANEL BUILD
+// ═══════════════════════════════════════════════════════
+const paramInputs={};
+
+// Helper to create a param input row
+function makeParamRow(key, labelText, body) {
+  const row=document.createElement('div'); row.className='param-row';
+  const lbl=document.createElement('span'); lbl.className='param-label'; lbl.textContent=labelText;
+  const inp=document.createElement('input');
+  inp.type='text'; inp.className='param-input';
+  inp.value=(params[key]!==undefined?params[key]:'');
+  inp.onchange=()=>{ const v=parseFloat(inp.value); if(!isNaN(v)){params[key]=v;redraw();} };
+  paramInputs[key]=inp;
+  row.appendChild(lbl); row.appendChild(inp);
+  body.appendChild(row);
+}
+
+// Helper to create a select row
+function makeSelectRow(labelText, options, initVal, onChange, body) {
+  const row=document.createElement('div'); row.className='param-row';
+  const lbl=document.createElement('span'); lbl.className='param-label'; lbl.textContent=labelText;
+  const sel=document.createElement('select'); sel.className='param-select';
+  options.forEach(([val,txt])=>{
+    const o=document.createElement('option'); o.value=val; o.textContent=txt; sel.appendChild(o);
+  });
+  sel.value=initVal;
+  sel.onchange=()=>onChange(sel.value);
+  row.appendChild(lbl); row.appendChild(sel);
+  body.appendChild(row);
+  return sel;
+}
+
+// Helper to create a collapsible group
+function makeGroup(scroll, name, buildFn, startOpen=true) {
+  const gw=document.createElement('div'); gw.className='group-wrap';
+  const hdr=document.createElement('div'); hdr.className='group-hdr';
+  const acc=document.createElement('div'); acc.className='group-accent';
+  const btn=document.createElement('button');
+  btn.className='group-btn'; btn.textContent=name.toLowerCase();
+  hdr.appendChild(acc); hdr.appendChild(btn);
+  gw.appendChild(hdr);
+  const body=document.createElement('div'); body.className='group-body';
+  if(!startOpen) body.classList.add('collapsed');
+  let open=startOpen;
+  btn.onclick=()=>{ open=!open; body.classList.toggle('collapsed',!open); };
+  buildFn(body);
+  gw.appendChild(body);
+  scroll.appendChild(gw);
+}
+
+function buildPanel(){
+  const scroll=document.getElementById('panel-scroll');
+  scroll.innerHTML='';
+
+  // ── 1. GEOMETRY section ───────────────────────────────
+  makeGroup(scroll, 'Geometry', body=>{
+    GEOM_FIELDS.forEach(([key,lbl])=>makeParamRow(key,lbl,body));
+    // Wheel sizes in geometry section
+    const wheelOpts=Object.keys(WHEEL_SIZES).map(k=>[k,k]);
+    const frontSel=makeSelectRow('Front Wheel', wheelOpts, '29"',
+      v=>{params.front_wheel_dia=WHEEL_SIZES[v];redraw();}, body);
+    const rearSel =makeSelectRow('Rear Wheel',  wheelOpts, '29"',
+      v=>{params.rear_wheel_dia =WHEEL_SIZES[v];redraw();}, body);
+    // Store refs for setParams sync
+    paramInputs._frontWheelSel=frontSel;
+    paramInputs._rearWheelSel =rearSel;
+  }, true);
+
+  // ── 2. TUBE PARAMETERS label (non-collapsible divider) ──
+  const divider=document.createElement('div');
+  divider.style.cssText='padding:8px 11px 3px;font-size:9px;letter-spacing:2px;color:var(--text-lo);text-transform:uppercase;font-family:Courier New,monospace;border-top:1px solid var(--border);margin-top:4px;';
+  divider.textContent='tube parameters';
+  scroll.appendChild(divider);
+
+  // ── 3. Bottom Bracket (standard + width) before tube groups ──
+  makeGroup(scroll, 'Bottom Bracket', body=>{
+    const bbOpts=Object.keys(BB_STANDARDS).map(k=>[k,k]);
+    makeSelectRow('Standard', bbOpts, 'BSA',
+      v=>{params.bb_diameter=BB_STANDARDS[v];redraw();}, body);
+    makeParamRow('bb_width','Width (mm)',body);
+  }, true);
+
+  // ── 4. Tube groups ────────────────────────────────────
+  GROUPS.forEach(({name,fields})=>{
+    // Bottom Bracket already done above — skip it here
+    if(name==='Bottom Bracket') return;
+    makeGroup(scroll, name, body=>{
+      fields.forEach(([key,lbl])=>makeParamRow(key,lbl,body));
+    }, false);  // start collapsed to save space
+  });
+}
+
+function setParams(p){
+  Object.assign(params,p);
+  for(const [k,inp] of Object.entries(paramInputs)){
+    if(k.startsWith('_')) continue;  // skip select refs
+    if(params[k]!==undefined) inp.value=params[k];
+  }
+  // Sync wheel selects
+  if(paramInputs._frontWheelSel){
+    const best=Object.entries(WHEEL_SIZES).reduce((a,b)=>
+      Math.abs(b[1]-params.front_wheel_dia)<Math.abs(a[1]-params.front_wheel_dia)?b:a);
+    paramInputs._frontWheelSel.value=best[0];
+  }
+  if(paramInputs._rearWheelSel){
+    const best=Object.entries(WHEEL_SIZES).reduce((a,b)=>
+      Math.abs(b[1]-params.rear_wheel_dia)<Math.abs(a[1]-params.rear_wheel_dia)?b:a);
+    paramInputs._rearWheelSel.value=best[0];
+  }
+  redraw();
+}
+
+// ═══════════════════════════════════════════════════════
+//  RESET / EXPORT / IMPORT
+// ═══════════════════════════════════════════════════════
+function resetParams(){ setParams({...DEFAULTS}); }
+
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(params,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='frame_geometry.json'; a.click();
+}
+
+function importJSON(){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
+  inp.onchange=e=>{
+    const f=e.target.files[0];
+    const r=new FileReader();
+    r.onload=ev=>{ try{ setParams(JSON.parse(ev.target.result)); }catch(err){ alert('Invalid JSON'); } };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+
+// ═══════════════════════════════════════════════════════
+//  PRESETS
+// ═══════════════════════════════════════════════════════
+function _p(reach,fork_atc,bb_drop,ht_a,ht_len,ht_od,fork_off,lhh,
+            st_a,st_len,st_od,front_w,rear_w,cs_len,stem_len=90,stem_ang=6){
+  return {...DEFAULTS, reach,fork_atc,bb_drop,ht_angle:ht_a,ht_length:ht_len,
+    ht_OD:ht_od,fork_offset:fork_off,lower_headset_height:lhh,
+    st_angle:st_a,st_length:st_len,st_OD:st_od,
+    front_wheel_dia:WHEEL_SIZES[front_w]||736.6,
+    rear_wheel_dia:WHEEL_SIZES[rear_w]||736.6,
+    chainstay_length:cs_len,stem_length:stem_len,stem_angle:stem_ang};
+}
+
+const PRESETS = {
+  'Road': {
+    'XS': _p(360,375,72,73,130,46.5,50,12,73,460,31.8,'700c','700c',408,80,-8),
+    'S':  _p(375,385,72,73,140,46.5,50,12,73,480,31.8,'700c','700c',413,80,-8),
+    'M':  _p(392,398,72,73,150,46.5,50,12,73,500,31.8,'700c','700c',418,80,-8),
+    'L':  _p(410,410,72,73,160,46.5,50,12,73.5,520,31.8,'700c','700c',423,80,-8),
+    'XL': _p(428,425,72,73,170,46.5,50,12,74,540,31.8,'700c','700c',428,80,-8),
+  },
+  'Gravel': {
+    'XS': _p(365,380,70,71,120,46.5,52,12,73.5,450,34.9,'700c','700c',425,60,2),
+    'S':  _p(380,393,70,71,130,46.5,52,12,73.5,470,34.9,'700c','700c',430,60,2),
+    'M':  _p(395,408,70,71,140,46.5,52,12,73.5,490,34.9,'700c','700c',435,60,2),
+    'L':  _p(413,422,70,71,150,46.5,52,12,74,510,34.9,'700c','700c',440,60,2),
+    'XL': _p(430,438,70,71,160,46.5,52,12,74,530,34.9,'700c','700c',445,60,2),
+  },
+  'MTB XC': {
+    'S':  _p(420,490,60,69,110,44,51,12,74,440,34.9,'29"','29"',430,50,5),
+    'M':  _p(440,500,60,69,115,44,51,12,74,460,34.9,'29"','29"',435,50,5),
+    'L':  _p(462,515,60,69,120,44,51,12,74.5,480,34.9,'29"','29"',440,50,5),
+    'XL': _p(485,530,60,69,125,44,51,12,74.5,500,34.9,'29"','29"',445,50,5),
+  },
+  'MTB Enduro': {
+    'S':  _p(425,537,35,64,110,44,44,12,76,400,34.9,'29"','29"',440,35,8),
+    'M':  _p(445,550,35,64,115,44,44,12,76,420,34.9,'29"','29"',445,35,8),
+    'L':  _p(468,563,35,64,120,44,44,12,76,440,34.9,'29"','29"',450,35,8),
+    'XL': _p(490,578,35,64,125,44,44,12,76.5,460,34.9,'29"','29"',455,35,8),
+  },
+  'BMX 20"': {
+    'Mid':  _p(185,315,55,75,110,44.5,33,8,72,300,28.6,'20"','20"',350,50,5),
+    'Large':_p(200,330,55,75,110,44.5,33,8,72,310,28.6,'20"','20"',355,50,5),
+  },
+};
+
+function buildPresetPanel(){
+  const catSel=document.getElementById('preset-cat');
+  Object.keys(PRESETS).forEach(cat=>{
+    const o=document.createElement('option'); o.value=cat; o.textContent=cat; catSel.appendChild(o);
+  });
+  updatePresetSizes();
+}
+
+function updatePresetSizes(){
+  const cat=document.getElementById('preset-cat').value;
+  const sizeSel=document.getElementById('preset-size');
+  sizeSel.innerHTML='';
+  Object.keys(PRESETS[cat]||{}).forEach(s=>{
+    const o=document.createElement('option'); o.value=s; o.textContent=s; sizeSel.appendChild(o);
+  });
+  const sizes=Object.keys(PRESETS[cat]||{});
+  const def=sizes.includes('M')?'M': sizes.includes('Large')?'Large':sizes[0];
+  if(def) sizeSel.value=def;
+}
+
+function loadPreset(){
+  const cat=document.getElementById('preset-cat').value;
+  const size=document.getElementById('preset-size').value;
+  const p=PRESETS[cat]?.[size];
+  if(p) setParams(p);
+}
+
+function togglePresets(){
+  const body=document.getElementById('preset-body');
+  const btn=document.getElementById('preset-toggle');
+  const open=body.classList.toggle('open');
+  btn.classList.toggle('open',open);
+  btn.textContent=open?'Presets ▾':'Presets ▸';
+}
+
+// ═══════════════════════════════════════════════════════
+//  PANEL RESIZER
+// ═══════════════════════════════════════════════════════
+const resizer=document.getElementById('resizer');
+const panel  =document.getElementById('panel');
+let rsz=null;
+resizer.addEventListener('mousedown',e=>{ rsz=e.clientX; e.preventDefault(); });
+window.addEventListener('mousemove',e=>{
+  if(rsz===null) return;
+  const w=Math.max(180,Math.min(500,panel.offsetWidth+(e.clientX-rsz)));
+  panel.style.width=w+'px';
+  rsz=e.clientX;
+  resizeCanvas();
+});
+window.addEventListener('mouseup',()=>rsz=null);
+
+// ═══════════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════════
+// Global error catcher — shows any uncaught error on canvas
+window.addEventListener('error', e=>{
+  if(canvas.width>0){
+    ctx.fillStyle='#1a0820'; ctx.fillRect(10,10,600,80);
+    ctx.strokeStyle='#f87171'; ctx.lineWidth=1; ctx.strokeRect(10,10,600,80);
+    ctx.fillStyle='#f87171'; ctx.font='bold 12px Courier New';
+    ctx.textAlign='left'; ctx.textBaseline='top';
+    ctx.fillText('JS ERROR: '+e.message, 20, 24);
+    ctx.fillStyle='#9d8ec0'; ctx.font='10px Courier New';
+    ctx.fillText('File: '+e.filename+' Line: '+e.lineno, 20, 44);
+  }
+});
+
+try { buildPanel(); } catch(e){ console.error('buildPanel failed:',e); }
+try { buildPresetPanel(); } catch(e){ console.error('buildPresetPanel failed:',e); }
+
+// Delay initial draw until browser has computed layout
+requestAnimationFrame(()=>{
+  requestAnimationFrame(()=>{
+    resizeCanvas();
+  });
+});
+</script>
+</body>
+</html>
