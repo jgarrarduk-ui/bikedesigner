@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="green">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -109,10 +109,10 @@
   #toolbar {
     background: var(--toolbar-bg);
     border-bottom: 1px solid var(--border);
-    height: 54px;
+    height: 26px;
     display: flex;
     align-items: center;
-    padding: 0 14px;
+    padding: 0 8px;
     gap: 0;
     flex-shrink: 0;
   }
@@ -120,12 +120,12 @@
   #logo-area {
     display: flex;
     align-items: baseline;
-    gap: 8px;
-    margin-right: 20px;
+    gap: 6px;
+    margin-right: 14px;
   }
 
   #logo-text {
-    font-size: 15px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--lavender);
     letter-spacing: 3px;
@@ -135,7 +135,7 @@
   }
 
   #logo-sub {
-    font-size: 10px;
+    font-size: 9px;
     color: var(--text-lo);
     letter-spacing: 2px;
     text-transform: lowercase;
@@ -143,9 +143,9 @@
 
   .tb-sep {
     width: 1px;
-    height: 28px;
+    height: 18px;
     background: var(--border);
-    margin: 0 10px;
+    margin: 0 7px;
   }
 
   .tb-btn {
@@ -153,24 +153,18 @@
     border: none;
     color: var(--text-mid);
     font-family: var(--font);
-    font-size: 11px;
-    padding: 5px 10px;
+    font-size: 10px;
+    padding: 3px 8px;
     cursor: pointer;
     border-radius: 3px;
     transition: background 0.15s, color 0.15s;
     letter-spacing: 0.5px;
+    white-space: nowrap;
   }
   .tb-btn:hover { background: var(--hdr-bg); color: var(--lavender); }
   .tb-btn.on { color: var(--accent-br); }
 
-  #tb-right {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-    gap: 2px;
-    font-size: 10px;
-    color: var(--text-lo);
-  }
+  #tb-right { display: none; }
 
   /* ── Main layout ── */
   #main {
@@ -189,6 +183,7 @@
     flex-direction: column;
     overflow: hidden;
     flex-shrink: 0;
+    height: 100%;  /* always fill full height — never shrinks when groups collapse */
   }
 
   #panel-scroll {
@@ -241,40 +236,178 @@
   }
   .group-body.collapsed { display: none; }
 
+
+
+
+
+
+
+
+
+
+
+  /* ── param row: two-line layout (label + slider+arrows+input) ── */
   .param-row {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 2px 0;
-    gap: 6px;
+    flex-direction: column;
+    padding: 4px 0 2px;
+    gap: 2px;
   }
 
   .param-label {
     color: var(--text-hi);
-    font-size: 11px;
-    flex: 1;
+    font-size: 10px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    flex-shrink: 0;
+  }
+
+  /* slider row: ← [range] → [value] */
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    width: 100%;
+  }
+
+  .arrow-btn {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    background: var(--hdr-bg);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text-mid);
+    font-size: 10px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s, color 0.1s;
+    padding: 0;
+    font-family: var(--font);
+  }
+  .arrow-btn:hover { background: var(--accent); color: var(--lavender-br); }
+  .arrow-btn:active { background: var(--accent-hi); }
+
+  .param-slider {
+    flex: 1;
+    height: 28px;          /* tall hit area for touch */
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+    outline: none;
+    min-width: 0;
+    touch-action: none;    /* let us handle touch without scroll conflict */
+  }
+
+  /* Track */
+  .param-slider::-webkit-slider-runnable-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+  }
+  .param-slider::-moz-range-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+  }
+
+  /* Thumb — desktop */
+  .param-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent-br);
+    border: 2px solid var(--accent-hi);
+    margin-top: -6px;
+    transition: background 0.1s, transform 0.1s;
+    cursor: grab;
+  }
+  .param-slider:active::-webkit-slider-thumb {
+    transform: scale(1.3);
+    cursor: grabbing;
+  }
+  .param-slider::-webkit-slider-thumb:hover { background: var(--lavender-br); }
+  .param-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent-br);
+    border: 2px solid var(--accent-hi);
+  }
+
+  /* Mobile — bigger thumb, fatter track */
+  @media (max-width: 900px) {
+    .param-slider {
+      height: 36px;
+    }
+    .param-slider::-webkit-slider-runnable-track {
+      height: 5px;
+    }
+    .param-slider::-webkit-slider-thumb {
+      width: 26px;
+      height: 26px;
+      margin-top: -10.5px;
+      border-width: 3px;
+    }
+    .param-slider::-moz-range-thumb {
+      width: 26px;
+      height: 26px;
+    }
+    .arrow-btn {
+      width: 28px;
+      height: 28px;
+      font-size: 14px;
+    }
+    .wheel-val {
+      font-size: 13px;
+      padding: 4px 6px;
+    }
   }
 
   .param-input {
-    width: 72px;
+    width: 54px;
     background: var(--input-bg);
     color: var(--input-fg);
     border: 1px solid var(--accent);
     border-radius: 2px;
-    padding: 2px 5px;
+    padding: 1px 4px;
     font-family: var(--font);
-    font-size: 11px;
+    font-size: 10px;
     text-align: right;
     outline: none;
     flex-shrink: 0;
   }
   .param-input:focus { border-color: var(--accent-br); }
 
+  /* Wheel toggle row: ← [label] → */
+  .wheel-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    width: 100%;
+  }
+  .wheel-val {
+    flex: 1;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--lavender-br);
+    font-family: var(--font);
+    background: var(--hdr-bg);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 2px 4px;
+  }
+
+  /* select stays for BB standard */
   .param-select {
-    width: 90px;
+    width: 100%;
     background: var(--input-bg);
     color: var(--input-fg);
     border: 1px solid var(--accent);
@@ -283,7 +416,6 @@
     font-family: var(--font);
     font-size: 11px;
     outline: none;
-    flex-shrink: 0;
   }
 
   /* Derived readout */
@@ -354,46 +486,25 @@
   /* ── Preset panel (floating bottom-right) ── */
   #preset-panel {
     position: absolute;
-    bottom: 16px;
-    right: 16px;
-    background: #0d0820;
+    bottom: 44px;
+    right: 12px;
+    background: var(--panel-bg);
     border: 1px solid var(--border);
     border-radius: 4px;
-    min-width: 180px;
+    min-width: 160px;
     z-index: 10;
   }
 
-  #preset-toggle {
-    background: var(--hdr-bg);
-    color: var(--text-mid);
-    border: none;
-    font-family: var(--font);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    padding: 7px 12px;
-    width: 100%;
-    text-align: left;
-    cursor: pointer;
-    border-radius: 4px 4px 0 0;
-    text-transform: uppercase;
-    transition: color 0.15s;
-  }
-  #preset-toggle:hover { color: var(--lavender); }
-  #preset-toggle.open { color: var(--lavender-br); }
-
-  #preset-body { padding: 8px; display: none; }
-  #preset-body.open { display: block; }
+  #preset-body { padding: 6px; display: block; }
 
   .preset-row {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 5px;
+    gap: 4px;
+    margin-bottom: 4px;
   }
-  .preset-row label { font-size: 10px; color: var(--text-mid); width: 32px; }
   .preset-row select {
-    flex: 1;
+    width: 100%;
     background: var(--input-bg);
     color: var(--input-fg);
     border: 1px solid var(--accent);
@@ -482,16 +593,16 @@
       border-top: 2px solid var(--accent);
       flex-shrink: 0;
       transition: height 0.25s ease;
+      overflow: hidden;  /* needed for height transition to clip content */
     }
 
     #panel.collapsed-mobile {
       height: 38px;
-      overflow: hidden;
     }
 
     #resizer { display: none; }
 
-    #canvas-wrap { flex: 1; min-height: 0; }
+    #canvas-wrap { flex: none; height: calc(58vh - 48px); min-height: 100px; }
 
     /* Panel header toggle row */
     #panel-mobile-hdr {
@@ -534,12 +645,296 @@
     }
   }
 
-  /* Show mobile panel header only on mobile */
-  #panel-mobile-hdr { display: none; }
-  @media (max-width: 600px) {
-    #panel-mobile-hdr { display: flex; }
+  /* Panel header hidden — no collapsible label needed */
+  #panel-mobile-hdr { display: none !important; }
+
+
+
+  /* ── Dropdown backdrop — closes menus on outside tap/click ── */
+  #dd-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 999;
+  }
+  #dd-backdrop.open { display: block; }
+
+  /* ── Toolbar dropdowns ── */
+  .tb-dropdown {
+    position: relative;
+    z-index: 1000;
+  }
+  .tb-dd-btn { letter-spacing: 0.3px; }
+  .tb-dd-menu {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    min-width: 210px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 0;
+    z-index: 1000;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+  .tb-dd-menu.open { display: block; }
+  .dd-label {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-lo);
+    padding: 4px 10px 2px;
+  }
+  .dd-radio-group {
+    display: flex;
+    gap: 3px;
+    padding: 3px 8px 6px;
+  }
+  .dd-radio {
+    flex: 1;
+    background: var(--hdr-bg);
+    border: 1px solid var(--border);
+    color: var(--text-mid);
+    font-family: var(--font);
+    font-size: 11px;
+    padding: 7px 2px;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+  .dd-radio.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent-br);
+  }
+  .dd-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--text-mid);
+    transition: background 0.1s;
+    min-height: 36px;
+  }
+  .dd-toggle-row:hover { background: var(--hdr-bg); }
+  .dd-toggle-row input[type=checkbox] {
+    accent-color: var(--accent);
+    width: 13px;
+    height: 13px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .dd-select {
+    width: 100%;
+    background: var(--hdr-bg);
+    border: 1px solid var(--border);
+    color: var(--text-mid);
+    font-family: var(--font);
+    font-size: 11px;
+    padding: 3px 6px;
+    border-radius: 2px;
   }
 
+
+  /* ── Export modal ── */
+  #export-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+  }
+  #export-modal-overlay.open { display: flex; }
+  #export-modal {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    width: min(380px, 88vw);
+    padding: 22px 24px 18px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  #export-modal h2 {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--lavender);
+    font-weight: 700;
+    margin: 0;
+  }
+  .exp-format-row {
+    display: flex;
+    gap: 10px;
+  }
+  .exp-fmt-btn {
+    flex: 1;
+    background: var(--hdr-bg);
+    border: 1px solid var(--border);
+    color: var(--text-mid);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 12px 0;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .exp-fmt-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent-br); }
+  .exp-modal-btns {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .exp-modal-btns button {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-mid);
+    font-family: var(--font);
+    font-size: 11px;
+    padding: 5px 18px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .exp-modal-btns button:hover { background: var(--hdr-bg); }
+
+  /* ── Zoom controls overlay ── */
+  #zoom-controls {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    z-index: 20;
+  }
+  .zoom-btn {
+    width: 28px;
+    height: 28px;
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-mid);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.12s, color 0.12s;
+    font-family: var(--font);
+    opacity: 0.85;
+  }
+  .zoom-btn:hover { background: var(--hdr-bg); color: var(--lavender); opacity: 1; }
+  .zoom-btn svg { pointer-events: none; }
+
+  /* ── Mobile: hide logo, reposition presets under toolbar ── */
+  @media (max-width: 600px) {
+    #logo-area { display: none; }
+    #toolbar .tb-sep:first-of-type { display: none; }
+
+    #preset-panel {
+      position: fixed;
+      top: 48px;
+      right: 0;
+      left: 0;
+      bottom: auto;
+      border-radius: 0;
+      border-left: none;
+      border-right: none;
+      border-top: none;
+      border-bottom: 1px solid var(--border);
+      z-index: 30;
+    }
+    #preset-toggle {
+      border-radius: 0;
+      width: 100%;
+      text-align: center;
+    }
+    #preset-body {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px;
+      flex-wrap: wrap;
+    }
+    .preset-row {
+      margin-bottom: 0;
+      flex: 1;
+      min-width: 120px;
+    }
+    #preset-load {
+      margin-top: 0;
+      flex: 0 0 auto;
+      padding: 5px 14px;
+    }
+
+    #zoom-controls {
+      bottom: auto;
+      top: 12px;
+      left: 8px;
+    }
+  }
+
+
+  /* ── Export result overlay ── */
+  #export-result-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.88);
+    z-index: 600;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 20px;
+  }
+  #export-result-overlay.open { display: flex; }
+  #export-result-img {
+    max-width: 100%;
+    max-height: 70vh;
+    border: 1px solid #444;
+    display: none;
+  }
+  #export-result-msg {
+    color: #ccc;
+    font-family: var(--font);
+    font-size: 12px;
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+  #export-result-link {
+    display: none;
+    color: var(--lavender);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 10px 24px;
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    text-decoration: none;
+  }
+  #export-result-close {
+    background: var(--hdr-bg);
+    border: 1px solid var(--border);
+    color: var(--text-mid);
+    font-family: var(--font);
+    font-size: 11px;
+    padding: 7px 22px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -551,20 +946,29 @@
     <span id="logo-sub">bike designer</span>
   </div>
   <div class="tb-sep"></div>
-  <select id="theme-sel" onchange="setTheme(this.value)">
-    <option value="dark">dark</option>
-    <option value="light" selected>light</option>
-    <option value="green">green</option>
-    <option value="orange">orange</option>
-  </select>
-  <button class="tb-btn on"  id="btn-grid"    onclick="toggleVis('grid')"   >grid</button>
-  <button class="tb-btn on"  id="btn-wheels"  onclick="toggleVis('wheels')" >wheels</button>
-  <button class="tb-btn on"  id="btn-fork"    onclick="toggleVis('fork')"   >fork</button>
-  <button class="tb-btn on"  id="btn-cockpit" onclick="toggleVis('cockpit')">cockpit</button>
+
+  <!-- Appearance dropdown — button only, menu lives in <body> -->
+  <div class="tb-dropdown" id="dd-appearance">
+    <button class="tb-btn tb-dd-btn" onclick="toggleDd('appearance')">▾ view</button>
+  </div>
+
+  <!-- Elements dropdown — button only -->
+  <div class="tb-dropdown" id="dd-elements">
+    <button class="tb-btn tb-dd-btn" onclick="toggleDd('elements')">▾ elements</button>
+  </div>
+
+  <!-- Annotations dropdown — button only -->
+  <div class="tb-dropdown" id="dd-annotations">
+    <button class="tb-btn tb-dd-btn" onclick="toggleDd('annotations')">▾ annotations</button>
+  </div>
+
   <div class="tb-sep"></div>
   <button class="tb-btn" onclick="resetView()">reset view</button>
-  <div id="tb-right">scroll: zoom &nbsp;·&nbsp; drag: pan</div>
+
 </div>
+
+<!-- Dropdown backdrop -->
+<div id="dd-backdrop" onclick="closeAllDd()"></div>
 
 <!-- Main -->
 <div id="main">
@@ -578,20 +982,12 @@
       <!-- generated by JS -->
     </div>
     <div class="derived-row">
-      <span>Stack (derived)</span>
-      <span class="derived-val" id="derived-stack">—</span>
-    </div>
-    <div class="derived-row">
       <span>Wheelbase</span>
       <span class="derived-val" id="derived-wb">—</span>
     </div>
-    <div class="derived-row">
-      <span>Trail</span>
-      <span class="derived-val" id="derived-trail">—</span>
-    </div>
     <div id="panel-btns">
       <button class="panel-btn" onclick="resetParams()">Reset</button>
-      <button class="panel-btn" onclick="exportJSON()">Export</button>
+      <button class="panel-btn" onclick="openSave()">Export</button>
       <button class="panel-btn" onclick="importJSON()">Import</button>
     </div>
   </div>
@@ -601,20 +997,52 @@
   <!-- Canvas -->
   <div id="canvas-wrap">
     <canvas id="canvas"></canvas>
+
+    <!-- Zoom controls -->
+    <div id="zoom-controls">
+      <button class="zoom-btn" onclick="zoomStep(1.25)" title="Zoom in">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="6" cy="6" r="4.5"/>
+          <line x1="9.5" y1="9.5" x2="13" y2="13"/>
+          <line x1="6" y1="4" x2="6" y2="8"/>
+          <line x1="4" y1="6" x2="8" y2="6"/>
+        </svg>
+      </button>
+      <button class="zoom-btn" onclick="zoomStep(0.8)" title="Zoom out">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="6" cy="6" r="4.5"/>
+          <line x1="9.5" y1="9.5" x2="13" y2="13"/>
+          <line x1="4" y1="6" x2="8" y2="6"/>
+        </svg>
+      </button>
+    </div>
     <!-- Preset panel -->
     <div id="preset-panel">
-      <button id="preset-toggle" onclick="togglePresets()">Presets ▸</button>
-      <div id="preset-body">
+      <div id="preset-body" class="open">
         <div class="preset-row">
-          <label>type</label>
           <select id="preset-cat" onchange="updatePresetSizes()"></select>
         </div>
         <div class="preset-row">
-          <label>size</label>
           <select id="preset-size"></select>
         </div>
         <button id="preset-load" onclick="loadPreset()">load preset</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Export modal -->
+<div id="export-modal-overlay" onclick="handleOverlayClick(event)">
+  <div id="export-modal">
+    <h2>export</h2>
+    <p style="font-size:11px;color:var(--text-lo);margin:0">choose format — the current canvas view will be exported with all visible annotations.</p>
+    <div class="exp-format-row">
+      <button class="exp-fmt-btn" onclick="doExport('pdf')">PDF</button>
+      <button class="exp-fmt-btn" onclick="doExport('jpeg')">JPEG</button>
+      <button class="exp-fmt-btn" onclick="doExport('json')">JSON</button>
+    </div>
+    <div class="exp-modal-btns">
+      <button onclick="closeExportModal()">cancel</button>
     </div>
   </div>
 </div>
@@ -627,6 +1055,8 @@
 //  MATHS HELPERS
 // ═══════════════════════════════════════════════════════
 const DEG = Math.PI / 180;
+const TUBE_LW = 0.5;   // frame tube stroke weight
+const WHEEL_LW = 0.5;  // wheel stroke weight
 const r2d = a => a / DEG;
 const d2r = a => a * DEG;
 const add = (a,b) => [a[0]+b[0], a[1]+b[1]];
@@ -677,18 +1107,54 @@ const DEFAULTS = {
   dt_weld_clearance:12, tt_weld_clearance:14,
   fork_offset:55, lower_headset_height:12,
   st_angle:76, st_length:450, st_OD:34.95, st_WT:1.0,
-  st_forward_offset:26, st_bend_radius:230,
-  st_bent_section_length:121, st_top_to_tt_intersection:40,
-  st_tt_clearance:45,
+
   tt_OD:32, tt_WT:0.8,
   dt_OD:38.1, dt_WT:1.0,
   chainstay_length:440, cs_ds_drop_angle:6,
   max_chainring:36,
   cs_OD:20, cs_WT:0.8,
   ss_OD:14, ss_WT:0.8,
-  bb_diameter:38.3, bb_width:73,
-  front_wheel_dia:736.6, rear_wheel_dia:736.6,
+  st_tt_clearance:45,
+  bb_diameter:50.0, bb_bore:33.9, bb_width:73,
+  front_wheel_dia:622, rear_wheel_dia:622, tyre_width:57,
+  front_wheel_key:'29"', rear_wheel_key:'29"',
   stem_length:90, stem_angle:6, bar_diameter:31.8, steerer_height:40,
+};
+
+
+// ── Slider ranges for every parameter ────────────────────────
+const PARAM_RANGES = {
+  reach:                    [200, 650, 1],
+  chainstay_length:         [300, 600, 1],
+  ht_angle:                 [50,  90,  0.5],
+  st_angle:                 [60,  85,  0.5],
+  bb_drop:                  [-100, 150, 1],
+  ht_length:                [40,  300, 1],
+  ht_OD:                    [28,  80,  0.1],
+  dt_weld_clearance:        [0,   30,  1],
+  tt_weld_clearance:        [0,   30,  1],
+  fork_atc:                 [200, 800, 1],
+  fork_offset:              [0,   150, 1],
+  lower_headset_height:     [0,   60,  1],
+  tyre_width:               [10,  150, 1],
+  st_length:                [200, 750, 1],
+  st_OD:                    [20,  60,  0.05],
+  st_tt_clearance:          [0,   150, 1],
+  st_WT:                    [0.5, 3,   0.05],
+  tt_OD:                    [16,  70,  0.1],
+  tt_WT:                    [0.5, 2,   0.05],
+  dt_OD:                    [20,  80,  0.1],
+  dt_WT:                    [0.5, 2,   0.05],
+  cs_ds_drop_angle:         [0,   20,  0.5],
+  max_chainring:            [24,  56,  1],
+  cs_OD:                    [10,  50,  0.5],
+  cs_WT:                    [0.5, 2,   0.05],
+  ss_OD:                    [8,   40,  0.5],
+  ss_WT:                    [0.5, 2,   0.05],
+  stem_length:              [0,   200, 5],
+  stem_angle:               [-45, 45,  1],
+  bar_diameter:             [22,  35,  0.2],
+  steerer_height:           [10,  100, 5],
 };
 
 // ── GEOMETRY section ─────────────────────────────────────────
@@ -716,14 +1182,10 @@ const GROUPS = [
     ['tt_weld_clearance', 'TT Weld Clearance (mm)'],
   ]},
   {name:'Seat Tube', fields:[
-    ['st_length',                 'ST Length (mm)'],
-    ['st_OD',                     'ST OD (mm)'],
-    ['st_WT',                     'ST Wall (mm)'],
-    ['st_forward_offset',         'ST Fwd Offset (mm)'],
-    ['st_bend_radius',            'ST Bend Radius (mm)'],
-    ['st_bent_section_length',    'ST Bent Length (mm)'],
-    ['st_top_to_tt_intersection', 'ST Top→TT (mm)'],
-    ['st_tt_clearance',           'ST/TT Clearance (mm)'],
+    ['st_length',      'ST Length (mm)'],
+    ['st_OD',          'ST OD (mm)'],
+    ['st_WT',          'ST Wall (mm)'],
+    ['st_tt_clearance','Top of ST → TT (mm)'],
   ]},
   {name:'Top Tube', fields:[
     ['tt_OD', 'TT Side Width (mm)'],
@@ -744,7 +1206,6 @@ const GROUPS = [
     ['ss_WT', 'SS Wall (mm)'],
   ]},
   {name:'Bottom Bracket', fields:[
-    ['bb_width', 'BB Width (mm)'],
   ]},
   {name:'Cockpit', fields:[
     ['stem_length',    'Stem Length (mm)'],
@@ -754,11 +1215,25 @@ const GROUPS = [
   ]},
 ];
 
+// WHEEL_SIZES stores ISO Bead Seat Diameter (BSD) for each wheel label.
+// The actual outer tyre diameter = BSD/2 + tyre_width (radius).
+// Order: smallest → largest, used by wheel toggle arrows.
 const WHEEL_SIZES = {
-  '29"':736.6, '27.5"':686, '26"':559, '700c':622,
-  '650b':584,  '24"':507,   '20"':406, '18"':355,
+  '20"':  406,
+  '24"':  507,
+  '26"':  559,
+  '27.5"':584,
+  '700c': 622,
+  '29"':  622,
+  '32"':  686,
 };
-const BB_STANDARDS = {'BSA':38.3, 'T47':38.3};
+// Ordered keys for the toggle (preserves insertion order)
+const WHEEL_KEYS = Object.keys(WHEEL_SIZES);
+// Each BB standard: [shell_OD mm, bore_ID mm]
+const BB_STANDARDS = {
+  'BSA': { shell: 50.0, bore: 33.9 },   // BSA: 1.37" threaded, ~50mm shell OD
+  'T47': { shell: 56.0, bore: 41.0 },   // T47: 47mm threaded, 56mm shell OD
+};
 
 
 // ═══════════════════════════════════════════════════════
@@ -843,12 +1318,12 @@ const THEMES = {
   },
 };
 
-let currentTheme = 'light';
+let currentTheme = 'green';
 
 function setTheme(name) {
   currentTheme = name;
   document.documentElement.setAttribute('data-theme', name);
-  document.getElementById('theme-sel').value = name;
+  syncThemeRadios();
   redraw();
 }
 
@@ -860,8 +1335,9 @@ function T(key) { return THEMES[currentTheme][key] || THEMES.dark[key]; }
 function computeGeometry(p) {
   const ha  = d2r(p.ht_angle);
   const sa  = d2r(p.st_angle);
-  const rwd = p.rear_wheel_dia/2;
-  const fwd = p.front_wheel_dia/2;
+  const tw  = p.tyre_width || 57;            // tyre section width ≈ section height (round cross-section)
+  const rwd = p.rear_wheel_dia/2  + tw;     // outer radius = rim_BSD/2 + tyre_width
+  const fwd = p.front_wheel_dia/2 + tw;
   const bb  = [0,0];
 
   const cs      = p.chainstay_length;
@@ -941,7 +1417,7 @@ function bbYokeDsMM(g, p) {
   const ds_end = g.ds_end;
   const ds_dir = g.ds_dir;
   const cs_od  = p.cs_OD;
-  const bb_r   = p.bb_diameter / 2;
+  const bb_r   = p.bb_diameter / 2;   // shell outer radius
 
   const perp_up = perp_ccw(ds_dir);
   const perp_dn = perp_cw(ds_dir);
@@ -987,9 +1463,23 @@ function bbYokeDsMM(g, p) {
 //  CANVAS STATE
 // ═══════════════════════════════════════════════════════
 let scale  = 0.47;
-let offset = [-120, 110];
+let offset = [0, 0];         // [offsetX, offsetY] — offsetY managed by groundFraction
+let groundFraction = 0.80;   // ground line sits at this fraction of canvas height (0=top,1=bottom)
+let viewPinned = true;        // true = pinGroundY active; released permanently on first drag
+// groundFraction is updated by fitView and by vertical drag/pinch
+// Every redraw recomputes offset[1] from groundFraction + live geometry
 let drag   = null;
-let vis    = {grid:true, wheels:true, fork:true, cockpit:true};
+let vis = {
+  grid:true, wheels:true, fork:true, cockpit:true,
+  // Annotations — bike geometry
+  ann_reach:true, ann_stack:true, ann_bbdrop:true,
+  ann_wheelbase:true, ann_chainstay:true,
+  ann_htangle:true, ann_stangle:true, ann_stlength:true,
+  // Annotations — tube dimensions
+  ann_tubeODs:false,
+  // Annotations — jig
+  ann_jig:false,
+};
 let params = {...DEFAULTS};
 
 const canvas  = document.getElementById('canvas');
@@ -1009,6 +1499,7 @@ function resizeCanvas(){
   if(w > 0 && h > 0){
     canvas.width  = w;
     canvas.height = h;
+    fitView();  // refit scale/horizontal when canvas changes size
   }
   redraw();
 }
@@ -1017,29 +1508,87 @@ window.addEventListener('resize', resizeCanvas);
 // ── Zoom / Pan ──
 canvas.addEventListener('wheel', e=>{
   e.preventDefault();
+  viewPinned=false;
   const f = e.deltaY<0?1.1:1/1.1;
   scale *= f;
   redraw();
 }, {passive:false});
 
-canvas.addEventListener('mousedown', e=>{ drag=[e.clientX,e.clientY,...offset]; canvas.style.cursor='grabbing'; });
+canvas.addEventListener('mousedown', e=>{ viewPinned=false; drag=[e.clientX,e.clientY,offset[0],offset[1],groundFraction]; canvas.style.cursor='grabbing'; });
 window.addEventListener('mousemove', e=>{
   if(!drag) return;
-  offset=[drag[2]+(e.clientX-drag[0]), drag[3]+(e.clientY-drag[1])];
+  offset[0] = drag[2] + (e.clientX - drag[0]);
+  offset[1] = drag[3] + (e.clientY - drag[1]);
   redraw();
 });
 window.addEventListener('mouseup', ()=>{ drag=null; canvas.style.cursor='grab'; });
 
 // Touch
-canvas.addEventListener('touchstart',e=>{ const t=e.touches[0]; drag=[t.clientX,t.clientY,...offset]; },{passive:true});
-canvas.addEventListener('touchmove',e=>{
+let pinchDist0 = null;
+let pinchScale0 = null;
+
+canvas.addEventListener('touchstart', e => {
+  if (e.touches.length === 1) {
+    viewPinned=false;
+    const t = e.touches[0];
+    drag = [t.clientX, t.clientY, offset[0], offset[1], groundFraction];
+    pinchDist0 = null;
+  } else if (e.touches.length === 2) {
+    drag = null;
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    pinchDist0 = Math.hypot(dx, dy);
+    pinchScale0 = scale;
+  }
+}, {passive: true});
+
+canvas.addEventListener('touchmove', e => {
   e.preventDefault();
-  if(!drag) return;
-  const t=e.touches[0];
-  offset=[drag[2]+(t.clientX-drag[0]),drag[3]+(t.clientY-drag[1])];
-  redraw();
-},{passive:false});
-canvas.addEventListener('touchend',()=>drag=null,{passive:true});
+  if (e.touches.length === 2 && pinchDist0 !== null) {
+    // Pinch to zoom — scale around midpoint of two fingers
+    const dx = e.touches[0].clientX - e.touches[1].clientX;
+    const dy = e.touches[0].clientY - e.touches[1].clientY;
+    const dist = Math.hypot(dx, dy);
+    const newScale = pinchScale0 * (dist / pinchDist0);
+    // Keep midpoint of fingers fixed in world space
+    const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+    const my = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    const rect = canvas.getBoundingClientRect();
+    const cx = mx - rect.left, cy = my - rect.top;
+    // Adjust offset so zoom centres on finger midpoint
+    const wx = (cx - canvas.width/2  - offset[0]) / scale;
+    const wy = (cy - canvas.height/2 - offset[1]) / (-scale);
+    scale = Math.max(0.05, Math.min(5, newScale));
+    offset[0] = cx - canvas.width/2  - wx * scale;
+    // Update groundFraction to match new offset[1] target
+    // wy is in mm (Y-up), ground_y is in mm
+    // We want pinGroundY to produce the same gy as the pinch centre intended.
+    // New offset[1] would be: cy - H/2 + wy * scale
+    // pinGroundY sets offset[1] = H*(gF-0.5) + g.ground_y*scale
+    // So gF = (cy - H/2 + wy*scale - g.ground_y*scale) / H + 0.5
+    //       = (cy - H/2 + (wy - g.ground_y)*scale) / H + 0.5
+    // We don't have g here so just approximate with current groundFraction
+    // adjusted for scale change:
+    const tentativeOff1 = cy - canvas.height/2 + wy * scale;
+    // Infer what groundFraction gives this offset:
+    // tentativeOff1 = H*(gF-0.5) + g_y_approx*scale
+    // We'll just do a raw fraction from the intended screen ground position
+    // ground_screen_approx = H/2 + tentativeOff1 - g.ground_y_approx * scale
+    // Since we don't recompute g here, just keep groundFraction and let pinGroundY
+    // recalculate on next redraw. The horizontal zoom is what matters for pinch.
+    redraw();
+  } else if (e.touches.length === 1 && drag) {
+    const t = e.touches[0];
+    offset[0] = drag[2] + (t.clientX - drag[0]);
+    offset[1] = drag[3] + (t.clientY - drag[1]);
+    redraw();
+  }
+}, {passive: false});
+
+canvas.addEventListener('touchend', e => {
+  if (e.touches.length < 2) pinchDist0 = null;
+  if (e.touches.length === 0) drag = null;
+}, {passive: true});
 
 // ═══════════════════════════════════════════════════════
 //  DRAWING HELPERS
@@ -1138,15 +1687,15 @@ function tubePoly(pt1,pt2,od,fill,stroke,cap1=true,cap2=true,cap1_inset=0,cap2_i
   const c1b=add(pt1,mul(p_,-hw));
   const c2a=add(pt2,mul(p_, hw));
   const c2b=add(pt2,mul(p_,-hw));
-  drawPoly([c1a,c2a,c2b,c1b],fill,stroke,1);
+  drawPoly([c1a,c2a,c2b,c1b],fill,stroke,TUBE_LW);
 
   if(cap1){
     const cp1=add(pt1,mul(ax, cap1_inset));
-    drawPoly(semicap(cp1,[-ax[0],-ax[1]],hw,false,8),fill,stroke,1);
+    drawPoly(semicap(cp1,[-ax[0],-ax[1]],hw,false,8),fill,stroke,TUBE_LW);
   }
   if(cap2){
     const cp2=add(pt2,mul(ax,-cap2_inset));
-    drawPoly(semicap(cp2,ax,hw,true,8),fill,stroke,1);
+    drawPoly(semicap(cp2,ax,hw,true,8),fill,stroke,TUBE_LW);
   }
 }
 
@@ -1233,22 +1782,55 @@ function drawGrid(g){
 //  DRAW WHEELS
 // ═══════════════════════════════════════════════════════
 function drawWheels(g){
-  const WCOL=T('wheel');
-  for(const [cx_mm,cy_mm,r_mm] of [
-    [g.rear_axle[0],  g.rear_axle[1],  g.rwd],
-    [g.front_axle[0], g.front_axle[1], g.fwd],
+  const WCOL = T('wheel');
+  const RSTK = T('tubeStk');
+  const RFIL = T('tubeFill');
+  const tw   = params.tyre_width || 57;  // tyre section width = section height (round cross-section)
+
+  for(const [cx_mm, cy_mm, outerR_mm, bsd_mm] of [
+    [g.rear_axle[0],  g.rear_axle[1],  g.rwd, params.rear_wheel_dia],
+    [g.front_axle[0], g.front_axle[1], g.fwd, params.front_wheel_dia],
   ]){
-    const [sx,sy]=mmToScreen(cx_mm,cy_mm);
-    const r=px(r_mm);
-    ctx.beginPath(); ctx.arc(sx,sy,r,0,Math.PI*2);
-    ctx.strokeStyle=WCOL; ctx.lineWidth=2; ctx.stroke();
+    const [sx,sy]  = mmToScreen(cx_mm, cy_mm);
+    const rOuter   = px(outerR_mm);              // outer tyre radius = BSD/2 + tyre_width
+    const rBSD     = px(bsd_mm / 2);             // BSD / bead seat circle (tyre sits here)
+    const rRimIn   = Math.max(rBSD - px(6), px(6)); // inner rim flange, ~6mm inside BSD
+
+    // Tyre cross-section — filled annulus: outer tyre down to bead seat (BSD)
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(sx, sy, rOuter, 0, Math.PI*2, false);
+    ctx.arc(sx, sy, rBSD,   0, Math.PI*2, true);
+    // Tyre shading: take tubeFill colour at low opacity so it reads as
+    // background-ish rather than competing with the frame tubes
+    ctx.globalAlpha = 0.25;
+    ctx.fillStyle = RFIL;
+    ctx.fill('evenodd');
+    ctx.globalAlpha = 1.0;
+    ctx.restore();
+
+    // Outer tyre wall
+    ctx.beginPath(); ctx.arc(sx, sy, rOuter, 0, Math.PI*2);
+    ctx.strokeStyle = WCOL; ctx.lineWidth = WHEEL_LW; ctx.stroke();
+
+    // Bead seat / rim outer circle (where tyre meets rim)
+    ctx.beginPath(); ctx.arc(sx, sy, rBSD, 0, Math.PI*2);
+    ctx.strokeStyle = RSTK; ctx.lineWidth = WHEEL_LW; ctx.stroke();
+
+    // Inner rim flange (dashed)
+    ctx.beginPath(); ctx.arc(sx, sy, rRimIn, 0, Math.PI*2);
+    ctx.strokeStyle = RSTK; ctx.lineWidth = WHEEL_LW;
+    ctx.setLineDash([3, 5]); ctx.stroke();
+    ctx.setLineDash([]);
+
     // Axle dot
-    drawDot(sx,sy,3,WCOL,WCOL);
+    drawDot(sx, sy, 3, WCOL, WCOL);
   }
-  // Tyre label
-  const rwStr = Object.entries(WHEEL_SIZES).find(([,v])=>Math.abs(v-params.rear_wheel_dia)<1)?.[0]||'';
-  const [rsx,rsy]=mmToScreen(g.rear_axle[0], g.rear_axle[1]);
-  if(rwStr) label(rsx,rsy-px(g.rwd)-6,rwStr,T('wheelLbl'),'center','bottom',8);
+
+  // Wheel size label above rear wheel
+  const rwStr = params.rear_wheel_key || Object.entries(WHEEL_SIZES).find(([,v])=>Math.abs(v-params.rear_wheel_dia)<1)?.[0]||'';
+  const [rsx,rsy] = mmToScreen(g.rear_axle[0], g.rear_axle[1]);
+  if(rwStr) label(rsx, rsy - px(g.rwd) - 6, rwStr, T('wheelLbl'), 'center', 'bottom', 8);
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1329,10 +1911,10 @@ function drawTubes(g){
     let dtPoly = tubeCorners(dt_ht_ext, bb, p.dt_OD);
     dtPoly = clipHalfPlane(dtPoly, mul(ht_dt_side,-1), ht_face_pt);
     if (dtPoly.length >= 3) {
-      drawPoly(dtPoly, TFILL, TSTK, 1);
+      drawPoly(dtPoly, TFILL, TSTK, TUBE_LW);
       // BB-end semicap
       const dt_bb_cap = semicap(bb, mul(dt_ax,-1), p.dt_OD/2, true, 8);
-      drawPoly(dt_bb_cap, TFILL, TSTK, 1);
+      drawPoly(dt_bb_cap, TFILL, TSTK, TUBE_LW);
     }
   }
 
@@ -1342,7 +1924,7 @@ function drawTubes(g){
   {
     let ttPoly = tubeCorners(tt_sc_ext, tt_ht_ext, tt_od);
     ttPoly = clipHalfPlane(ttPoly, mul(ht_dt_side,-1), ht_face_pt);
-    if (ttPoly.length >= 3) drawPoly(ttPoly, TFILL, TSTK, 1);
+    if (ttPoly.length >= 3) drawPoly(ttPoly, TFILL, TSTK, TUBE_LW);
   }
 
   tubePoly(bb, sc, st_od, TFILL, TSTK, false, false);
@@ -1358,14 +1940,14 @@ function drawTubes(g){
 
   // BB shell
   const [bsx,bsy]=mmToScreen(0,0);
-  const bb_r=px(p.bb_diameter/2);
-  const bore_r=px(p.bb_diameter<50?35/2:49/2);
+  const bb_r   = px(p.bb_diameter / 2);          // shell OD
+  const bore_r = px((p.bb_bore || 33.9) / 2);    // bore ID
   ctx.beginPath(); ctx.arc(bsx,bsy,bb_r,0,Math.PI*2);
   ctx.fillStyle=LFILL; ctx.fill();
-  ctx.strokeStyle=LSTK; ctx.lineWidth=1; ctx.stroke();
+  ctx.strokeStyle=LSTK; ctx.lineWidth=TUBE_LW; ctx.stroke();
   ctx.beginPath(); ctx.arc(bsx,bsy,bore_r,0,Math.PI*2);
   ctx.fillStyle=T('bbBore'); ctx.fill();
-  ctx.strokeStyle=LSTK; ctx.lineWidth=1; ctx.stroke();
+  ctx.strokeStyle=LSTK; ctx.lineWidth=TUBE_LW; ctx.stroke();
 
   // Chainring dashed
   const cr_r=px(chainringRadius(p.max_chainring)+15);
@@ -1378,10 +1960,10 @@ function drawTubes(g){
   const do_r=px((p.cs_OD+p.ss_OD)*0.55);
   ctx.beginPath(); ctx.arc(rax,ray,do_r,0,Math.PI*2);
   ctx.fillStyle=LFILL; ctx.fill();
-  ctx.strokeStyle=LSTK; ctx.lineWidth=1; ctx.stroke();
+  ctx.strokeStyle=LSTK; ctx.lineWidth=TUBE_LW; ctx.stroke();
   ctx.beginPath(); ctx.arc(rax,ray,px(5),0,Math.PI*2);
   ctx.fillStyle='#0d0d16'; ctx.fill();
-  ctx.strokeStyle=LSTK; ctx.lineWidth=1; ctx.stroke();
+  ctx.strokeStyle=LSTK; ctx.lineWidth=TUBE_LW; ctx.stroke();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1479,7 +2061,7 @@ function drawCockpit(g){
   // Stem line
   const [smx1,smy1]=mmToScreen(stem_bot[0],stem_bot[1]);
   const [smx2,smy2]=mmToScreen(stem_end[0],stem_end[1]);
-  ctx.beginPath(); ctx.strokeStyle=WCOL; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.strokeStyle=WCOL; ctx.lineWidth=WHEEL_LW*2;
   ctx.lineCap='round'; ctx.moveTo(smx1,smy1); ctx.lineTo(smx2,smy2); ctx.stroke();
   ctx.lineCap='butt';
 
@@ -1487,7 +2069,7 @@ function drawCockpit(g){
   const [bx,by]=mmToScreen(stem_end[0],stem_end[1]);
   const br=px(bar_r);
   ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI*2);
-  ctx.strokeStyle=WCOL; ctx.lineWidth=2; ctx.stroke();
+  ctx.strokeStyle=WCOL; ctx.lineWidth=WHEEL_LW; ctx.stroke();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1501,35 +2083,96 @@ function drawAnnotations(g){
   const [rax,ray]=mmToScreen(g.rear_axle[0],g.rear_axle[1]);
   const [fax,fay]=mmToScreen(g.front_axle[0],g.front_axle[1]);
   const rwpx=px(g.rwd);
+  const sa=p.st_angle*DEG, ha=p.ht_angle*DEG;
 
-  // Reach
-  const reach_y=Math.min(bby,hty)-52;
-  arrowH(bbx,htx,reach_y,ANN);
-  label((bbx+htx)/2, reach_y-6, `reach  ${p.reach.toFixed(0)}`, ANN,'center','bottom',10);
-  lineS(bbx,reach_y-8,bbx,bby+6,ANN,1,[3,3]);
-  lineS(htx,reach_y-8,htx,hty+6,ANN,1,[3,3]);
+  // ── Reach — arrow sits just above HT top, close to the bike ──
+  if(vis.ann_reach){
+    const reach_y = Math.min(bby,hty) - 22;  // 22px above highest point
+    arrowH(bbx, htx, reach_y, ANN);
+    label((bbx+htx)/2, reach_y-5, `reach  ${p.reach.toFixed(0)}`, ANN,'center','bottom',10);
+    lineS(bbx, reach_y-4, bbx, bby+4, ANN, 1, [3,3]);
+    lineS(htx, reach_y-4, htx, hty+4, ANN, 1, [3,3]);
+  }
 
-  // Stack
-  const stack_x=fax+rwpx+46;
-  arrowV(bby,hty,stack_x,ANN);
-  label(stack_x+8,(bby+hty)/2,`stack  ${g.stack.toFixed(0)}`,ANN,'left','middle',10);
-  lineS(stack_x-8,bby,bbx-2,bby,ANN,1,[3,3]);
-  lineS(stack_x-8,hty,htx+2,hty,ANN,1,[3,3]);
+  // ── Stack — just outside right edge of front wheel ──
+  if(vis.ann_stack){
+    const stack_x = fax + rwpx + 18;
+    arrowV(bby, hty, stack_x, ANN);
+    label(stack_x+6, (bby+hty)/2, `stack  ${g.stack.toFixed(0)}`, ANN,'left','middle',10);
+    lineS(stack_x-4, bby, bbx+4, bby, ANN, 1, [3,3]);
+    lineS(stack_x-4, hty, htx+4, hty, ANN, 1, [3,3]);
+  }
 
-  // BB Drop
-  const drop_x=rax-rwpx-46;
-  arrowV(ray,bby,drop_x,ANN2);
-  label(drop_x-8,(ray+bby)/2,`bb drop  ${p.bb_drop.toFixed(0)}`,ANN2,'right','middle',9);
+  // ── BB Drop — just outside left edge of rear wheel, dotted leaders ──
+  if(vis.ann_bbdrop){
+    const drop_x = rax - rwpx - 18;
+    arrowV(ray, bby, drop_x, ANN2);
+    label(drop_x-6, (ray+bby)/2, `bb drop  ${p.bb_drop.toFixed(0)}`, ANN2,'right','middle',9);
+    lineS(drop_x+4, ray, rax, ray, ANN2, 1, [3,3]);
+    lineS(drop_x+4, bby, bbx-4, bby, ANN2, 1, [3,3]);
+  }
 
-  // Wheelbase
+  // ── Wheelbase ──
   const wb_y=Math.max(ray,fay)+rwpx+20;
-  arrowH(rax,fax,wb_y,ANN2);
-  label((rax+fax)/2,wb_y+6,`wheelbase  ${g.wheelbase.toFixed(0)}`,ANN2,'center','top',9);
+  if(vis.ann_wheelbase){
+    arrowH(rax,fax,wb_y,ANN2);
+    label((rax+fax)/2,wb_y+6,`wheelbase  ${g.wheelbase.toFixed(0)}`,ANN2,'center','top',9);
+  }
 
-  // Chainstay
-  const cs_y=wb_y-22;
-  lineS(rax,cs_y,bbx,cs_y,ANN2,1);
-  label((rax+bbx)/2,cs_y-4,`cs  ${p.chainstay_length.toFixed(0)}`,ANN2,'center','bottom',8);
+  // ── Chainstay ──
+  if(vis.ann_chainstay){
+    const cs_y=wb_y-22;
+    lineS(rax,cs_y,bbx,cs_y,ANN2,1);
+    label((rax+bbx)/2,cs_y-4,`cs  ${p.chainstay_length.toFixed(0)}`,ANN2,'center','bottom',8);
+  }
+
+  // ── HT Angle ──
+  if(vis.ann_htangle){
+    const arcR=px(38);
+    const [hbx,hby]=mmToScreen(g.ht_bot[0],g.ht_bot[1]);
+    // Draw arc at HT bottom between vertical and HT axis direction
+    const htAng = Math.PI/2 - ha;  // angle from vertical
+    ctx.beginPath();
+    ctx.arc(hbx,hby,arcR, Math.PI/2, Math.PI/2+htAng, ha<Math.PI/2);
+    ctx.strokeStyle=ANN2; ctx.lineWidth=1; ctx.setLineDash([3,3]); ctx.stroke(); ctx.setLineDash([]);
+    label(hbx+arcR*0.7+6, hby+8, `${p.ht_angle.toFixed(1)}°`, ANN2,'left','top',9);
+  }
+
+  // ── ST Angle ──
+  if(vis.ann_stangle){
+    const arcR2=px(32);
+    // ST angle is measured from horizontal; draw arc at BB
+    const stAng = sa - Math.PI/2;
+    ctx.beginPath();
+    ctx.arc(bbx,bby,arcR2, -Math.PI/2, -Math.PI/2+stAng, false);
+    ctx.strokeStyle=ANN; ctx.lineWidth=1; ctx.setLineDash([3,3]); ctx.stroke(); ctx.setLineDash([]);
+    label(bbx+arcR2*0.5+4, bby-arcR2*0.7, `${p.st_angle.toFixed(1)}°`, ANN,'left','bottom',9);
+  }
+
+  // ── ST Length ──
+  if(vis.ann_stlength){
+    const [scx,scy]=mmToScreen(g.seat_cluster[0],g.seat_cluster[1]);
+    const mid=[(bbx+scx)/2,(bby+scy)/2];
+    const perp=[-(scy-bby), scx-bbx]; // perp offset for label
+    const pd=Math.hypot(perp[0],perp[1])||1;
+    label(mid[0]+perp[0]/pd*18, mid[1]+perp[1]/pd*18,
+      `st  ${p.st_length.toFixed(0)}`, ANN,'center','middle',9);
+  }
+
+  // ── Tube ODs (placeholder callouts) ──
+  if(vis.ann_tubeODs){
+    const FS=8; const COL=ANN2;
+    label(bbx+14, bby-12, `DT ø${p.dt_OD}`, COL,'left','bottom',FS);
+    label((bbx+(htx+fax)*0.5)/2, (bby+hty)/2-8, `TT ø${p.tt_OD}`, COL,'center','bottom',FS);
+    label(bbx-14, (bby+mmToScreen(g.seat_cluster[0],g.seat_cluster[1])[1])/2,
+      `ST ø${p.st_OD}`, COL,'right','middle',FS);
+  }
+
+  // ── Jig dimensions (placeholder) ──
+  if(vis.ann_jig){
+    const jt = params._jigType || 'type1';
+    label(bbx, bby+px(40), `jig: ${jt}  [placeholder]`, ANN2,'center','top',9);
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1537,17 +2180,25 @@ function drawAnnotations(g){
 // ═══════════════════════════════════════════════════════
 function redraw(){
   if(canvas.width===0 || canvas.height===0) return;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle=T('bg');
-  ctx.fillRect(0,0,canvas.width,canvas.height);
 
   let g;
   try {
     g = computeGeometry(params);
   } catch(e) {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle=T('bg');
+    ctx.fillRect(0,0,canvas.width,canvas.height);
     showError('Geometry: '+e.message, e);
     return;
   }
+
+  // Always re-pin ground to fixed screen position
+  // (preserves horizontal pan/zoom but locks vertical)
+  pinGroundY(g);
+
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle=T('bg');
+  ctx.fillRect(0,0,canvas.width,canvas.height);
   try {
     if(vis.grid)    drawGrid(g);
     if(vis.wheels)  drawWheels(g);
@@ -1588,9 +2239,7 @@ function updateStatus(g){
     `Front Centre: ${g.front_centre.toFixed(1)} mm  ·  `+
     `Trail: ${g.trail.toFixed(1)} mm  ·  `+
     `Stack (derived): ${g.stack.toFixed(1)} mm`;
-  document.getElementById('derived-stack').textContent=g.stack.toFixed(1)+' mm';
-  document.getElementById('derived-wb').textContent   =g.wheelbase.toFixed(1)+' mm';
-  document.getElementById('derived-trail').textContent=g.trail.toFixed(1)+' mm';
+  document.getElementById('derived-wb').textContent = g.wheelbase.toFixed(1)+' mm';
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1599,19 +2248,283 @@ function updateStatus(g){
 function toggleMobilePanel(){
   const panel = document.getElementById('panel');
   panel.classList.toggle('collapsed-mobile');
+  // Canvas size doesn't change (fixed height), but re-fit after transition
+  setTimeout(()=>{ resizeCanvas(); fitView(); redraw(); }, 280);
+}
+
+function zoomStep(factor) {
+  // Zoom around canvas centre
+  scale = Math.max(0.05, Math.min(5, scale * factor));
+  redraw();
+}
+
+// Recompute offset[1] so ground_y (mm) maps to groundFraction * canvas.height.
+// Called every redraw — this means geometry changes (wheel size, bb_drop) never
+// shift the ground line. groundFraction itself is only changed by fitView or
+// by vertical drag (so the user can still pan up/down deliberately).
+function pinGroundY(g) {
+  if (!viewPinned) return;
+  // mmToScreen: sy = H/2 + offset[1] - y*scale
+  // Want:  sy_ground = H * groundFraction
+  // => offset[1] = H * (groundFraction - 0.5) + g.ground_y * scale
+  offset[1] = canvas.height * (groundFraction - 0.5) + g.ground_y * scale;
+}
+
+function fitView() {
+  let g;
+  try { g = computeGeometry(params); } catch(e) { return; }
+
+  const W = canvas.width, H = canvas.height;
+  const rwd = g.rwd, fwd = g.fwd;
+
+  // ── Horizontal fit ───────────────────────────────────────
+  // Rear wheel outer-left → front wheel outer-right, with margins
+  const minX = g.rear_axle[0]  - rwd  - 65;
+  const maxX = g.front_axle[0] + fwd  + 65;
+  const mmW  = maxX - minX;
+  if (mmW < 1) return;
+
+  scale = (W - 64) / mmW;           // 32px pad each side
+  offset[0] = -((minX + maxX) / 2) * scale;
+
+  // ── Vertical: pin ground at 80% of canvas height ─────────
+  // 80% leaves ~20% above the tallest point and ~20% for labels below.
+  // Increase this fraction to push the bike lower (0.85 = very low).
+  groundFraction = 0.80;
+  viewPinned = true;   // re-enable pin on reset/resize
+  // offset[1] will be set by pinGroundY in the next redraw.
 }
 
 function resetView(){
-  scale  = 0.47;
-  offset = [-120, 110];
+  fitView();
   redraw();
 }
 
-function toggleVis(key){
-  vis[key]=!vis[key];
-  const btn=document.getElementById('btn-'+key);
-  btn.classList.toggle('on',vis[key]);
+function setVis(key, val){
+  vis[key] = val;
   redraw();
+}
+function toggleVis(key){   // kept for any legacy calls
+  vis[key] = !vis[key];
+  redraw();
+}
+
+
+// ── Toolbar dropdown logic ─────────────────────────────────
+function toggleDd(name){
+  const menu = document.getElementById('ddm-'+name);
+  const btn  = document.querySelector('#dd-'+name+' .tb-dd-btn');
+  if(!menu || !btn) return;
+  const isOpen = menu.classList.contains('open');
+  closeAllDd();
+  if(!isOpen){
+    // Position fixed menu below the button using viewport coords
+    const r = btn.getBoundingClientRect();
+    menu.style.top  = (r.bottom + 4) + 'px';
+    menu.style.left = r.left + 'px';
+    // Prevent going off right edge
+    menu.style.display = 'block';
+    const mw = menu.offsetWidth;
+    if(r.left + mw > window.innerWidth - 8){
+      menu.style.left = Math.max(8, window.innerWidth - mw - 8) + 'px';
+    }
+    menu.style.display = '';
+    menu.classList.add('open');
+    document.getElementById('dd-backdrop').classList.add('open');
+  }
+}
+function closeAllDd(){
+  document.querySelectorAll('.tb-dd-menu').forEach(m=>m.classList.remove('open'));
+  const bd = document.getElementById('dd-backdrop');
+  if(bd) bd.classList.remove('open');
+}
+function syncThemeRadios(){
+  document.querySelectorAll('#theme-radios .dd-radio').forEach(b=>{
+    b.classList.toggle('active', b.dataset.val===currentTheme);
+  });
+}
+
+// ── Export modal ───────────────────────────────────────────
+function openSave(){
+  document.getElementById('export-modal-overlay').classList.add('open');
+}
+function closeExportModal(){
+  document.getElementById('export-modal-overlay').classList.remove('open');
+}
+function handleOverlayClick(e){
+  if(e.target===document.getElementById('export-modal-overlay')) closeExportModal();
+}
+// ═══════════════════════════════════════════════════════
+//  EXPORT
+// ═══════════════════════════════════════════════════════
+
+// Print palette — black on white
+const PRINT_PALETTE = {
+  bg:'#ffffff', grid:'#e0e0e0', ground:'#888888',
+  tubeFill:'#e8e8e8', tubeStk:'#111111',
+  lugFill:'#cccccc',  lugStk:'#111111',
+  ann:'#111111', ann2:'#444444',
+  forkFill:'#e8e8e8', forkStk:'#111111', forkAnn:'#555555',
+  bbBore:'#ffffff', crDash:'#bbbbbb',
+  cockFill:'#e0e0e0', cockStk:'#111111',
+  stemFill:'#cccccc', stemStk:'#111111',
+  wheelRim:'#999999', wheelTyre:'#444444',
+};
+
+function renderToDataURL() {
+  const g = computeGeometry(params);
+
+  // Save live state
+  const savedTheme = {...THEMES[currentTheme]};
+
+  // Apply print palette (no canvas resize — use current canvas size)
+  Object.assign(THEMES[currentTheme], PRINT_PALETTE);
+
+  // Draw white background + bike over current canvas
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  try {
+    drawGrid(g);
+    drawWheels(g);
+    drawTubes(g);
+    if(vis.fork)    drawFork(g);
+    if(vis.cockpit) drawCockpit(g);
+    drawAnnotations(g);
+  } catch(err){ console.error('Export draw:', err); }
+
+  // Capture at current canvas size — low quality to keep blob small
+  const dataURL = canvas.toDataURL('image/jpeg', 0.82);
+
+  // Restore live view
+  Object.assign(THEMES[currentTheme], savedTheme);
+  redraw();
+
+  return dataURL;
+}
+
+
+
+
+async function exportJpegAsPdf(dataURL) {
+  // Decode JPEG bytes
+  const b64 = dataURL.split(',')[1];
+  const bin = atob(b64);
+  const jpg = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++) jpg[i]=bin.charCodeAt(i);
+
+  // Parse JPEG size
+  let iw=1754, ih=1240;
+  for(let i=0;i<jpg.length-8;i++){
+    if(jpg[i]===0xFF&&(jpg[i+1]===0xC0||jpg[i+1]===0xC2)){
+      ih=(jpg[i+5]<<8)|jpg[i+6]; iw=(jpg[i+7]<<8)|jpg[i+8]; break;
+    }
+  }
+  const PW=841.89, PH=595.28;
+  const NL='\n';
+  const parts=[], offs=[];
+  let pos=0;
+  const te=new TextEncoder();
+  const ps=s=>{const b=te.encode(s);parts.push(b);pos+=b.length;};
+  const pb=b=>{parts.push(b);pos+=b.length;};
+
+  ps('%PDF-1.4'+NL+'%\xE2\xE3\xCF\xD3'+NL);
+  offs.push(pos);
+  ps('1 0 obj'+NL+'<< /Type /Catalog /Pages 2 0 R >>'+NL+'endobj'+NL);
+  offs.push(pos);
+  ps('2 0 obj'+NL+'<< /Type /Pages /Kids [3 0 R] /Count 1 >>'+NL+'endobj'+NL);
+  offs.push(pos);
+  ps('3 0 obj'+NL+
+    '<< /Type /Page /Parent 2 0 R'+NL+
+    '   /MediaBox [0 0 '+PW.toFixed(2)+' '+PH.toFixed(2)+']'+NL+
+    '   /Contents 4 0 R'+NL+
+    '   /Resources << /XObject << /Im1 5 0 R >> >>'+NL+
+    '>>'+NL+'endobj'+NL);
+  const cs='q '+PW.toFixed(2)+' 0 0 '+PH.toFixed(2)+' 0 0 cm /Im1 Do Q';
+  offs.push(pos);
+  ps('4 0 obj'+NL+'<< /Length '+cs.length+' >>'+NL+'stream'+NL+cs+NL+'endstream'+NL+'endobj'+NL);
+  offs.push(pos);
+  ps('5 0 obj'+NL+
+    '<< /Type /XObject /Subtype /Image'+NL+
+    '   /Width '+iw+' /Height '+ih+NL+
+    '   /ColorSpace /DeviceRGB /BitsPerComponent 8'+NL+
+    '   /Filter /DCTDecode /Length '+jpg.length+NL+
+    '>>'+NL+'stream'+NL);
+  pb(jpg);
+  ps(NL+'endstream'+NL+'endobj'+NL);
+
+  const xref=pos;
+  ps('xref'+NL+'0 '+(offs.length+1)+NL);
+  ps('0000000000 65535 f '+NL);
+  for(const o of offs) ps(String(o).padStart(10,'0')+' 00000 n '+NL);
+  ps('trailer'+NL+'<< /Size '+(offs.length+1)+' /Root 1 0 R >>'+NL);
+  ps('startxref'+NL+xref+NL+'%%EOF'+NL);
+
+  const total=parts.reduce((s,c)=>s+c.length,0);
+  const pdf=new Uint8Array(total);
+  let wp=0; for(const c of parts){pdf.set(c,wp);wp+=c.length;}
+
+  const blob = new Blob([pdf], {type:'application/pdf'});
+  return URL.createObjectURL(blob);
+}
+
+function showExportResult(dataURL, fmt) {
+  const overlay = document.getElementById('export-result-overlay');
+  const img     = document.getElementById('export-result-img');
+  const msg     = document.getElementById('export-result-msg');
+  const link    = document.getElementById('export-result-link');
+  img.style.display  = 'none';
+  link.style.display = 'none';
+
+  if(fmt === 'jpeg') {
+    img.src = dataURL;
+    img.style.display = 'block';
+    msg.textContent = 'long-press the image to save';
+    // No download link — iOS doesn't support blob anchor download
+  } else if(fmt === 'pdf') {
+    msg.textContent = 'building pdf\u2026';
+    overlay.classList.add('open');
+    exportJpegAsPdf(dataURL).then(blobUrl => {
+      // Navigate current page to blob URL — iOS opens native PDF viewer
+      // with share sheet where user can save/print
+      window.location.href = blobUrl;
+    }).catch(e => {
+      msg.textContent = 'PDF build failed: ' + e.message;
+    });
+    return; // overlay already opened
+  }
+  overlay.classList.add('open');
+}
+
+
+function closeExportResult() {
+  document.getElementById('export-result-overlay').classList.remove('open');
+}
+
+function doExport(fmt) {
+  if(fmt === 'json') {
+    const blob = new Blob([JSON.stringify(params,null,2)], {type:'application/json'});
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = 'frame_params.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    closeExportModal();
+    return;
+  }
+  closeExportModal();
+  try {
+    const dataURL = renderToDataURL();
+    showExportResult(dataURL, fmt);
+  } catch(e) {
+    console.error('Export failed:', e);
+    alert('Export failed: ' + e.message);
+  }
+}
+
+
+// ── Load JSON (reuse existing import logic) ────────────────
+function openLoad(){
+  importJSON();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1619,16 +2532,57 @@ function toggleVis(key){
 // ═══════════════════════════════════════════════════════
 const paramInputs={};
 
-// Helper to create a param input row
+// Helper to create a param input row with slider
 function makeParamRow(key, labelText, body) {
-  const row=document.createElement('div'); row.className='param-row';
-  const lbl=document.createElement('span'); lbl.className='param-label'; lbl.textContent=labelText;
-  const inp=document.createElement('input');
-  inp.type='text'; inp.className='param-input';
-  inp.value=(params[key]!==undefined?params[key]:'');
-  inp.onchange=()=>{ const v=parseFloat(inp.value); if(!isNaN(v)){params[key]=v;redraw();} };
-  paramInputs[key]=inp;
-  row.appendChild(lbl); row.appendChild(inp);
+  const range = PARAM_RANGES[key] || [0, 1000, 1];
+  const [rMin, rMax, rStep] = range;
+
+  const row = document.createElement('div'); row.className = 'param-row';
+
+  // Label
+  const lbl = document.createElement('span'); lbl.className = 'param-label';
+  lbl.textContent = labelText;
+  row.appendChild(lbl);
+
+  // Slider row: ← [range] → [input]
+  const srow = document.createElement('div'); srow.className = 'slider-row';
+
+  const btnL = document.createElement('button'); btnL.className = 'arrow-btn';
+  btnL.textContent = '‹';
+  const sld = document.createElement('input');
+  sld.type = 'range'; sld.className = 'param-slider';
+  sld.min = rMin; sld.max = rMax; sld.step = rStep;
+  sld.value = params[key] !== undefined ? params[key] : (rMin+rMax)/2;
+  const btnR = document.createElement('button'); btnR.className = 'arrow-btn';
+  btnR.textContent = '›';
+
+  const inp = document.createElement('input');
+  inp.type = 'text'; inp.className = 'param-input';
+  inp.value = params[key] !== undefined ? Number(params[key]).toFixed(rStep < 1 ? 1 : 0) : '';
+
+  // Sync helpers
+  function apply(v) {
+    const clamped = Math.max(rMin, Math.min(rMax, v));
+    params[key] = clamped;
+    sld.value = clamped;
+    inp.value = Number(clamped).toFixed(rStep < 1 ? 1 : 0);
+    redraw();
+  }
+
+  sld.oninput = () => apply(parseFloat(sld.value));
+  inp.onchange = () => { const v = parseFloat(inp.value); if (!isNaN(v)) apply(v); };
+  inp.onkeydown = e => {
+    if (e.key === 'ArrowUp')   { e.preventDefault(); apply(params[key] + rStep); }
+    if (e.key === 'ArrowDown') { e.preventDefault(); apply(params[key] - rStep); }
+  };
+  btnL.onclick = () => apply(params[key] - rStep);
+  btnR.onclick = () => apply(params[key] + rStep);
+
+  paramInputs[key] = inp;
+  paramInputs[key + '_sld'] = sld;
+
+  srow.appendChild(btnL); srow.appendChild(sld); srow.appendChild(btnR); srow.appendChild(inp);
+  row.appendChild(srow);
   body.appendChild(row);
 }
 
@@ -1672,15 +2626,53 @@ function buildPanel(){
   // ── 1. GEOMETRY section ───────────────────────────────
   makeGroup(scroll, 'Geometry', body=>{
     GEOM_FIELDS.forEach(([key,lbl])=>makeParamRow(key,lbl,body));
-    // Wheel sizes in geometry section
-    const wheelOpts=Object.keys(WHEEL_SIZES).map(k=>[k,k]);
-    const frontSel=makeSelectRow('Front Wheel', wheelOpts, '29"',
-      v=>{params.front_wheel_dia=WHEEL_SIZES[v];redraw();}, body);
-    const rearSel =makeSelectRow('Rear Wheel',  wheelOpts, '29"',
-      v=>{params.rear_wheel_dia =WHEEL_SIZES[v];redraw();}, body);
-    // Store refs for setParams sync
-    paramInputs._frontWheelSel=frontSel;
-    paramInputs._rearWheelSel =rearSel;
+    // Wheel sizes — arrow toggles tracking by key label (not BSD value)
+    function makeWheelRow(labelTxt, keyParam, diaParam, onSet, storeKey) {
+      const row = document.createElement('div'); row.className = 'param-row';
+      const lbl = document.createElement('span'); lbl.className = 'param-label';
+      lbl.textContent = labelTxt;
+      row.appendChild(lbl);
+
+      const trow = document.createElement('div'); trow.className = 'wheel-toggle-row';
+      const btnL = document.createElement('button'); btnL.className = 'arrow-btn'; btnL.textContent = '‹';
+      const valSpan = document.createElement('span'); valSpan.className = 'wheel-val';
+      const btnR = document.createElement('button'); btnR.className = 'arrow-btn'; btnR.textContent = '›';
+
+      function getKey() { return params[keyParam] || WHEEL_KEYS[4]; }  // default '700c'
+      function setKey(k) {
+        params[keyParam] = k;
+        params[diaParam] = WHEEL_SIZES[k];
+        valSpan.textContent = k;
+        if (onSet) onSet(WHEEL_SIZES[k]);
+        redraw();
+      }
+      function step(dir) {
+        const idx = WHEEL_KEYS.indexOf(getKey());
+        setKey(WHEEL_KEYS[(idx + dir + WHEEL_KEYS.length) % WHEEL_KEYS.length]);
+      }
+      valSpan.textContent = getKey();
+      btnL.onclick = () => step(-1);
+      btnR.onclick = () => step(1);
+
+      // syncDisplay called from setParams when loading a preset
+      paramInputs[storeKey] = { syncDisplay: () => { valSpan.textContent = getKey(); } };
+
+      trow.appendChild(btnL); trow.appendChild(valSpan); trow.appendChild(btnR);
+      row.appendChild(trow);
+      body.appendChild(row);
+    }
+
+    makeWheelRow('Front Wheel', 'front_wheel_key', 'front_wheel_dia', v=>{
+      // ATC minimum = outer wheel radius + 60mm crown clearance
+      const minATC = v/2 + (params.tyre_width||57) + 60;
+      if (params.fork_atc < minATC) {
+        params.fork_atc = Math.round(minATC);
+        if (paramInputs['fork_atc'])     paramInputs['fork_atc'].value = params.fork_atc;
+        if (paramInputs['fork_atc_sld']) paramInputs['fork_atc_sld'].value = params.fork_atc;
+      }
+    }, '_frontWheel');
+    makeWheelRow('Rear Wheel', 'rear_wheel_key', 'rear_wheel_dia', null, '_rearWheel');
+    makeParamRow('tyre_width', 'Tyre Width (mm)', body);
   }, true);
 
   // ── 2. FORK section ──────────────────────────────────
@@ -1694,12 +2686,53 @@ function buildPanel(){
   divider.textContent='tube parameters';
   scroll.appendChild(divider);
 
-  // ── 4. Bottom Bracket (standard + width) before tube groups ──
+  // ── 4. Bottom Bracket (standard + width toggle) ──────────
   makeGroup(scroll, 'Bottom Bracket', body=>{
+    // Standard select
     const bbOpts=Object.keys(BB_STANDARDS).map(k=>[k,k]);
     makeSelectRow('Standard', bbOpts, 'BSA',
-      v=>{params.bb_diameter=BB_STANDARDS[v];redraw();}, body);
-    makeParamRow('bb_width','Width (mm)',body);
+      v=>{ const std=BB_STANDARDS[v]; params.bb_diameter=std.shell; params.bb_bore=std.bore; redraw(); }, body);
+
+    // Width 3-way toggle: 68 / 73 / 83
+    const BB_WIDTHS = [68, 73, 83];
+    const wrow = document.createElement('div'); wrow.className='param-row';
+    const wlbl = document.createElement('span'); wlbl.className='param-label';
+    wlbl.textContent='Width (mm)';
+    wrow.appendChild(wlbl);
+
+    const trow = document.createElement('div');
+    trow.style.cssText='display:flex;gap:4px;width:100%;margin-top:2px;';
+
+    BB_WIDTHS.forEach(w=>{
+      const btn=document.createElement('button');
+      btn.textContent=w;
+      btn.style.cssText='flex:1;padding:4px 2px;font-family:var(--font);font-size:11px;font-weight:700;'+
+        'background:var(--hdr-bg);color:var(--text-mid);border:1px solid var(--border);'+
+        'border-radius:2px;cursor:pointer;transition:background 0.1s,color 0.1s;';
+      function sync(){
+        BB_WIDTHS.forEach((ww,i)=>{
+          trow.children[i].style.background = params.bb_width===ww ? 'var(--accent)' : 'var(--hdr-bg)';
+          trow.children[i].style.color      = params.bb_width===ww ? '#fff'          : 'var(--text-mid)';
+          trow.children[i].style.borderColor= params.bb_width===ww ? 'var(--accent-br)':'var(--border)';
+        });
+      }
+      btn.onclick=()=>{ params.bb_width=w; sync(); redraw(); };
+      trow.appendChild(btn);
+    });
+
+    wrow.appendChild(trow);
+    body.appendChild(wrow);
+
+    // Store sync ref so setParams can update display
+    paramInputs._bbWidthSync = ()=>{
+      BB_WIDTHS.forEach((ww,i)=>{
+        trow.children[i].style.background = params.bb_width===ww ? 'var(--accent)' : 'var(--hdr-bg)';
+        trow.children[i].style.color      = params.bb_width===ww ? '#fff'          : 'var(--text-mid)';
+        trow.children[i].style.borderColor= params.bb_width===ww ? 'var(--accent-br)':'var(--border)';
+      });
+    };
+    // Initial highlight
+    paramInputs._bbWidthSync();
   }, true);
 
   // ── 5. Tube groups ────────────────────────────────────
@@ -1715,19 +2748,22 @@ function buildPanel(){
 function setParams(p){
   Object.assign(params,p);
   for(const [k,inp] of Object.entries(paramInputs)){
-    if(k.startsWith('_')) continue;  // skip select refs
-    if(params[k]!==undefined) inp.value=params[k];
-  }
-  // Sync wheel selects
-  if(paramInputs._frontWheelSel){
-    const best=Object.entries(WHEEL_SIZES).reduce((a,b)=>
-      Math.abs(b[1]-params.front_wheel_dia)<Math.abs(a[1]-params.front_wheel_dia)?b:a);
-    paramInputs._frontWheelSel.value=best[0];
-  }
-  if(paramInputs._rearWheelSel){
-    const best=Object.entries(WHEEL_SIZES).reduce((a,b)=>
-      Math.abs(b[1]-params.rear_wheel_dia)<Math.abs(a[1]-params.rear_wheel_dia)?b:a);
-    paramInputs._rearWheelSel.value=best[0];
+    if(k.startsWith('_')) {
+      if(inp && typeof inp.syncDisplay === 'function') inp.syncDisplay();
+      if(typeof inp === 'function') inp();  // _bbWidthSync
+      continue;
+    }
+    if(k.endsWith('_sld')) {
+      // Sync slider position
+      if(params[k.slice(0,-4)] !== undefined) inp.value = params[k.slice(0,-4)];
+      continue;
+    }
+    if(params[k]!==undefined){
+      const range = PARAM_RANGES[k];
+      inp.value = range && range[2] < 1
+        ? Number(params[k]).toFixed(1)
+        : params[k];
+    }
   }
   redraw();
 }
@@ -1762,8 +2798,9 @@ function _p(reach,fork_atc,bb_drop,ht_a,ht_len,ht_od,fork_off,lhh,
   return {...DEFAULTS, reach,fork_atc,bb_drop,ht_angle:ht_a,ht_length:ht_len,
     ht_OD:ht_od,fork_offset:fork_off,lower_headset_height:lhh,
     st_angle:st_a,st_length:st_len,st_OD:st_od,
-    front_wheel_dia:WHEEL_SIZES[front_w]||736.6,
-    rear_wheel_dia:WHEEL_SIZES[rear_w]||736.6,
+    front_wheel_key:front_w, rear_wheel_key:rear_w,
+    front_wheel_dia:WHEEL_SIZES[front_w]||622,
+    rear_wheel_dia:WHEEL_SIZES[rear_w]||622,
     chainstay_length:cs_len,stem_length:stem_len,stem_angle:stem_ang};
 }
 
@@ -1873,9 +2910,62 @@ try { buildPresetPanel(); } catch(e){ console.error('buildPresetPanel failed:',e
 // Delay initial draw until browser has computed layout
 requestAnimationFrame(()=>{
   requestAnimationFrame(()=>{
-    resizeCanvas();
+    canvas.width  = wrap.clientWidth;
+    canvas.height = wrap.clientHeight;
+    fitView();
+    redraw();
   });
 });
 </script>
+
+<!-- Toolbar dropdown menus — direct body children so z-index is never trapped -->
+<div class="tb-dd-menu" id="ddm-appearance">
+  <div class="dd-label">theme</div>
+  <div class="dd-radio-group" id="theme-radios">
+    <button class="dd-radio" data-val="dark"   onclick="setTheme('dark');  syncThemeRadios()">dark</button>
+    <button class="dd-radio" data-val="light"  onclick="setTheme('light'); syncThemeRadios()">light</button>
+    <button class="dd-radio active" data-val="green"  onclick="setTheme('green'); syncThemeRadios()">green</button>
+    <button class="dd-radio" data-val="orange" onclick="setTheme('orange');syncThemeRadios()">orange</button>
+  </div>
+</div>
+
+<div class="tb-dd-menu" id="ddm-elements">
+  <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('grid',this.checked)"><span>grid</span></label>
+  <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('wheels',this.checked)"><span>wheels</span></label>
+  <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('fork',this.checked)"><span>fork diagram</span></label>
+  <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('cockpit',this.checked)"><span>cockpit</span></label>
+</div>
+
+<div class="tb-dd-menu" id="ddm-annotations">
+  <div class="dd-label">bike geometry</div>
+  <label class="dd-toggle-row"><input type="checkbox" id="ann-reach"     checked onchange="setVis('ann_reach',this.checked)"><span>reach</span></label>
+  <label class="dd-toggle-row"><input type="checkbox" id="ann-stack"     checked onchange="setVis('ann_stack',this.checked)"><span>stack</span></label>
+  <label class="dd-toggle-row"><input type="checkbox" id="ann-bbdrop"    checked onchange="setVis('ann_bbdrop',this.checked)"><span>bb drop</span></label>
+  <label class="dd-toggle-row"><input type="checkbox" id="ann-wheelbase" checked onchange="setVis('ann_wheelbase',this.checked)"><span>wheelbase</span></label>
+  <label class="dd-toggle-row"><input type="checkbox" id="ann-chainstay" checked onchange="setVis('ann_chainstay',this.checked)"><span>chainstay</span></label>
+  <label class="dd-toggle-row"><input type="checkbox" id="ann-htangle"   checked onchange="setVis('ann_htangle',this.checked)"><span>ht angle</span></label>
+  <label class="dd-toggle-row"><input type="checkbox" id="ann-stangle"   checked onchange="setVis('ann_stangle',this.checked)"><span>st angle</span></label>
+  <label class="dd-toggle-row"><input type="checkbox" id="ann-stlength"  checked onchange="setVis('ann_stlength',this.checked)"><span>st length</span></label>
+  <div class="dd-label" style="margin-top:6px">tube dimensions</div>
+  <label class="dd-toggle-row"><input type="checkbox" id="ann-tubeODs"   onchange="setVis('ann_tubeODs',this.checked)"><span>tube ODs</span></label>
+  <div class="dd-label" style="margin-top:6px">setup / jig</div>
+  <label class="dd-toggle-row"><input type="checkbox" id="ann-jig"       onchange="setVis('ann_jig',this.checked)"><span>jig dimensions</span></label>
+  <div style="padding:4px 8px 4px 24px">
+    <select id="jig-type-sel" class="dd-select" onchange="params._jigType=this.value;redraw()">
+      <option value="type1">type 1</option>
+      <option value="type2">type 2</option>
+      <option value="type3">type 3</option>
+    </select>
+  </div>
+</div>
+
+
+<!-- Export result overlay -->
+<div id="export-result-overlay" onclick="if(event.target===this)closeExportResult()">
+  <img id="export-result-img" alt="export preview">
+  <div id="export-result-msg"></div>
+  <a id="export-result-link" target="_blank">tap to open / save</a>
+  <button id="export-result-close" onclick="closeExportResult()">close</button>
+</div>
 </body>
 </html>
