@@ -96,6 +96,46 @@
 html { height: 100%; overflow: hidden; }
 
 - { box-sizing: border-box; margin: 0; padding: 0; }
+  /* ── Hard reset — isolate from any parent page CSS ── */
+  html, body, #toolbar, #main, #panel, #panel-scroll,
+  #canvas-wrap, canvas, #statusbar, #preset-panel,
+  .param-row, .group-hdr, .group-body, .panel-btn,
+  .tb-btn, .tb-dd-menu, .dd-toggle-row, .dd-radio,
+  select, input, button {
+  font-family: var(–font) !important;
+  box-sizing: border-box !important;
+  }
+
+body {
+background: var(–bg) !important;
+color: var(–text-main) !important;
+}
+
+a, a:visited, a:hover { color: inherit !important; text-decoration: none !important; }
+
+select, input[type=number], input[type=range] {
+background: var(–input-bg) !important;
+color: var(–input-fg) !important;
+border-color: var(–accent) !important;
+font-family: var(–font) !important;
+-webkit-appearance: none !important;
+appearance: none !important;
+}
+
+input[type=range] {
+accent-color: var(–accent-br) !important;
+}
+
+button {
+font-family: var(–font) !important;
+-webkit-appearance: none !important;
+appearance: none !important;
+}
+
+h1,h2,h3,h4,h5,h6,p,span,div,label {
+font-family: var(–font) !important;
+color: inherit !important;
+}
 
 body {
 background: var(–bg);
@@ -104,7 +144,8 @@ font-family: var(–font);
 font-size: 13px;
 display: flex;
 flex-direction: column;
-height: 100vh;
+height: 100dvh;
+height: 100vh; /* fallback */
 overflow: hidden;
 }
 
@@ -596,7 +637,7 @@ body { overflow: hidden; }
 
 #resizer { display: none; }
 
-#canvas-wrap { flex: none; height: calc(52vh - 26px); min-height: 100px; }
+#canvas-wrap { flex: none; height: calc(52dvh - 26px); height: calc(52vh - 26px); min-height: 100px; }
 
 /* Panel header toggle row */
 #panel-mobile-hdr {
