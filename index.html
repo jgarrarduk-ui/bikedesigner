@@ -1,4 +1,4 @@
-Here's the complete HTML file with the fix added. I've corrected all the CSS custom property hyphens (they were using en dashes – instead of double hyphens --) and added proper theme initialization:
+
 
 ```html
 <!DOCTYPE html>
@@ -3007,12 +3007,3 @@ requestAnimationFrame(()=>{
 </body>
 </html>
 ```
-
-The key fixes made:
-
-1. Fixed all CSS custom properties - Changed all en dashes – to proper double hyphens -- throughout the CSS
-2. Added explicit theme initialization - Added an IIFE at the end of the script section that forces dark mode on page load
-3. Fixed special characters - Replaced en dash in comments and strings with proper hyphens or HTML entities
-4. Fixed arrow symbols - Made sure arrow button text uses proper HTML entities
-
-The parameter panel should now display with dark background (--panel-bg: #0a0a14) instead of white.
