@@ -1,945 +1,987 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="green">
+
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Creature Cycles — Bike Designer</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
 
-  :root {
-    --font: 'Courier Prime', 'Courier New', monospace;
-    --err: #f87171;
-  }
-
-  /* ── DARK (default) ── */
-  [data-theme="dark"] {
-    --input-bg:    #1a1230;
-    --input-fg:    #d8b4fe;
-    --bg:          #0d0d16;
-    --panel-bg:    #0a0a14;
-    --toolbar-bg:  #130d24;
-    --hdr-bg:      #1a0f30;
-    --border:      #2a1f45;
-    --accent:      #4c1d95;
-    --accent-hi:   #7c3aed;
-    --accent-br:   #a855f7;
-    --text-lo:     #3d2b5a;
-    --text-mid:    #7c6d9a;
-    --text-hi:     #9d8ec0;
-    --text-main:   #e8dff5;
-    --lavender:    #c4b5fd;
-    --lavender-br: #d8b4fe;
-  }
-
-  /* ── LIGHT ── */
-  [data-theme="light"] {
-    --input-bg:    #ffffff;
-    --input-fg:    #1a1030;
-    --bg:          #f0eef8;
-    --panel-bg:    #e8e4f4;
-    --toolbar-bg:  #ddd8f0;
-    --hdr-bg:      #d0c8e8;
-    --border:      #b8b0d4;
-    --accent:      #6d28d9;
-    --accent-hi:   #7c3aed;
-    --accent-br:   #8b5cf6;
-    --text-lo:     #a89cc8;
-    --text-mid:    #5b4f7a;
-    --text-hi:     #3b2f5a;
-    --text-main:   #1a1030;
-    --lavender:    #5b21b6;
-    --lavender-br: #4c1d95;
-  }
-
-  /* ── GREEN ── */
-  [data-theme="green"] {
-    --input-bg:    #0a1e0d;
-    --input-fg:    #86efac;
-    --bg:          #080f0a;
-    --panel-bg:    #060d08;
-    --toolbar-bg:  #0a1a0d;
-    --hdr-bg:      #0f2a14;
-    --border:      #1a3d20;
-    --accent:      #166534;
-    --accent-hi:   #16a34a;
-    --accent-br:   #22c55e;
-    --text-lo:     #14532d;
-    --text-mid:    #4ade80;
-    --text-hi:     #86efac;
-    --text-main:   #dcfce7;
-    --lavender:    #4ade80;
-    --lavender-br: #86efac;
-  }
-
-  /* ── ORANGE ── */
-  [data-theme="orange"] {
-    --input-bg:    #1e1005;
-    --input-fg:    #fde68a;
-    --bg:          #0f0a04;
-    --panel-bg:    #0d0902;
-    --toolbar-bg:  #1a1005;
-    --hdr-bg:      #2a1a08;
-    --border:      #3d2810;
-    --accent:      #92400e;
-    --accent-hi:   #d97706;
-    --accent-br:   #f59e0b;
-    --text-lo:     #78350f;
-    --text-mid:    #d97706;
-    --text-hi:     #fbbf24;
-    --text-main:   #fef3c7;
-    --lavender:    #fbbf24;
-    --lavender-br: #fde68a;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text-main);
-    font-family: var(--font);
-    font-size: 13px;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
-  }
-
-  /* ── Toolbar ── */
-  #toolbar {
-    background: var(--toolbar-bg);
-    border-bottom: 1px solid var(--border);
-    height: 26px;
-    display: flex;
-    align-items: center;
-    padding: 0 8px;
-    gap: 0;
-    flex-shrink: 0;
-  }
-
-  #logo-area {
-    display: flex;
-    align-items: baseline;
-    gap: 6px;
-    margin-right: 14px;
-  }
-
-  #logo-text {
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--lavender);
-    letter-spacing: 3px;
-    font-style: normal;
-    text-transform: uppercase;
-    font-family: 'Courier New', monospace;
-  }
-
-  #logo-sub {
-    font-size: 9px;
-    color: var(--text-lo);
-    letter-spacing: 2px;
-    text-transform: lowercase;
-  }
-
-  .tb-sep {
-    width: 1px;
-    height: 18px;
-    background: var(--border);
-    margin: 0 7px;
-  }
-
-  .tb-btn {
-    background: none;
-    border: none;
-    color: var(--text-mid);
-    font-family: var(--font);
-    font-size: 10px;
-    padding: 3px 8px;
-    cursor: pointer;
-    border-radius: 3px;
-    transition: background 0.15s, color 0.15s;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-  }
-  .tb-btn:hover { background: var(--hdr-bg); color: var(--lavender); }
-  .tb-btn.on { color: var(--accent-br); }
-
-  #tb-right { display: none; }
-
-  /* ── Main layout ── */
-  #main {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-  }
-
-  /* ── Param panel ── */
-  #panel {
-    width: 290px;
-    min-width: 200px;
-    background: var(--panel-bg);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    flex-shrink: 0;
-    height: 100%;  /* always fill full height — never shrinks when groups collapse */
-  }
-
-  #panel-scroll {
-    overflow-y: auto;
-    flex: 1;
-    padding-bottom: 8px;
-  }
-
-  #panel-scroll::-webkit-scrollbar { width: 6px; }
-  #panel-scroll::-webkit-scrollbar-track { background: var(--panel-bg); }
-  #panel-scroll::-webkit-scrollbar-thumb { background: var(--hdr-bg); border-radius: 3px; }
-  #panel-scroll::-webkit-scrollbar-thumb:hover { background: var(--accent); }
-
-  .group-wrap { margin: 0; }
-
-  .group-hdr {
-    display: flex;
-    align-items: stretch;
-    cursor: pointer;
-    margin-top: 4px;
-    user-select: none;
-  }
-
-  .group-accent {
-    width: 3px;
-    background: var(--accent);
-    flex-shrink: 0;
-  }
-
-  .group-btn {
-    flex: 1;
-    background: var(--hdr-bg);
-    color: var(--lavender-br);
-    font-family: var(--font);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    padding: 6px 10px;
-    border: none;
-    text-align: left;
-    cursor: pointer;
-    transition: background 0.1s;
-  }
-  .group-btn:hover { background: #200d40; }
-
-  .group-body {
-    padding: 2px 8px 4px 11px;
-    background: var(--panel-bg);
-  }
-  .group-body.collapsed { display: none; }
-
-
-
-
-
-
-
-
-
-
-
-  /* ── param row: two-line layout (label + slider+arrows+input) ── */
-  .param-row {
-    display: flex;
-    flex-direction: column;
-    padding: 4px 0 2px;
-    gap: 2px;
-  }
-
-  .param-label {
-    color: var(--text-hi);
-    font-size: 10px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    flex-shrink: 0;
-  }
-
-  /* slider row: ← [range] → [value] */
-  .slider-row {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    width: 100%;
-  }
-
-  .arrow-btn {
-    flex-shrink: 0;
-    width: 18px;
-    height: 18px;
-    background: var(--hdr-bg);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    color: var(--text-mid);
-    font-size: 10px;
-    line-height: 1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.1s, color 0.1s;
-    padding: 0;
-    font-family: var(--font);
-  }
-  .arrow-btn:hover { background: var(--accent); color: var(--lavender-br); }
-  .arrow-btn:active { background: var(--accent-hi); }
-
-  .param-slider {
-    flex: 1;
-    height: 28px;          /* tall hit area for touch */
-    -webkit-appearance: none;
-    appearance: none;
-    background: transparent;
-    cursor: pointer;
-    outline: none;
-    min-width: 0;
-    touch-action: none;    /* let us handle touch without scroll conflict */
-  }
-
-  /* Track */
-  .param-slider::-webkit-slider-runnable-track {
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-  }
-  .param-slider::-moz-range-track {
-    height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-  }
-
-  /* Thumb — desktop */
-  .param-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--accent-br);
-    border: 2px solid var(--accent-hi);
-    margin-top: -6px;
-    transition: background 0.1s, transform 0.1s;
-    cursor: grab;
-  }
-  .param-slider:active::-webkit-slider-thumb {
-    transform: scale(1.3);
-    cursor: grabbing;
-  }
-  .param-slider::-webkit-slider-thumb:hover { background: var(--lavender-br); }
-  .param-slider::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--accent-br);
-    border: 2px solid var(--accent-hi);
-  }
-
-  /* Mobile — bigger thumb, fatter track */
-  @media (max-width: 900px) {
-    .param-slider {
-      height: 36px;
-    }
-    .param-slider::-webkit-slider-runnable-track {
-      height: 5px;
-    }
-    .param-slider::-webkit-slider-thumb {
-      width: 26px;
-      height: 26px;
-      margin-top: -10.5px;
-      border-width: 3px;
-    }
-    .param-slider::-moz-range-thumb {
-      width: 26px;
-      height: 26px;
-    }
-    .arrow-btn {
-      width: 28px;
-      height: 28px;
-      font-size: 14px;
-    }
-    .wheel-val {
-      font-size: 13px;
-      padding: 4px 6px;
-    }
-  }
-
-  .param-input {
-    width: 54px;
-    background: var(--input-bg);
-    color: var(--input-fg);
-    border: 1px solid var(--accent);
-    border-radius: 2px;
-    padding: 1px 4px;
-    font-family: var(--font);
-    font-size: 10px;
-    text-align: right;
-    outline: none;
-    flex-shrink: 0;
-  }
-  .param-input:focus { border-color: var(--accent-br); }
-
-  /* Wheel toggle row: ← [label] → */
-  .wheel-toggle-row {
-    display: flex;
-    align-items: center;
-    gap: 3px;
-    width: 100%;
-  }
-  .wheel-val {
-    flex: 1;
-    text-align: center;
-    font-size: 11px;
-    font-weight: 700;
-    color: var(--lavender-br);
-    font-family: var(--font);
-    background: var(--hdr-bg);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    padding: 2px 4px;
-  }
-
-  /* select stays for BB standard */
-  .param-select {
-    width: 100%;
-    background: var(--input-bg);
-    color: var(--input-fg);
-    border: 1px solid var(--accent);
-    border-radius: 2px;
-    padding: 2px 4px;
-    font-family: var(--font);
-    font-size: 11px;
-    outline: none;
-  }
-
-  /* Derived readout */
-  .derived-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 3px 8px 3px 11px;
-    font-size: 10px;
-    color: var(--text-mid);
-    border-top: 1px solid var(--border);
-    margin-top: 2px;
-  }
-  .derived-val { color: var(--lavender-br); font-weight: 700; }
-
-  /* Panel buttons */
-  #panel-btns {
-    display: flex;
-    gap: 6px;
-    padding: 8px 10px;
-    border-top: 1px solid var(--border);
-    background: var(--panel-bg);
-    flex-shrink: 0;
-  }
-
-  .panel-btn {
-    flex: 1;
-    background: var(--hdr-bg);
-    color: var(--lavender);
-    border: 1px solid var(--accent);
-    border-radius: 2px;
-    font-family: var(--font);
-    font-size: 11px;
-    font-weight: 700;
-    padding: 5px 4px;
-    cursor: pointer;
-    letter-spacing: 0.5px;
-    transition: background 0.1s, color 0.1s;
-  }
-  .panel-btn:hover { background: var(--accent); color: #fff; }
-
-  /* Status bar */
-  #statusbar {
-    background: var(--panel-bg);
-    border-top: 1px solid var(--border);
-    color: var(--text-lo);
-    font-size: 10px;
-    padding: 3px 12px;
-    flex-shrink: 0;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  /* ── Canvas area ── */
-  #canvas-wrap {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-  }
-
-  #canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-    cursor: grab;
-  }
-  #canvas:active { cursor: grabbing; }
-
-  /* ── Preset panel (floating bottom-right) ── */
-  #preset-panel {
-    position: absolute;
-    bottom: 44px;
-    right: 12px;
-    background: var(--panel-bg);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    min-width: 160px;
-    z-index: 10;
-  }
-
-  #preset-body { padding: 6px; display: block; }
-
-  .preset-row {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-bottom: 4px;
-  }
-  .preset-row select {
-    width: 100%;
-    background: var(--input-bg);
-    color: var(--input-fg);
-    border: 1px solid var(--accent);
-    border-radius: 2px;
-    font-family: var(--font);
-    font-size: 10px;
-    padding: 2px 4px;
-    outline: none;
-  }
-
-  #preset-load {
-    width: 100%;
-    background: var(--hdr-bg);
-    color: var(--accent-br);
-    border: none;
-    font-family: var(--font);
-    font-size: 11px;
-    font-weight: 700;
-    padding: 6px;
-    cursor: pointer;
-    border-radius: 2px;
-    margin-top: 4px;
-    letter-spacing: 0.5px;
-    transition: background 0.15s;
-  }
-  #preset-load:hover { background: var(--accent); color: #fff; }
-
-  /* Resizer */
-  #resizer {
-    width: 4px;
-    background: var(--border);
-    cursor: col-resize;
-    flex-shrink: 0;
-    transition: background 0.15s;
-  }
-  #resizer:hover { background: var(--accent-hi); }
-
-  /* theme selector */
-  #theme-sel {
-    background: transparent;
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    color: var(--text-mid);
-    font-family: var(--font);
-    font-size: 11px;
-    padding: 4px 6px;
-    cursor: pointer;
-    outline: none;
-    transition: border-color 0.15s, color 0.15s;
-  }
-  #theme-sel:hover { border-color: var(--accent-br); color: var(--lavender); }
-  #theme-sel option { background: var(--toolbar-bg); color: var(--text-main); }
-
-  /* ════════════════════════════════════════════════
-     MOBILE / TABLET RESPONSIVE
-     ════════════════════════════════════════════════ */
-
-  /* Tablet: narrow panel, hide logo subtitle */
-  @media (max-width: 900px) {
-    #panel { width: 240px; min-width: 180px; }
-    #logo-sub { display: none; }
-    .tb-btn { padding: 5px 7px; font-size: 10px; }
-    #logo-text { font-size: 13px; letter-spacing: 2px; }
-  }
-
-  /* Mobile: panel slides under canvas, toggled by hamburger */
-  @media (max-width: 600px) {
-    body { overflow: hidden; }
-
-    #toolbar {
-      height: 48px;
-      padding: 0 8px;
-      gap: 2px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    /* Panel becomes a bottom sheet on mobile */
-    #main { flex-direction: column-reverse; }
-
-    #panel {
-      width: 100% !important;
-      height: 42vh;
-      min-width: unset;
-      border-right: none;
-      border-top: 2px solid var(--accent);
-      flex-shrink: 0;
-      transition: height 0.25s ease;
-      overflow: hidden;  /* needed for height transition to clip content */
-    }
-
-    #panel.collapsed-mobile {
-      height: 38px;
-    }
-
-    #resizer { display: none; }
-
-    #canvas-wrap { flex: none; height: calc(58vh - 48px); min-height: 100px; }
-
-    /* Panel header toggle row */
-    #panel-mobile-hdr {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px 12px;
-      background: var(--hdr-bg);
-      border-bottom: 1px solid var(--border);
-      cursor: pointer;
-      flex-shrink: 0;
-      user-select: none;
-    }
-    #panel-mobile-hdr span {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--lavender-br);
-      font-family: var(--font);
-    }
-    #panel-mobile-hdr .arrow {
-      font-size: 12px;
-      color: var(--accent-br);
-      transition: transform 0.2s;
-    }
-    #panel.collapsed-mobile #panel-mobile-hdr .arrow {
-      transform: rotate(180deg);
-    }
-
-    .param-label { font-size: 10px; }
-    .param-input { width: 64px; font-size: 10px; }
-    .param-select { width: 80px; font-size: 10px; }
-
-    /* Preset panel repositioned on mobile */
-    #preset-panel {
-      bottom: auto;
-      top: 56px;
-      right: 8px;
-    }
-  }
-
-  /* Panel header hidden — no collapsible label needed */
-  #panel-mobile-hdr { display: none !important; }
-
-
-
-  /* ── Dropdown backdrop — closes menus on outside tap/click ── */
-  #dd-backdrop {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 999;
-  }
-  #dd-backdrop.open { display: block; }
-
-  /* ── Toolbar dropdowns ── */
-  .tb-dropdown {
-    position: relative;
-    z-index: 1000;
-  }
-  .tb-dd-btn { letter-spacing: 0.3px; }
-  .tb-dd-menu {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    min-width: 210px;
-    background: var(--panel-bg);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 6px 0;
-    z-index: 1000;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
-    max-height: 80vh;
-    overflow-y: auto;
-  }
-  .tb-dd-menu.open { display: block; }
-  .dd-label {
-    font-size: 9px;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--text-lo);
-    padding: 4px 10px 2px;
-  }
-  .dd-radio-group {
-    display: flex;
-    gap: 3px;
-    padding: 3px 8px 6px;
-  }
-  .dd-radio {
-    flex: 1;
-    background: var(--hdr-bg);
-    border: 1px solid var(--border);
-    color: var(--text-mid);
-    font-family: var(--font);
-    font-size: 11px;
-    padding: 7px 2px;
-    border-radius: 2px;
-    cursor: pointer;
-  }
-  .dd-radio.active {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent-br);
-  }
-  .dd-toggle-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 14px;
-    cursor: pointer;
-    font-size: 12px;
-    color: var(--text-mid);
-    transition: background 0.1s;
-    min-height: 36px;
-  }
-  .dd-toggle-row:hover { background: var(--hdr-bg); }
-  .dd-toggle-row input[type=checkbox] {
-    accent-color: var(--accent);
-    width: 13px;
-    height: 13px;
-    cursor: pointer;
-    flex-shrink: 0;
-  }
-  .dd-select {
-    width: 100%;
-    background: var(--hdr-bg);
-    border: 1px solid var(--border);
-    color: var(--text-mid);
-    font-family: var(--font);
-    font-size: 11px;
-    padding: 3px 6px;
-    border-radius: 2px;
-  }
-
-
-  /* ── Export modal ── */
-  #export-modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.55);
-    z-index: 500;
-    align-items: center;
-    justify-content: center;
-  }
-  #export-modal-overlay.open { display: flex; }
-  #export-modal {
-    background: var(--panel-bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    width: min(380px, 88vw);
-    padding: 22px 24px 18px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  #export-modal h2 {
-    font-size: 12px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--lavender);
-    font-weight: 700;
-    margin: 0;
-  }
-  .exp-format-row {
-    display: flex;
-    gap: 10px;
-  }
-  .exp-fmt-btn {
-    flex: 1;
-    background: var(--hdr-bg);
-    border: 1px solid var(--border);
-    color: var(--text-mid);
-    font-family: var(--font);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    padding: 12px 0;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-  }
-  .exp-fmt-btn:hover { background: var(--accent); color: #fff; border-color: var(--accent-br); }
-  .exp-modal-btns {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 4px;
-  }
-  .exp-modal-btns button {
-    background: none;
-    border: 1px solid var(--border);
-    color: var(--text-mid);
-    font-family: var(--font);
-    font-size: 11px;
-    padding: 5px 18px;
-    border-radius: 3px;
-    cursor: pointer;
-  }
-  .exp-modal-btns button:hover { background: var(--hdr-bg); }
-
-  /* ── Zoom controls overlay ── */
-  #zoom-controls {
-    position: absolute;
-    bottom: 12px;
-    left: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    z-index: 20;
-  }
-  .zoom-btn {
-    width: 28px;
-    height: 28px;
-    background: var(--panel-bg);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    color: var(--text-mid);
-    font-size: 14px;
-    line-height: 1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.12s, color 0.12s;
-    font-family: var(--font);
-    opacity: 0.85;
-  }
-  .zoom-btn:hover { background: var(--hdr-bg); color: var(--lavender); opacity: 1; }
-  .zoom-btn svg { pointer-events: none; }
-
-  /* ── Mobile: hide logo, reposition presets under toolbar ── */
-  @media (max-width: 600px) {
-    #logo-area { display: none; }
-    #toolbar .tb-sep:first-of-type { display: none; }
-
-    #preset-panel {
-      position: fixed;
-      top: 48px;
-      right: 0;
-      left: 0;
-      bottom: auto;
-      border-radius: 0;
-      border-left: none;
-      border-right: none;
-      border-top: none;
-      border-bottom: 1px solid var(--border);
-      z-index: 30;
-    }
-    #preset-toggle {
-      border-radius: 0;
-      width: 100%;
-      text-align: center;
-    }
-    #preset-body {
-      display: flex;
-      flex-direction: row;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 10px;
-      flex-wrap: wrap;
-    }
-    .preset-row {
-      margin-bottom: 0;
-      flex: 1;
-      min-width: 120px;
-    }
-    #preset-load {
-      margin-top: 0;
-      flex: 0 0 auto;
-      padding: 5px 14px;
-    }
-
-    #zoom-controls {
-      bottom: auto;
-      top: 12px;
-      left: 8px;
-    }
-  }
-
-
-  /* ── Export result overlay ── */
-  #export-result-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.88);
-    z-index: 600;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 14px;
-    padding: 20px;
-  }
-  #export-result-overlay.open { display: flex; }
-  #export-result-img {
-    max-width: 100%;
-    max-height: 70vh;
-    border: 1px solid #444;
-    display: none;
-  }
-  #export-result-msg {
-    color: #ccc;
-    font-family: var(--font);
-    font-size: 12px;
-    text-align: center;
-    letter-spacing: 0.5px;
-  }
-  #export-result-link {
-    display: none;
-    color: var(--lavender);
-    font-family: var(--font);
-    font-size: 13px;
-    font-weight: 700;
-    padding: 10px 24px;
-    border: 1px solid var(--accent);
-    border-radius: 4px;
-    text-decoration: none;
-  }
-  #export-result-close {
-    background: var(--hdr-bg);
-    border: 1px solid var(--border);
-    color: var(--text-mid);
-    font-family: var(--font);
-    font-size: 11px;
-    padding: 7px 22px;
-    border-radius: 3px;
-    cursor: pointer;
-  }
+:root {
+–font: ‘Courier Prime’, ‘Courier New’, monospace;
+–err: #f87171;
+}
+
+/* ── DARK (default) ── */
+[data-theme=“dark”] {
+–input-bg:    #1a1230;
+–input-fg:    #d8b4fe;
+–bg:          #0d0d16;
+–panel-bg:    #0a0a14;
+–toolbar-bg:  #130d24;
+–hdr-bg:      #1a0f30;
+–border:      #2a1f45;
+–accent:      #4c1d95;
+–accent-hi:   #7c3aed;
+–accent-br:   #a855f7;
+–text-lo:     #3d2b5a;
+–text-mid:    #7c6d9a;
+–text-hi:     #9d8ec0;
+–text-main:   #e8dff5;
+–lavender:    #c4b5fd;
+–lavender-br: #d8b4fe;
+}
+
+/* ── LIGHT ── */
+[data-theme=“light”] {
+–input-bg:    #ffffff;
+–input-fg:    #1a1030;
+–bg:          #f0eef8;
+–panel-bg:    #e8e4f4;
+–toolbar-bg:  #ddd8f0;
+–hdr-bg:      #d0c8e8;
+–border:      #b8b0d4;
+–accent:      #6d28d9;
+–accent-hi:   #7c3aed;
+–accent-br:   #8b5cf6;
+–text-lo:     #a89cc8;
+–text-mid:    #5b4f7a;
+–text-hi:     #3b2f5a;
+–text-main:   #1a1030;
+–lavender:    #5b21b6;
+–lavender-br: #4c1d95;
+}
+
+/* ── GREEN ── */
+[data-theme=“green”] {
+–input-bg:    #0a1e0d;
+–input-fg:    #86efac;
+–bg:          #080f0a;
+–panel-bg:    #060d08;
+–toolbar-bg:  #0a1a0d;
+–hdr-bg:      #0f2a14;
+–border:      #1a3d20;
+–accent:      #166534;
+–accent-hi:   #16a34a;
+–accent-br:   #22c55e;
+–text-lo:     #14532d;
+–text-mid:    #4ade80;
+–text-hi:     #86efac;
+–text-main:   #dcfce7;
+–lavender:    #4ade80;
+–lavender-br: #86efac;
+}
+
+/* ── ORANGE ── */
+[data-theme=“orange”] {
+–input-bg:    #1e1005;
+–input-fg:    #fde68a;
+–bg:          #0f0a04;
+–panel-bg:    #0d0902;
+–toolbar-bg:  #1a1005;
+–hdr-bg:      #2a1a08;
+–border:      #3d2810;
+–accent:      #92400e;
+–accent-hi:   #d97706;
+–accent-br:   #f59e0b;
+–text-lo:     #78350f;
+–text-mid:    #d97706;
+–text-hi:     #fbbf24;
+–text-main:   #fef3c7;
+–lavender:    #fbbf24;
+–lavender-br: #fde68a;
+}
+
+html, body { height: 100%; }
+
+- { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+background: var(–bg);
+color: var(–text-main);
+font-family: var(–font);
+font-size: 13px;
+display: flex;
+flex-direction: column;
+height: 100vh;
+overflow: hidden;
+}
+
+/* ── Toolbar ── */
+#toolbar {
+background: var(–toolbar-bg);
+border-bottom: 1px solid var(–border);
+height: 26px;
+display: flex;
+align-items: center;
+padding: 0 8px;
+gap: 0;
+flex-shrink: 0;
+}
+
+#logo-area {
+display: flex;
+align-items: baseline;
+gap: 6px;
+margin-right: 14px;
+}
+
+#logo-text {
+font-size: 12px;
+font-weight: 700;
+color: var(–lavender);
+letter-spacing: 3px;
+font-style: normal;
+text-transform: uppercase;
+font-family: ‘Courier New’, monospace;
+}
+
+#logo-sub {
+font-size: 9px;
+color: var(–text-lo);
+letter-spacing: 2px;
+text-transform: lowercase;
+}
+
+.tb-sep {
+width: 1px;
+height: 18px;
+background: var(–border);
+margin: 0 7px;
+}
+
+.tb-btn {
+background: none;
+border: none;
+color: var(–text-mid);
+font-family: var(–font);
+font-size: 10px;
+padding: 3px 8px;
+cursor: pointer;
+border-radius: 3px;
+transition: background 0.15s, color 0.15s;
+letter-spacing: 0.5px;
+white-space: nowrap;
+}
+.tb-btn:hover { background: var(–hdr-bg); color: var(–lavender); }
+.tb-btn.on { color: var(–accent-br); }
+
+/* ── Main layout ── */
+#main {
+display: flex;
+flex: 1;
+overflow: hidden;
+}
+
+/* ── Param panel ── */
+#panel {
+width: 290px;
+min-width: 200px;
+background: var(–panel-bg);
+border-right: 1px solid var(–border);
+display: flex;
+flex-direction: column;
+overflow: hidden;
+flex-shrink: 0;
+height: 100%;
+}
+
+#panel-scroll {
+overflow-y: auto;
+flex: 1;
+padding-bottom: 8px;
+}
+
+#panel-scroll::-webkit-scrollbar { width: 6px; }
+#panel-scroll::-webkit-scrollbar-track { background: var(–panel-bg); }
+#panel-scroll::-webkit-scrollbar-thumb { background: var(–hdr-bg); border-radius: 3px; }
+#panel-scroll::-webkit-scrollbar-thumb:hover { background: var(–accent); }
+
+.group-wrap { margin: 0; }
+
+.group-hdr {
+display: flex;
+align-items: stretch;
+cursor: pointer;
+margin-top: 4px;
+user-select: none;
+}
+
+.group-accent {
+width: 3px;
+background: var(–accent);
+flex-shrink: 0;
+}
+
+.group-btn {
+flex: 1;
+background: var(–hdr-bg);
+color: var(–lavender-br);
+font-family: var(–font);
+font-size: 10px;
+font-weight: 700;
+letter-spacing: 1.5px;
+text-transform: uppercase;
+padding: 6px 10px;
+border: none;
+text-align: left;
+cursor: pointer;
+transition: background 0.1s;
+}
+.group-btn:hover { background: var(–accent); }
+
+.group-body {
+padding: 2px 8px 4px 11px;
+background: var(–panel-bg);
+}
+.group-body.collapsed { display: none; }
+
+/* ── param row ── */
+.param-row {
+display: flex;
+flex-direction: column;
+padding: 4px 0 2px;
+gap: 2px;
+}
+
+.param-label {
+color: var(–text-hi);
+font-size: 10px;
+white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;
+flex-shrink: 0;
+}
+
+.slider-row {
+display: flex;
+align-items: center;
+gap: 3px;
+width: 100%;
+}
+
+.arrow-btn {
+flex-shrink: 0;
+width: 18px;
+height: 18px;
+background: var(–hdr-bg);
+border: 1px solid var(–border);
+border-radius: 2px;
+color: var(–text-mid);
+font-size: 10px;
+line-height: 1;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: background 0.1s, color 0.1s;
+padding: 0;
+font-family: var(–font);
+}
+.arrow-btn:hover { background: var(–accent); color: var(–lavender-br); }
+.arrow-btn:active { background: var(–accent-hi); }
+
+.param-slider {
+flex: 1;
+height: 28px;
+-webkit-appearance: none;
+appearance: none;
+background: transparent;
+cursor: pointer;
+outline: none;
+min-width: 0;
+touch-action: none;
+}
+
+.param-slider::-webkit-slider-runnable-track {
+height: 4px;
+background: var(–border);
+border-radius: 2px;
+}
+.param-slider::-moz-range-track {
+height: 4px;
+background: var(–border);
+border-radius: 2px;
+}
+
+.param-slider::-webkit-slider-thumb {
+-webkit-appearance: none;
+width: 16px;
+height: 16px;
+border-radius: 50%;
+background: var(–accent-br);
+border: 2px solid var(–accent-hi);
+margin-top: -6px;
+transition: background 0.1s, transform 0.1s;
+cursor: grab;
+}
+.param-slider:active::-webkit-slider-thumb {
+transform: scale(1.3);
+cursor: grabbing;
+}
+.param-slider::-webkit-slider-thumb:hover { background: var(–lavender-br); }
+.param-slider::-moz-range-thumb {
+width: 16px;
+height: 16px;
+border-radius: 50%;
+background: var(–accent-br);
+border: 2px solid var(–accent-hi);
+}
+
+@media (max-width: 900px) {
+.param-slider {
+height: 36px;
+}
+.param-slider::-webkit-slider-runnable-track {
+height: 5px;
+}
+.param-slider::-webkit-slider-thumb {
+width: 26px;
+height: 26px;
+margin-top: -10.5px;
+border-width: 3px;
+}
+.param-slider::-moz-range-thumb {
+width: 26px;
+height: 26px;
+}
+.arrow-btn {
+width: 28px;
+height: 28px;
+font-size: 14px;
+}
+.wheel-val {
+font-size: 13px;
+padding: 4px 6px;
+}
+}
+
+.param-input {
+width: 54px;
+background: var(–input-bg);
+color: var(–input-fg);
+border: 1px solid var(–accent);
+border-radius: 2px;
+padding: 1px 4px;
+font-family: var(–font);
+font-size: 10px;
+text-align: right;
+outline: none;
+flex-shrink: 0;
+}
+.param-input:focus { border-color: var(–accent-br); }
+
+.wheel-toggle-row {
+display: flex;
+align-items: center;
+gap: 3px;
+width: 100%;
+}
+.wheel-val {
+flex: 1;
+text-align: center;
+font-size: 11px;
+font-weight: 700;
+color: var(–lavender-br);
+font-family: var(–font);
+background: var(–hdr-bg);
+border: 1px solid var(–border);
+border-radius: 2px;
+padding: 2px 4px;
+}
+
+.param-select {
+width: 100%;
+background: var(–input-bg);
+color: var(–input-fg);
+border: 1px solid var(–accent);
+border-radius: 2px;
+padding: 2px 4px;
+font-family: var(–font);
+font-size: 11px;
+outline: none;
+}
+
+.derived-row {
+display: flex;
+justify-content: space-between;
+padding: 3px 8px 3px 11px;
+font-size: 10px;
+color: var(–text-mid);
+border-top: 1px solid var(–border);
+margin-top: 2px;
+}
+.derived-val { color: var(–lavender-br); font-weight: 700; }
+
+#panel-btns {
+display: flex;
+gap: 6px;
+padding: 8px 10px;
+border-top: 1px solid var(–border);
+background: var(–panel-bg);
+flex-shrink: 0;
+}
+
+.panel-btn {
+flex: 1;
+background: var(–hdr-bg);
+color: var(–lavender);
+border: 1px solid var(–accent);
+border-radius: 2px;
+font-family: var(–font);
+font-size: 11px;
+font-weight: 700;
+padding: 5px 4px;
+cursor: pointer;
+letter-spacing: 0.5px;
+transition: background 0.1s, color 0.1s;
+}
+.panel-btn:hover { background: var(–accent); color: #fff; }
+
+#statusbar {
+background: var(–panel-bg);
+border-top: 1px solid var(–border);
+color: var(–text-lo);
+font-size: 10px;
+padding: 3px 12px;
+flex-shrink: 0;
+white-space: nowrap;
+overflow: hidden;
+}
+
+/* ── Canvas area ── */
+#canvas-wrap {
+flex: 1;
+position: relative;
+overflow: hidden;
+}
+
+#canvas {
+display: block;
+width: 100%;
+height: 100%;
+cursor: grab;
+}
+#canvas:active { cursor: grabbing; }
+
+/* ── Preset panel ── */
+#preset-panel {
+position: absolute;
+bottom: 44px;
+right: 12px;
+background: var(–panel-bg);
+border: 1px solid var(–border);
+border-radius: 4px;
+min-width: 160px;
+z-index: 10;
+}
+
+#preset-body { padding: 6px; display: block; }
+
+.preset-row {
+display: flex;
+align-items: center;
+gap: 4px;
+margin-bottom: 4px;
+}
+.preset-row select {
+width: 100%;
+background: var(–input-bg);
+color: var(–input-fg);
+border: 1px solid var(–accent);
+border-radius: 2px;
+font-family: var(–font);
+font-size: 10px;
+padding: 2px 4px;
+outline: none;
+}
+
+#preset-load {
+width: 100%;
+background: var(–hdr-bg);
+color: var(–accent-br);
+border: none;
+font-family: var(–font);
+font-size: 11px;
+font-weight: 700;
+padding: 6px;
+cursor: pointer;
+border-radius: 2px;
+margin-top: 4px;
+letter-spacing: 0.5px;
+transition: background 0.15s;
+}
+#preset-load:hover { background: var(–accent); color: #fff; }
+
+/* Resizer */
+#resizer {
+width: 4px;
+background: var(–border);
+cursor: col-resize;
+flex-shrink: 0;
+transition: background 0.15s;
+}
+#resizer:hover { background: var(–accent-hi); }
+
+/* ═══════ MOBILE / TABLET ═══════ */
+
+@media (max-width: 900px) {
+#panel { width: 240px; min-width: 180px; }
+#logo-sub { display: none; }
+.tb-btn { padding: 5px 7px; font-size: 10px; }
+#logo-text { font-size: 13px; letter-spacing: 2px; }
+}
+
+@media (max-width: 600px) {
+body { overflow: hidden; }
+
+#toolbar {
+height: 48px;
+padding: 0 8px;
+gap: 2px;
+overflow-x: auto;
+-webkit-overflow-scrolling: touch;
+}
+
+#main { flex-direction: column-reverse; }
+
+#panel {
+width: 100% !important;
+height: 42vh;
+min-width: unset;
+border-right: none;
+border-top: 2px solid var(–accent);
+flex-shrink: 0;
+transition: height 0.25s ease;
+overflow: hidden;
+}
+
+#panel.collapsed-mobile {
+height: 38px;
+}
+
+#resizer { display: none; }
+
+#canvas-wrap { flex: none; height: calc(52vh - 26px); min-height: 100px; }
+
+#panel-mobile-hdr {
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 6px 12px;
+background: var(–hdr-bg);
+border-bottom: 1px solid var(–border);
+cursor: pointer;
+flex-shrink: 0;
+user-select: none;
+}
+#panel-mobile-hdr span {
+font-size: 10px;
+font-weight: 700;
+letter-spacing: 1.5px;
+text-transform: uppercase;
+color: var(–lavender-br);
+font-family: var(–font);
+}
+#panel-mobile-hdr .arrow {
+font-size: 12px;
+color: var(–accent-br);
+transition: transform 0.2s;
+}
+#panel.collapsed-mobile #panel-mobile-hdr .arrow {
+transform: rotate(180deg);
+}
+
+.param-label { font-size: 10px; }
+.param-input { width: 64px; font-size: 10px; }
+.param-select { width: 80px; font-size: 10px; }
+
+#preset-panel {
+position: fixed;
+top: 48px;
+right: 0;
+left: 0;
+bottom: auto;
+border-radius: 0;
+border-left: none;
+border-right: none;
+border-top: none;
+border-bottom: 1px solid var(–border);
+z-index: 30;
+}
+#preset-toggle {
+border-radius: 0;
+width: 100%;
+text-align: center;
+}
+#preset-body {
+display: flex;
+flex-direction: row;
+align-items: center;
+gap: 8px;
+padding: 6px 10px;
+flex-wrap: wrap;
+}
+.preset-row {
+margin-bottom: 0;
+flex: 1;
+min-width: 120px;
+}
+#preset-load {
+margin-top: 0;
+flex: 0 0 auto;
+padding: 5px 14px;
+}
+
+#zoom-controls {
+bottom: auto;
+top: 12px;
+left: 8px;
+}
+
+}
+
+/* Panel header hidden */
+#panel-mobile-hdr { display: none !important; }
+
+/* ── Dropdown backdrop ── */
+#dd-backdrop {
+display: none;
+position: fixed;
+inset: 0;
+z-index: 999;
+}
+#dd-backdrop.open { display: block; }
+
+/* ── Toolbar dropdowns ── */
+.tb-dropdown {
+position: relative;
+z-index: 1000;
+}
+.tb-dd-btn { letter-spacing: 0.3px; }
+.tb-dd-menu {
+display: none;
+position: fixed;
+top: 0;
+left: 0;
+min-width: 210px;
+background: var(–panel-bg);
+border: 1px solid var(–border);
+border-radius: 4px;
+padding: 6px 0;
+z-index: 1000;
+box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+max-height: 80vh;
+overflow-y: auto;
+}
+.tb-dd-menu.open { display: block; }
+.dd-label {
+font-size: 9px;
+letter-spacing: 1.5px;
+text-transform: uppercase;
+color: var(–text-lo);
+padding: 4px 10px 2px;
+}
+.dd-radio-group {
+display: flex;
+gap: 3px;
+padding: 3px 8px 6px;
+}
+.dd-radio {
+flex: 1;
+background: var(–hdr-bg);
+border: 1px solid var(–border);
+color: var(–text-mid);
+font-family: var(–font);
+font-size: 11px;
+padding: 7px 2px;
+border-radius: 2px;
+cursor: pointer;
+}
+.dd-radio.active {
+background: var(–accent);
+color: #fff;
+border-color: var(–accent-br);
+}
+.dd-toggle-row {
+display: flex;
+align-items: center;
+gap: 10px;
+padding: 8px 14px;
+cursor: pointer;
+font-size: 12px;
+color: var(–text-mid);
+transition: background 0.1s;
+min-height: 36px;
+}
+.dd-toggle-row:hover { background: var(–hdr-bg); }
+.dd-toggle-row input[type=checkbox] {
+accent-color: var(–accent);
+width: 13px;
+height: 13px;
+cursor: pointer;
+flex-shrink: 0;
+}
+.dd-select {
+width: 100%;
+background: var(–hdr-bg);
+border: 1px solid var(–border);
+color: var(–text-mid);
+font-family: var(–font);
+font-size: 11px;
+padding: 3px 6px;
+border-radius: 2px;
+}
+
+/* ── Export modal ── */
+#export-modal-overlay {
+display: none;
+position: fixed;
+inset: 0;
+background: rgba(0,0,0,0.55);
+z-index: 500;
+align-items: center;
+justify-content: center;
+}
+#export-modal-overlay.open { display: flex; }
+#export-modal {
+background: var(–panel-bg);
+border: 1px solid var(–border);
+border-radius: 6px;
+width: min(380px, 88vw);
+padding: 22px 24px 18px;
+box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+display: flex;
+flex-direction: column;
+gap: 14px;
+}
+#export-modal h2 {
+font-size: 12px;
+letter-spacing: 2px;
+text-transform: uppercase;
+color: var(–lavender);
+font-weight: 700;
+margin: 0;
+}
+.exp-format-row {
+display: flex;
+gap: 10px;
+}
+.exp-fmt-btn {
+flex: 1;
+background: var(–hdr-bg);
+border: 1px solid var(–border);
+color: var(–text-mid);
+font-family: var(–font);
+font-size: 12px;
+font-weight: 700;
+letter-spacing: 1.5px;
+padding: 12px 0;
+border-radius: 3px;
+cursor: pointer;
+transition: background 0.15s, color 0.15s;
+}
+.exp-fmt-btn:hover { background: var(–accent); color: #fff; border-color: var(–accent-br); }
+.exp-modal-btns {
+display: flex;
+justify-content: flex-end;
+gap: 8px;
+margin-top: 4px;
+}
+.exp-modal-btns button {
+background: none;
+border: 1px solid var(–border);
+color: var(–text-mid);
+font-family: var(–font);
+font-size: 11px;
+padding: 5px 18px;
+border-radius: 3px;
+cursor: pointer;
+}
+.exp-modal-btns button:hover { background: var(–hdr-bg); }
+
+/* ── Zoom controls overlay ── */
+#zoom-controls {
+position: absolute;
+bottom: 12px;
+left: 12px;
+display: flex;
+flex-direction: column;
+gap: 3px;
+z-index: 20;
+}
+.zoom-btn {
+width: 28px;
+height: 28px;
+background: var(–panel-bg);
+border: 1px solid var(–border);
+border-radius: 4px;
+color: var(–text-mid);
+font-size: 14px;
+line-height: 1;
+cursor: pointer;
+display: flex;
+align-items: center;
+justify-content: center;
+transition: background 0.12s, color 0.12s;
+font-family: var(–font);
+opacity: 0.85;
+}
+.zoom-btn:hover { background: var(–hdr-bg); color: var(–lavender); opacity: 1; }
+.zoom-btn svg { pointer-events: none; }
+
+/* ── Mobile: hide logo ── */
+@media (max-width: 600px) {
+#logo-area { display: none; }
+#toolbar .tb-sep:first-of-type { display: none; }
+
+#preset-panel {
+position: fixed;
+top: 48px;
+right: 0;
+left: 0;
+bottom: auto;
+border-radius: 0;
+border-left: none;
+border-right: none;
+border-top: none;
+border-bottom: 1px solid var(–border);
+z-index: 30;
+}
+#preset-toggle {
+border-radius: 0;
+width: 100%;
+text-align: center;
+}
+#preset-body {
+display: flex;
+flex-direction: row;
+align-items: center;
+gap: 8px;
+padding: 6px 10px;
+flex-wrap: wrap;
+}
+.preset-row {
+margin-bottom: 0;
+flex: 1;
+min-width: 120px;
+}
+#preset-load {
+margin-top: 0;
+flex: 0 0 auto;
+padding: 5px 14px;
+}
+
+#zoom-controls {
+bottom: auto;
+top: 12px;
+left: 8px;
+}
+
+}
+
+/* ── JSON meta form ── */
+#json-meta-form {
+display: none;
+flex-direction: column;
+gap: 10px;
+}
+#json-meta-form.open { display: flex; }
+.meta-field {
+display: flex;
+flex-direction: column;
+gap: 3px;
+}
+.meta-field label {
+font-size: 9px;
+letter-spacing: 1px;
+text-transform: uppercase;
+color: var(–text-lo);
+}
+.meta-field input {
+background: var(–input-bg);
+color: var(–input-fg);
+border: 1px solid var(–accent);
+border-radius: 2px;
+padding: 6px 8px;
+font-family: var(–font);
+font-size: 12px;
+outline: none;
+}
+.meta-field input:focus { border-color: var(–accent-br); }
+.meta-field input::placeholder { color: var(–text-lo); }
+#json-export-btn {
+background: var(–accent);
+color: #fff;
+border: none;
+font-family: var(–font);
+font-size: 12px;
+font-weight: 700;
+letter-spacing: 1.5px;
+padding: 10px 0;
+border-radius: 3px;
+cursor: pointer;
+transition: background 0.15s;
+margin-top: 4px;
+}
+#json-export-btn:hover { background: var(–accent-hi); }
+
+/* ── Export result overlay ── */
+#export-result-overlay {
+display: none;
+position: fixed;
+inset: 0;
+background: rgba(0,0,0,0.88);
+z-index: 600;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+gap: 14px;
+padding: 20px;
+}
+#export-result-overlay.open { display: flex; }
+#export-result-img {
+max-width: 100%;
+max-height: 70vh;
+border: 1px solid #444;
+display: none;
+}
+#export-result-msg {
+color: #ccc;
+font-family: var(–font);
+font-size: 12px;
+text-align: center;
+letter-spacing: 0.5px;
+}
+#export-result-link {
+display: none;
+color: var(–lavender);
+font-family: var(–font);
+font-size: 13px;
+font-weight: 700;
+padding: 10px 24px;
+border: 1px solid var(–accent);
+border-radius: 4px;
+text-decoration: none;
+}
+#export-result-close {
+background: var(–hdr-bg);
+border: 1px solid var(–border);
+color: var(–text-mid);
+font-family: var(–font);
+font-size: 11px;
+padding: 7px 22px;
+border-radius: 3px;
+cursor: pointer;
+}
+
 </style>
 </head>
 <body>
 
 <!-- Toolbar -->
+
 <div id="toolbar">
   <div id="logo-area">
     <span id="logo-text">CREATURE</span>
@@ -947,19 +989,16 @@
   </div>
   <div class="tb-sep"></div>
 
-  <!-- Appearance dropdown — button only, menu lives in <body> -->
   <div class="tb-dropdown" id="dd-appearance">
-    <button class="tb-btn tb-dd-btn" onclick="toggleDd('appearance')">▾ view</button>
+    <button class="tb-btn tb-dd-btn" onclick="toggleDd('appearance')">&#9662; view</button>
   </div>
 
-  <!-- Elements dropdown — button only -->
   <div class="tb-dropdown" id="dd-elements">
-    <button class="tb-btn tb-dd-btn" onclick="toggleDd('elements')">▾ elements</button>
+    <button class="tb-btn tb-dd-btn" onclick="toggleDd('elements')">&#9662; elements</button>
   </div>
 
-  <!-- Annotations dropdown — button only -->
   <div class="tb-dropdown" id="dd-annotations">
-    <button class="tb-btn tb-dd-btn" onclick="toggleDd('annotations')">▾ annotations</button>
+    <button class="tb-btn tb-dd-btn" onclick="toggleDd('annotations')">&#9662; annotations</button>
   </div>
 
   <div class="tb-sep"></div>
@@ -968,22 +1007,24 @@
 </div>
 
 <!-- Dropdown backdrop -->
+
 <div id="dd-backdrop" onclick="closeAllDd()"></div>
 
 <!-- Main -->
+
 <div id="main">
   <!-- Param panel -->
   <div id="panel">
     <div id="panel-mobile-hdr" onclick="toggleMobilePanel()">
-      <span>parameters ▴</span>
-      <span class="arrow">▾</span>
+      <span>parameters &#9652;</span>
+      <span class="arrow">&#9662;</span>
     </div>
     <div id="panel-scroll">
       <!-- generated by JS -->
     </div>
     <div class="derived-row">
       <span>Wheelbase</span>
-      <span class="derived-val" id="derived-wb">—</span>
+      <span class="derived-val" id="derived-wb">&mdash;</span>
     </div>
     <div id="panel-btns">
       <button class="panel-btn" onclick="resetParams()">Reset</button>
@@ -995,51 +1036,73 @@
   <div id="resizer"></div>
 
   <!-- Canvas -->
+
   <div id="canvas-wrap">
     <canvas id="canvas"></canvas>
 
-    <!-- Zoom controls -->
-    <div id="zoom-controls">
-      <button class="zoom-btn" onclick="zoomStep(1.25)" title="Zoom in">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="6" cy="6" r="4.5"/>
-          <line x1="9.5" y1="9.5" x2="13" y2="13"/>
-          <line x1="6" y1="4" x2="6" y2="8"/>
-          <line x1="4" y1="6" x2="8" y2="6"/>
-        </svg>
-      </button>
-      <button class="zoom-btn" onclick="zoomStep(0.8)" title="Zoom out">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="6" cy="6" r="4.5"/>
-          <line x1="9.5" y1="9.5" x2="13" y2="13"/>
-          <line x1="4" y1="6" x2="8" y2="6"/>
-        </svg>
-      </button>
+```
+<!-- Zoom controls -->
+<div id="zoom-controls">
+  <button class="zoom-btn" onclick="zoomStep(1.25)" title="Zoom in">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="6" cy="6" r="4.5"/>
+      <line x1="9.5" y1="9.5" x2="13" y2="13"/>
+      <line x1="6" y1="4" x2="6" y2="8"/>
+      <line x1="4" y1="6" x2="8" y2="6"/>
+    </svg>
+  </button>
+  <button class="zoom-btn" onclick="zoomStep(0.8)" title="Zoom out">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="6" cy="6" r="4.5"/>
+      <line x1="9.5" y1="9.5" x2="13" y2="13"/>
+      <line x1="4" y1="6" x2="8" y2="6"/>
+    </svg>
+  </button>
+</div>
+<!-- Preset panel -->
+<div id="preset-panel">
+  <div id="preset-body" class="open">
+    <div class="preset-row">
+      <select id="preset-cat" onchange="updatePresetSizes()"></select>
     </div>
-    <!-- Preset panel -->
-    <div id="preset-panel">
-      <div id="preset-body" class="open">
-        <div class="preset-row">
-          <select id="preset-cat" onchange="updatePresetSizes()"></select>
-        </div>
-        <div class="preset-row">
-          <select id="preset-size"></select>
-        </div>
-        <button id="preset-load" onclick="loadPreset()">load preset</button>
-      </div>
+    <div class="preset-row">
+      <select id="preset-size"></select>
     </div>
+    <button id="preset-load" onclick="loadPreset()">load preset</button>
+  </div>
+</div>
+```
+
   </div>
 </div>
 
 <!-- Export modal -->
+
 <div id="export-modal-overlay" onclick="handleOverlayClick(event)">
   <div id="export-modal">
     <h2>export</h2>
-    <p style="font-size:11px;color:var(--text-lo);margin:0">choose format — the current canvas view will be exported with all visible annotations.</p>
-    <div class="exp-format-row">
-      <button class="exp-fmt-btn" onclick="doExport('pdf')">PDF</button>
-      <button class="exp-fmt-btn" onclick="doExport('jpeg')">JPEG</button>
-      <button class="exp-fmt-btn" onclick="doExport('json')">JSON</button>
+    <p id="export-prompt" style="font-size:11px;color:var(--text-lo);margin:0">choose format &mdash; the current canvas view will be exported with all visible annotations.</p>
+    <div id="export-format-step">
+      <div class="exp-format-row">
+        <button class="exp-fmt-btn" onclick="doExport('pdf')">PDF</button>
+        <button class="exp-fmt-btn" onclick="doExport('jpeg')">JPEG</button>
+        <button class="exp-fmt-btn" onclick="showJsonMetaForm()">JSON</button>
+      </div>
+    </div>
+    <div id="json-meta-form">
+      <div class="meta-field">
+        <label>design name</label>
+        <input type="text" id="meta-name" placeholder="enter design name">
+      </div>
+      <div class="meta-field">
+        <label>author</label>
+        <input type="text" id="meta-author" placeholder="enter author">
+      </div>
+      <div class="meta-field">
+        <label>version</label>
+        <input type="text" id="meta-version" value="v1">
+      </div>
+      <button id="json-export-btn" onclick="doJsonExport()">export json</button>
     </div>
     <div class="exp-modal-btns">
       <button onclick="closeExportModal()">cancel</button>
@@ -1055,8 +1118,8 @@
 //  MATHS HELPERS
 // ═══════════════════════════════════════════════════════
 const DEG = Math.PI / 180;
-const TUBE_LW = 0.5;   // frame tube stroke weight
-const WHEEL_LW = 0.5;  // wheel stroke weight
+const TUBE_LW = 0.5;
+const WHEEL_LW = 0.5;
 const r2d = a => a / DEG;
 const d2r = a => a * DEG;
 const add = (a,b) => [a[0]+b[0], a[1]+b[1]];
@@ -1099,6 +1162,33 @@ function chainringRadius(teeth) {
 }
 
 // ═══════════════════════════════════════════════════════
+//  DESIGN METADATA
+// ═══════════════════════════════════════════════════════
+let designMeta = {
+  name: '',
+  author: '',
+  version: 'v1',
+  id: '',
+  parent_id: '',
+  exported: '',
+};
+let sessionAuthor = '';  // remember author within session
+
+function generateId() {
+  const hex = () => Math.floor(Math.random() * 0x10000).toString(16).padStart(4, '0');
+  return 'cc-' + hex() + hex();
+}
+
+function parseVersion(v) {
+  const m = String(v).match(/^v?(\d+)$/);
+  return m ? parseInt(m[1], 10) : 1;
+}
+
+function bumpVersion(v) {
+  return 'v' + (parseVersion(v) + 1);
+}
+
+// ═══════════════════════════════════════════════════════
 //  DEFAULTS & GROUPS
 // ═══════════════════════════════════════════════════════
 const DEFAULTS = {
@@ -1121,8 +1211,6 @@ const DEFAULTS = {
   stem_length:90, stem_angle:6, bar_diameter:31.8, steerer_height:40,
 };
 
-
-// ── Slider ranges for every parameter ────────────────────────
 const PARAM_RANGES = {
   reach:                    [200, 650, 1],
   chainstay_length:         [300, 600, 1],
@@ -1157,23 +1245,20 @@ const PARAM_RANGES = {
   steerer_height:           [10,  100, 5],
 };
 
-// ── GEOMETRY section ─────────────────────────────────────────
 const GEOM_FIELDS = [
   ['reach',            'Reach (mm)'],
   ['chainstay_length', 'CS Length (mm)'],
-  ['ht_angle',         'HT Angle (°)'],
-  ['st_angle',         'ST Angle (°)'],
+  ['ht_angle',         'HT Angle (\u00b0)'],
+  ['st_angle',         'ST Angle (\u00b0)'],
   ['bb_drop',          'BB Drop (mm)'],
 ];
 
-// ── FORK section ──────────────────────────────────────────────
 const FORK_FIELDS = [
   ['fork_atc',             'Fork ATC (mm)'],
   ['fork_offset',          'Fork Rake (mm)'],
   ['lower_headset_height', 'Lower Headset (mm)'],
 ];
 
-// ── TUBE PARAMETERS groups ────────────────────────────────────
 const GROUPS = [
   {name:'Head Tube', fields:[
     ['ht_length',         'HT Length (mm)'],
@@ -1185,7 +1270,7 @@ const GROUPS = [
     ['st_length',      'ST Length (mm)'],
     ['st_OD',          'ST OD (mm)'],
     ['st_WT',          'ST Wall (mm)'],
-    ['st_tt_clearance','Top of ST → TT (mm)'],
+    ['st_tt_clearance','Top of ST \u2192 TT (mm)'],
   ]},
   {name:'Top Tube', fields:[
     ['tt_OD', 'TT Side Width (mm)'],
@@ -1196,7 +1281,7 @@ const GROUPS = [
     ['dt_WT', 'DT Wall (mm)'],
   ]},
   {name:'Chainstays', fields:[
-    ['cs_ds_drop_angle', 'DS Drop Angle (°)'],
+    ['cs_ds_drop_angle', 'DS Drop Angle (\u00b0)'],
     ['max_chainring',    'Max Chainring (teeth)'],
     ['cs_OD',            'CS OD (mm)'],
     ['cs_WT',            'CS Wall (mm)'],
@@ -1209,15 +1294,12 @@ const GROUPS = [
   ]},
   {name:'Cockpit', fields:[
     ['stem_length',    'Stem Length (mm)'],
-    ['stem_angle',     'Stem Angle (°)'],
+    ['stem_angle',     'Stem Angle (\u00b0)'],
     ['bar_diameter',   'Bar Diameter (mm)'],
     ['steerer_height', 'Steerer Above HT (mm)'],
   ]},
 ];
 
-// WHEEL_SIZES stores ISO Bead Seat Diameter (BSD) for each wheel label.
-// The actual outer tyre diameter = BSD/2 + tyre_width (radius).
-// Order: smallest → largest, used by wheel toggle arrows.
 const WHEEL_SIZES = {
   '20"':  406,
   '24"':  507,
@@ -1227,98 +1309,55 @@ const WHEEL_SIZES = {
   '29"':  622,
   '32"':  686,
 };
-// Ordered keys for the toggle (preserves insertion order)
 const WHEEL_KEYS = Object.keys(WHEEL_SIZES);
-// Each BB standard: [shell_OD mm, bore_ID mm]
 const BB_STANDARDS = {
-  'BSA': { shell: 50.0, bore: 33.9 },   // BSA: 1.37" threaded, ~50mm shell OD
-  'T47': { shell: 56.0, bore: 41.0 },   // T47: 47mm threaded, 56mm shell OD
+  'BSA': { shell: 50.0, bore: 33.9 },
+  'T47': { shell: 56.0, bore: 41.0 },
 };
-
 
 // ═══════════════════════════════════════════════════════
 //  THEME SYSTEM
 // ═══════════════════════════════════════════════════════
 const THEMES = {
   dark: {
-    bg:        '#0d0d16',
-    grid:      '#2d1b4e',
-    ground:    '#2a1f45',
-    wheel:     '#888888',
-    wheelLbl:  '#555555',
-    tubeFill:  '#3b2070',
-    tubeStk:   '#c4b5fd',
-    lugFill:   '#2a1a50',
-    lugStk:    '#c4b5fd',
-    bbBore:    '#0d0d16',
-    crDash:    '#3a2a5a',
-    forkFill:  '#4a1d80',
-    forkStk:   '#7c3aed',
-    forkAnn:   '#c084fc',
-    ann:       '#a855f7',
-    ann2:      '#7c3aed',
-    errFill:   '#1a0820',
+    bg:'#0d0d16', grid:'#2d1b4e', ground:'#2a1f45',
+    wheel:'#888888', wheelLbl:'#555555',
+    tubeFill:'#3b2070', tubeStk:'#c4b5fd',
+    lugFill:'#2a1a50', lugStk:'#c4b5fd',
+    bbBore:'#0d0d16', crDash:'#3a2a5a',
+    forkFill:'#4a1d80', forkStk:'#7c3aed', forkAnn:'#c084fc',
+    ann:'#a855f7', ann2:'#7c3aed', errFill:'#1a0820',
   },
   light: {
-    bg:        '#f0eef8',
-    grid:      '#c8c0e0',
-    ground:    '#9b8fc0',
-    wheel:     '#6655aa',
-    wheelLbl:  '#9b8fc0',
-    tubeFill:  '#c4b5fd',
-    tubeStk:   '#4c1d95',
-    lugFill:   '#ddd6fe',
-    lugStk:    '#4c1d95',
-    bbBore:    '#f0eef8',
-    crDash:    '#a78bfa',
-    forkFill:  '#a78bfa',
-    forkStk:   '#4c1d95',
-    forkAnn:   '#6d28d9',
-    ann:       '#6d28d9',
-    ann2:      '#8b5cf6',
-    errFill:   '#fee2e2',
+    bg:'#f0eef8', grid:'#c8c0e0', ground:'#9b8fc0',
+    wheel:'#6655aa', wheelLbl:'#9b8fc0',
+    tubeFill:'#c4b5fd', tubeStk:'#4c1d95',
+    lugFill:'#ddd6fe', lugStk:'#4c1d95',
+    bbBore:'#f0eef8', crDash:'#a78bfa',
+    forkFill:'#a78bfa', forkStk:'#4c1d95', forkAnn:'#6d28d9',
+    ann:'#6d28d9', ann2:'#8b5cf6', errFill:'#fee2e2',
   },
   green: {
-    bg:        '#080f0a',
-    grid:      '#0d2e14',
-    ground:    '#1a3d20',
-    wheel:     '#4ade80',
-    wheelLbl:  '#166534',
-    tubeFill:  '#0f4a20',
-    tubeStk:   '#4ade80',
-    lugFill:   '#0a3018',
-    lugStk:    '#22c55e',
-    bbBore:    '#080f0a',
-    crDash:    '#1a4d28',
-    forkFill:  '#15803d',
-    forkStk:   '#22c55e',
-    forkAnn:   '#86efac',
-    ann:       '#22c55e',
-    ann2:      '#4ade80',
-    errFill:   '#1a0808',
+    bg:'#080f0a', grid:'#0d2e14', ground:'#1a3d20',
+    wheel:'#4ade80', wheelLbl:'#166534',
+    tubeFill:'#0f4a20', tubeStk:'#4ade80',
+    lugFill:'#0a3018', lugStk:'#22c55e',
+    bbBore:'#080f0a', crDash:'#1a4d28',
+    forkFill:'#15803d', forkStk:'#22c55e', forkAnn:'#86efac',
+    ann:'#22c55e', ann2:'#4ade80', errFill:'#1a0808',
   },
   orange: {
-    bg:        '#0f0a04',
-    grid:      '#2a1a08',
-    ground:    '#3d2810',
-    wheel:     '#f59e0b',
-    wheelLbl:  '#78350f',
-    tubeFill:  '#7c2d12',
-    tubeStk:   '#fbbf24',
-    lugFill:   '#4a1a08',
-    lugStk:    '#f59e0b',
-    bbBore:    '#0f0a04',
-    crDash:    '#5c2d0e',
-    forkFill:  '#c2410c',
-    forkStk:   '#f97316',
-    forkAnn:   '#fdba74',
-    ann:       '#f59e0b',
-    ann2:      '#fbbf24',
-    errFill:   '#1a0808',
+    bg:'#0f0a04', grid:'#2a1a08', ground:'#3d2810',
+    wheel:'#f59e0b', wheelLbl:'#78350f',
+    tubeFill:'#7c2d12', tubeStk:'#fbbf24',
+    lugFill:'#4a1a08', lugStk:'#f59e0b',
+    bbBore:'#0f0a04', crDash:'#5c2d0e',
+    forkFill:'#c2410c', forkStk:'#f97316', forkAnn:'#fdba74',
+    ann:'#f59e0b', ann2:'#fbbf24', errFill:'#1a0808',
   },
 };
 
-let currentTheme = 'green';
+let currentTheme = 'dark';
 
 function setTheme(name) {
   currentTheme = name;
@@ -1335,8 +1374,8 @@ function T(key) { return THEMES[currentTheme][key] || THEMES.dark[key]; }
 function computeGeometry(p) {
   const ha  = d2r(p.ht_angle);
   const sa  = d2r(p.st_angle);
-  const tw  = p.tyre_width || 57;            // tyre section width ≈ section height (round cross-section)
-  const rwd = p.rear_wheel_dia/2  + tw;     // outer radius = rim_BSD/2 + tyre_width
+  const tw  = p.tyre_width || 57;
+  const rwd = p.rear_wheel_dia/2  + tw;
   const fwd = p.front_wheel_dia/2 + tw;
   const bb  = [0,0];
 
@@ -1410,14 +1449,13 @@ function computeGeometry(p) {
 }
 
 // ═══════════════════════════════════════════════════════
-//  BB YOKE (translated from Python)
+//  BB YOKE
 // ═══════════════════════════════════════════════════════
 function bbYokeDsMM(g, p) {
-  // DS yoke: tangent lines from CS tube shoulders at ds_end to BB shell arc
   const ds_end = g.ds_end;
   const ds_dir = g.ds_dir;
   const cs_od  = p.cs_OD;
-  const bb_r   = p.bb_diameter / 2;   // shell outer radius
+  const bb_r   = p.bb_diameter / 2;
 
   const perp_up = perp_ccw(ds_dir);
   const perp_dn = perp_cw(ds_dir);
@@ -1458,26 +1496,21 @@ function bbYokeDsMM(g, p) {
   return outline;
 }
 
-
 // ═══════════════════════════════════════════════════════
 //  CANVAS STATE
 // ═══════════════════════════════════════════════════════
 let scale  = 0.47;
-let offset = [0, 0];         // [offsetX, offsetY] — offsetY managed by groundFraction
-let groundFraction = 0.80;   // ground line sits at this fraction of canvas height (0=top,1=bottom)
-let viewPinned = true;        // true = pinGroundY active; released permanently on first drag
-// groundFraction is updated by fitView and by vertical drag/pinch
-// Every redraw recomputes offset[1] from groundFraction + live geometry
+let offset = [0, 0];
+let groundFraction = 0.80;
+let viewPinned = true;
 let drag   = null;
 let vis = {
-  grid:true, wheels:true, fork:true, cockpit:true,
-  // Annotations — bike geometry
+  grid:false, wheels:true, fork:true, cockpit:true,
+  silhouette:true,
   ann_reach:true, ann_stack:true, ann_bbdrop:true,
   ann_wheelbase:true, ann_chainstay:true,
   ann_htangle:true, ann_stangle:true, ann_stlength:true,
-  // Annotations — tube dimensions
   ann_tubeODs:false,
-  // Annotations — jig
   ann_jig:false,
 };
 let params = {...DEFAULTS};
@@ -1492,20 +1525,18 @@ function mmToScreen(x,y) {
 }
 function px(mm){ return Math.max(0.5, mm*scale); }
 
-// ── Resize ──
 function resizeCanvas(){
   const w = wrap.clientWidth;
   const h = wrap.clientHeight;
   if(w > 0 && h > 0){
     canvas.width  = w;
     canvas.height = h;
-    fitView();  // refit scale/horizontal when canvas changes size
+    fitView();
   }
   redraw();
 }
 window.addEventListener('resize', resizeCanvas);
 
-// ── Zoom / Pan ──
 canvas.addEventListener('wheel', e=>{
   e.preventDefault();
   viewPinned=false;
@@ -1523,7 +1554,6 @@ window.addEventListener('mousemove', e=>{
 });
 window.addEventListener('mouseup', ()=>{ drag=null; canvas.style.cursor='grab'; });
 
-// Touch
 let pinchDist0 = null;
 let pinchScale0 = null;
 
@@ -1545,37 +1575,19 @@ canvas.addEventListener('touchstart', e => {
 canvas.addEventListener('touchmove', e => {
   e.preventDefault();
   if (e.touches.length === 2 && pinchDist0 !== null) {
-    // Pinch to zoom — scale around midpoint of two fingers
     const dx = e.touches[0].clientX - e.touches[1].clientX;
     const dy = e.touches[0].clientY - e.touches[1].clientY;
     const dist = Math.hypot(dx, dy);
     const newScale = pinchScale0 * (dist / pinchDist0);
-    // Keep midpoint of fingers fixed in world space
     const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
     const my = (e.touches[0].clientY + e.touches[1].clientY) / 2;
     const rect = canvas.getBoundingClientRect();
     const cx = mx - rect.left, cy = my - rect.top;
-    // Adjust offset so zoom centres on finger midpoint
     const wx = (cx - canvas.width/2  - offset[0]) / scale;
     const wy = (cy - canvas.height/2 - offset[1]) / (-scale);
     scale = Math.max(0.05, Math.min(5, newScale));
     offset[0] = cx - canvas.width/2  - wx * scale;
-    // Update groundFraction to match new offset[1] target
-    // wy is in mm (Y-up), ground_y is in mm
-    // We want pinGroundY to produce the same gy as the pinch centre intended.
-    // New offset[1] would be: cy - H/2 + wy * scale
-    // pinGroundY sets offset[1] = H*(gF-0.5) + g.ground_y*scale
-    // So gF = (cy - H/2 + wy*scale - g.ground_y*scale) / H + 0.5
-    //       = (cy - H/2 + (wy - g.ground_y)*scale) / H + 0.5
-    // We don't have g here so just approximate with current groundFraction
-    // adjusted for scale change:
     const tentativeOff1 = cy - canvas.height/2 + wy * scale;
-    // Infer what groundFraction gives this offset:
-    // tentativeOff1 = H*(gF-0.5) + g_y_approx*scale
-    // We'll just do a raw fraction from the intended screen ground position
-    // ground_screen_approx = H/2 + tentativeOff1 - g.ground_y_approx * scale
-    // Since we don't recompute g here, just keep groundFraction and let pinGroundY
-    // recalculate on next redraw. The horizontal zoom is what matters for pinch.
     redraw();
   } else if (e.touches.length === 1 && drag) {
     const t = e.touches[0];
@@ -1594,7 +1606,6 @@ canvas.addEventListener('touchend', e => {
 //  DRAWING HELPERS
 // ═══════════════════════════════════════════════════════
 
-// Fill-only rectangle for a tube segment (no caps, no stroke) — used as mask
 function tubeRect(pt1, pt2, od, fill) {
   const dx=pt2[0]-pt1[0], dy=pt2[1]-pt1[1];
   const L=Math.hypot(dx,dy);
@@ -1618,9 +1629,6 @@ function tubeRect(pt1, pt2, od, fill) {
   ctx.fill();
 }
 
-
-// Sutherland-Hodgman clip of polygon against a single half-plane.
-// Keeps points where dot(pt - planePoint, planeNormal) <= 0.
 function clipHalfPlane(poly, planeNormal, planePoint) {
   if (poly.length === 0) return [];
   const out = [];
@@ -1629,9 +1637,8 @@ function clipHalfPlane(poly, planeNormal, planePoint) {
     const next = poly[(i + 1) % poly.length];
     const dc = dot(sub(curr, planePoint), planeNormal);
     const dn = dot(sub(next, planePoint), planeNormal);
-    if (dc <= 0) out.push(curr);           // curr inside → keep
+    if (dc <= 0) out.push(curr);
     if ((dc < 0 && dn > 0) || (dc > 0 && dn < 0)) {
-      // Edge crosses plane → add intersection
       const t = dc / (dc - dn);
       out.push(add(curr, mul(sub(next, curr), t)));
     }
@@ -1639,7 +1646,6 @@ function clipHalfPlane(poly, planeNormal, planePoint) {
   return out;
 }
 
-// Return the 4 corner points of a tube rectangle in mm (no caps).
 function tubeCorners(pt1, pt2, od) {
   const dx=pt2[0]-pt1[0], dy=pt2[1]-pt1[1];
   const L=Math.hypot(dx,dy);
@@ -1654,7 +1660,6 @@ function tubeCorners(pt1, pt2, od) {
   ];
 }
 
-// Draw a clipped tube: compute rect corners, clip, draw polygon.
 function tubePolyClipped(pt1, pt2, od, fill, stroke, clipNormal, clipPoint) {
   let poly = tubeCorners(pt1, pt2, od);
   poly = clipHalfPlane(poly, clipNormal, clipPoint);
@@ -1721,7 +1726,6 @@ function lineS(sx1,sy1,sx2,sy2,col,lw=1,dash=[]){
 
 function arrowH(sx1,sx2,sy,col,lw=1){
   lineS(sx1,sy,sx2,sy,col,lw);
-  // arrowheads
   const d=5;
   lineS(sx1,sy, sx1+d,sy-d, col,lw);
   lineS(sx1,sy, sx1+d,sy+d, col,lw);
@@ -1771,7 +1775,6 @@ function drawGrid(g){
     const y=yi*step+cy;
     ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
   }
-  // Ground line
   const [,gy]=mmToScreen(0,g.ground_y);
   ctx.strokeStyle=T('ground'); ctx.lineWidth=1.5;
   ctx.beginPath(); ctx.moveTo(0,gy); ctx.lineTo(w,gy); ctx.stroke();
@@ -1785,49 +1788,41 @@ function drawWheels(g){
   const WCOL = T('wheel');
   const RSTK = T('tubeStk');
   const RFIL = T('tubeFill');
-  const tw   = params.tyre_width || 57;  // tyre section width = section height (round cross-section)
+  const tw   = params.tyre_width || 57;
 
   for(const [cx_mm, cy_mm, outerR_mm, bsd_mm] of [
     [g.rear_axle[0],  g.rear_axle[1],  g.rwd, params.rear_wheel_dia],
     [g.front_axle[0], g.front_axle[1], g.fwd, params.front_wheel_dia],
   ]){
     const [sx,sy]  = mmToScreen(cx_mm, cy_mm);
-    const rOuter   = px(outerR_mm);              // outer tyre radius = BSD/2 + tyre_width
-    const rBSD     = px(bsd_mm / 2);             // BSD / bead seat circle (tyre sits here)
-    const rRimIn   = Math.max(rBSD - px(6), px(6)); // inner rim flange, ~6mm inside BSD
+    const rOuter   = px(outerR_mm);
+    const rBSD     = px(bsd_mm / 2);
+    const rRimIn   = Math.max(rBSD - px(6), px(6));
 
-    // Tyre cross-section — filled annulus: outer tyre down to bead seat (BSD)
     ctx.save();
     ctx.beginPath();
     ctx.arc(sx, sy, rOuter, 0, Math.PI*2, false);
     ctx.arc(sx, sy, rBSD,   0, Math.PI*2, true);
-    // Tyre shading: take tubeFill colour at low opacity so it reads as
-    // background-ish rather than competing with the frame tubes
     ctx.globalAlpha = 0.25;
     ctx.fillStyle = RFIL;
     ctx.fill('evenodd');
     ctx.globalAlpha = 1.0;
     ctx.restore();
 
-    // Outer tyre wall
     ctx.beginPath(); ctx.arc(sx, sy, rOuter, 0, Math.PI*2);
     ctx.strokeStyle = WCOL; ctx.lineWidth = WHEEL_LW; ctx.stroke();
 
-    // Bead seat / rim outer circle (where tyre meets rim)
     ctx.beginPath(); ctx.arc(sx, sy, rBSD, 0, Math.PI*2);
     ctx.strokeStyle = RSTK; ctx.lineWidth = WHEEL_LW; ctx.stroke();
 
-    // Inner rim flange (dashed)
     ctx.beginPath(); ctx.arc(sx, sy, rRimIn, 0, Math.PI*2);
     ctx.strokeStyle = RSTK; ctx.lineWidth = WHEEL_LW;
     ctx.setLineDash([3, 5]); ctx.stroke();
     ctx.setLineDash([]);
 
-    // Axle dot
     drawDot(sx, sy, 3, WCOL, WCOL);
   }
 
-  // Wheel size label above rear wheel
   const rwStr = params.rear_wheel_key || Object.entries(WHEEL_SIZES).find(([,v])=>Math.abs(v-params.rear_wheel_dia)<1)?.[0]||'';
   const [rsx,rsy] = mmToScreen(g.rear_axle[0], g.rear_axle[1]);
   if(rwStr) label(rsx, rsy - px(g.rwd) - 6, rwStr, T('wheelLbl'), 'center', 'bottom', 8);
@@ -1838,17 +1833,17 @@ function drawWheels(g){
 // ═══════════════════════════════════════════════════════
 function drawTubes(g){
   const p=params;
-  const TFILL=T('tubeFill'), TSTK=T('tubeStk'), LFILL=T('lugFill'), LSTK=T('lugStk');
+  const SIL = vis.silhouette;
+  const SFILL = SIL ? T('tubeStk') : null;  // silhouette uses stroke color as solid fill
+  const TFILL=SIL ? SFILL : T('tubeFill'), TSTK=SIL ? null : T('tubeStk');
+  const LFILL=SIL ? SFILL : T('lugFill'),  LSTK=SIL ? null : T('lugStk');
   const ra=g.rear_axle, sc=g.seat_cluster;
   const ht_t=g.ht_top, ht_b=g.ht_bot, bb=[0,0];
   const tt_od=p.tt_OD, ss_od=p.ss_OD, st_od=p.st_OD;
 
-  // BS chainstay
   tubePoly(ra, g.bs_end, p.cs_OD, TFILL, TSTK, false, false);
-  // DS chainstay
   tubePoly(ra, g.ds_end, p.cs_OD, TFILL, TSTK, false, false);
 
-  // ── HT junction ──
   const ht_od=p.ht_OD, fa_x=g.fork_axis;
   const ht_perp_cw=perp_cw(fa_x);
   const to_bb=sub(bb,ht_b);
@@ -1874,7 +1869,6 @@ function drawTubes(g){
   const tt_ht=[Q_tt[0]-tt_top_perp[0]*tt_od/2, Q_tt[1]-tt_top_perp[1]*tt_od/2];
   const tt_ht_ext=[tt_ht[0]-tt_vec[0]*ht_od, tt_ht[1]-tt_vec[1]*ht_od];
 
-  // ST junction
   const st_tt_clr=p.st_tt_clearance;
   const st_ax=g.st_ax;
   const st_perp_cw=perp_cw(st_ax);
@@ -1898,21 +1892,13 @@ function drawTubes(g){
   const tt_sc_ext=add(tt_sc,mul(tt_vec_st,st_od/2));
   const ss_sc_ext=add(ss_sc,mul(ss_vec_st,-st_od/2));
 
-  // ── HT clip planes ──
-  // Both DT and TT enter the HT from the same lateral side (ht_dt_side).
-  // Clip each tube rect to stop exactly at the HT outer face on that side.
-  // clipNormal = ht_dt_side (pointing INTO the HT body = inward normal)
-  // clipPoint  = the HT face point on that side
-  const ht_face_pt = add(ht_b, mul(ht_dt_side, ht_od / 2));  // point on HT face
+  const ht_face_pt = add(ht_b, mul(ht_dt_side, ht_od / 2));
 
-  // ── Draw order: back → front ──
-  // DT: clipped at HT face, capped at BB end only
   {
     let dtPoly = tubeCorners(dt_ht_ext, bb, p.dt_OD);
     dtPoly = clipHalfPlane(dtPoly, mul(ht_dt_side,-1), ht_face_pt);
     if (dtPoly.length >= 3) {
       drawPoly(dtPoly, TFILL, TSTK, TUBE_LW);
-      // BB-end semicap
       const dt_bb_cap = semicap(bb, mul(dt_ax,-1), p.dt_OD/2, true, 8);
       drawPoly(dt_bb_cap, TFILL, TSTK, TUBE_LW);
     }
@@ -1920,7 +1906,6 @@ function drawTubes(g){
 
   tubePoly(ra, ss_sc_ext, ss_od, TFILL, TSTK, false, false);
 
-  // TT: clipped at HT face, no caps (both ends buried in other tubes)
   {
     let ttPoly = tubeCorners(tt_sc_ext, tt_ht_ext, tt_od);
     ttPoly = clipHalfPlane(ttPoly, mul(ht_dt_side,-1), ht_face_pt);
@@ -1929,41 +1914,42 @@ function drawTubes(g){
 
   tubePoly(bb, sc, st_od, TFILL, TSTK, false, false);
 
-  // BB yoke
   try {
     const yoke=bbYokeDsMM(g,p);
     if(yoke.length>=3) drawPoly(yoke,LFILL,LSTK,1);
   } catch(e){}
 
-  // HT drawn last — clean, no masking needed now tubes are clipped
   tubePoly(ht_t, ht_b, ht_od, TFILL, TSTK, false, false);
 
-  // BB shell
   const [bsx,bsy]=mmToScreen(0,0);
-  const bb_r   = px(p.bb_diameter / 2);          // shell OD
-  const bore_r = px((p.bb_bore || 33.9) / 2);    // bore ID
+  const bb_r   = px(p.bb_diameter / 2);
   ctx.beginPath(); ctx.arc(bsx,bsy,bb_r,0,Math.PI*2);
   ctx.fillStyle=LFILL; ctx.fill();
-  ctx.strokeStyle=LSTK; ctx.lineWidth=TUBE_LW; ctx.stroke();
-  ctx.beginPath(); ctx.arc(bsx,bsy,bore_r,0,Math.PI*2);
-  ctx.fillStyle=T('bbBore'); ctx.fill();
-  ctx.strokeStyle=LSTK; ctx.lineWidth=TUBE_LW; ctx.stroke();
+  if(!SIL){ ctx.strokeStyle=LSTK; ctx.lineWidth=TUBE_LW; ctx.stroke(); }
 
-  // Chainring dashed
-  const cr_r=px(chainringRadius(p.max_chainring)+15);
-  ctx.beginPath(); ctx.arc(bsx,bsy,cr_r,0,Math.PI*2);
-  ctx.strokeStyle=T('crDash'); ctx.lineWidth=1;
-  ctx.setLineDash([5,4]); ctx.stroke(); ctx.setLineDash([]);
+  if(!SIL){
+    const bore_r = px((p.bb_bore || 33.9) / 2);
+    ctx.beginPath(); ctx.arc(bsx,bsy,bore_r,0,Math.PI*2);
+    ctx.fillStyle=T('bbBore'); ctx.fill();
+    ctx.strokeStyle=LSTK; ctx.lineWidth=TUBE_LW; ctx.stroke();
 
-  // Dropout
+    const cr_r=px(chainringRadius(p.max_chainring)+15);
+    ctx.beginPath(); ctx.arc(bsx,bsy,cr_r,0,Math.PI*2);
+    ctx.strokeStyle=T('crDash'); ctx.lineWidth=1;
+    ctx.setLineDash([5,4]); ctx.stroke(); ctx.setLineDash([]);
+  }
+
   const [rax,ray]=mmToScreen(g.rear_axle[0],g.rear_axle[1]);
   const do_r=px((p.cs_OD+p.ss_OD)*0.55);
   ctx.beginPath(); ctx.arc(rax,ray,do_r,0,Math.PI*2);
   ctx.fillStyle=LFILL; ctx.fill();
-  ctx.strokeStyle=LSTK; ctx.lineWidth=TUBE_LW; ctx.stroke();
-  ctx.beginPath(); ctx.arc(rax,ray,px(5),0,Math.PI*2);
-  ctx.fillStyle='#0d0d16'; ctx.fill();
-  ctx.strokeStyle=LSTK; ctx.lineWidth=TUBE_LW; ctx.stroke();
+  if(!SIL){ ctx.strokeStyle=LSTK; ctx.lineWidth=TUBE_LW; ctx.stroke(); }
+
+  if(!SIL){
+    ctx.beginPath(); ctx.arc(rax,ray,px(5),0,Math.PI*2);
+    ctx.fillStyle='#0d0d16'; ctx.fill();
+    ctx.strokeStyle=LSTK; ctx.lineWidth=TUBE_LW; ctx.stroke();
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1971,71 +1957,55 @@ function drawTubes(g){
 // ═══════════════════════════════════════════════════════
 function drawFork(g){
   const p=params;
-  const FCOL=T('forkFill'), FSTK=T('forkStk'), FANN=T('forkAnn');
+  const SIL = vis.silhouette;
+  const SFILL = SIL ? T('tubeStk') : null;
+  const FCOL=SIL ? SFILL : T('forkFill'), FSTK=SIL ? null : T('forkStk'), FANN=T('forkAnn');
   const fa  =g.front_axle, fc=g.fork_crown;
   const f_ax=g.fork_axis,  f_perp=g.fork_perp;
   const fo  =p.fork_offset;
 
-  // ── Fork rake geometry diagram ──────────────────────────────
-  // The classic right-angle rake triangle:
-  //   • Long dashed line: HT centreline extended down through fork crown to axle height
-  //   • Short dashed line: 90° offset from that line to the front axle (= rake)
-  //   • Bold fork blade: hypotenuse of the triangle (crown → axle)
-
-  // fork_axis points crown→axle direction (along steerer, downward)
-  // f_perp is perpendicular to fork axis (= rake direction)
-  const fa_dir = f_ax;  // unit vector along steerer axis (top→bottom)
-
-  // Point on steerer axis at same height as front axle (foot of perpendicular)
-  // front_axle = fc + f_along*fa_dir + fo*f_perp
-  // The foot is: fc + f_along*fa_dir  (the mid point before the offset)
+  const fa_dir = f_ax;
   const f_along = g.fork_along;
   const foot = [fc[0] + fa_dir[0]*f_along, fc[1] + fa_dir[1]*f_along];
 
-  // 1. Long dashed line: fork crown → foot (along steerer CL extended)
-  line(fc[0], fc[1], foot[0], foot[1], FANN, 1, [6, 4]);
+  if(!SIL){
+    line(fc[0], fc[1], foot[0], foot[1], FANN, 1, [6, 4]);
+    line(foot[0], foot[1], fa[0], fa[1], FANN, 1, [6, 4]);
 
-  // 2. Short dashed line: foot → front axle (perpendicular offset = rake)
-  line(foot[0], foot[1], fa[0], fa[1], FANN, 1, [6, 4]);
+    const sq = 6 / scale;
+    const sqA = add(foot, mul(fa_dir, -sq));
+    const sqB = add(sqA,  mul(f_perp,  sq));
+    const sqC = add(foot, mul(f_perp,  sq));
+    const [sax,say]=mmToScreen(sqA[0],sqA[1]);
+    const [sbx,sby]=mmToScreen(sqB[0],sqB[1]);
+    const [scx,scy]=mmToScreen(sqC[0],sqC[1]);
+    const [sfx,sfy]=mmToScreen(foot[0],foot[1]);
+    ctx.beginPath();
+    ctx.moveTo(sax,say); ctx.lineTo(sbx,sby); ctx.lineTo(scx,scy); ctx.lineTo(sfx,sfy);
+    ctx.strokeStyle=FANN; ctx.lineWidth=1; ctx.setLineDash([]); ctx.stroke();
+  }
 
-  // Small right-angle square at foot
-  const sq = 6 / scale;  // 6px in mm
-  const sqA = add(foot, mul(fa_dir, -sq));
-  const sqB = add(sqA,  mul(f_perp,  sq));
-  const sqC = add(foot, mul(f_perp,  sq));
-  const [sax,say]=mmToScreen(sqA[0],sqA[1]);
-  const [sbx,sby]=mmToScreen(sqB[0],sqB[1]);
-  const [scx,scy]=mmToScreen(sqC[0],sqC[1]);
-  const [sfx,sfy]=mmToScreen(foot[0],foot[1]);
-  ctx.beginPath();
-  ctx.moveTo(sax,say); ctx.lineTo(sbx,sby); ctx.lineTo(scx,scy); ctx.lineTo(sfx,sfy);
-  ctx.strokeStyle=FANN; ctx.lineWidth=1; ctx.setLineDash([]); ctx.stroke();
-
-  // 3. Fork blade (hypotenuse): fork crown → front axle — drawn on top
   tubePoly(fc, fa, 26, FCOL, FSTK, false, true);
 
-  // Rake label — below the short offset line, near the axle end
-  // Position: 80% along the offset (close to axle), then offset downward (in screen space)
-  const rake_near = add(foot, mul(f_perp, fo * 0.8));
-  const [rnx, rny] = mmToScreen(rake_near[0], rake_near[1]);
-  label(rnx, rny + 14, `rake  ${fo.toFixed(0)}`, FANN, 'center', 'top', 9);
+  if(!SIL){
+    const rake_near = add(foot, mul(f_perp, fo * 0.8));
+    const [rnx, rny] = mmToScreen(rake_near[0], rake_near[1]);
+    label(rnx, rny + 14, `rake  ${fo.toFixed(0)}`, FANN, 'center', 'top', 9);
 
-  // ATC label — beside the long dashed line
-  const atc_mid = add(fc, mul(fa_dir, f_along*0.5));
-  const [amx,amy] = mmToScreen(atc_mid[0], atc_mid[1]);
-  label(amx - 8, amy, `A/C  ${g.fork_atc.toFixed(0)}`, FANN, 'right', 'middle', 9);
+    const atc_mid = add(fc, mul(fa_dir, f_along*0.5));
+    const [amx,amy] = mmToScreen(atc_mid[0], atc_mid[1]);
+    label(amx - 8, amy, `A/C  ${g.fork_atc.toFixed(0)}`, FANN, 'right', 'middle', 9);
 
-  // Headset x line
-  const lhh=p.lower_headset_height;
-  const hx1=[g.ht_bot[0]-f_perp[0]*25, g.ht_bot[1]-f_perp[1]*25];
-  const hx2=[g.ht_bot[0]+f_perp[0]*25, g.ht_bot[1]+f_perp[1]*25];
-  line(hx1[0],hx1[1],hx2[0],hx2[1],FANN,2,[4,3]);
-  const [hxm,hym]=mmToScreen((hx1[0]+hx2[0])/2+5,(hx1[1]+hx2[1])/2);
-  label(hxm+6,hym,`x=${lhh.toFixed(0)}`,FANN,'left','middle',9);
+    const lhh=p.lower_headset_height;
+    const hx1=[g.ht_bot[0]-f_perp[0]*25, g.ht_bot[1]-f_perp[1]*25];
+    const hx2=[g.ht_bot[0]+f_perp[0]*25, g.ht_bot[1]+f_perp[1]*25];
+    line(hx1[0],hx1[1],hx2[0],hx2[1],FANN,2,[4,3]);
+    const [hxm,hym]=mmToScreen((hx1[0]+hx2[0])/2+5,(hx1[1]+hx2[1])/2);
+    label(hxm+6,hym,`x=${lhh.toFixed(0)}`,FANN,'left','middle',9);
 
-  // Fork crown dot
-  const [fcs,fcs2]=mmToScreen(fc[0],fc[1]);
-  drawDot(fcs,fcs2,4,FCOL,T('forkStk'));
+    const [fcs,fcs2]=mmToScreen(fc[0],fc[1]);
+    drawDot(fcs,fcs2,4,FCOL,T('forkStk'));
+  }
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2043,7 +2013,7 @@ function drawFork(g){
 // ═══════════════════════════════════════════════════════
 function drawCockpit(g){
   const p=params;
-  const WCOL=T('wheel');
+  const WCOL = vis.silhouette ? T('tubeStk') : T('wheel');
   const ha=d2r(p.ht_angle);
   const fa_x=g.fork_axis;
   const sd=[-fa_x[0],-fa_x[1]];
@@ -2058,14 +2028,12 @@ function drawCockpit(g){
                   sfb[0]*Math.sin(stem_ang)+sfb[1]*Math.cos(stem_ang)];
   const stem_end=[stem_bot[0]+stem_dir[0]*stem_len, stem_bot[1]+stem_dir[1]*stem_len];
 
-  // Stem line
   const [smx1,smy1]=mmToScreen(stem_bot[0],stem_bot[1]);
   const [smx2,smy2]=mmToScreen(stem_end[0],stem_end[1]);
   ctx.beginPath(); ctx.strokeStyle=WCOL; ctx.lineWidth=WHEEL_LW*2;
   ctx.lineCap='round'; ctx.moveTo(smx1,smy1); ctx.lineTo(smx2,smy2); ctx.stroke();
   ctx.lineCap='butt';
 
-  // Bar circle
   const [bx,by]=mmToScreen(stem_end[0],stem_end[1]);
   const br=px(bar_r);
   ctx.beginPath(); ctx.arc(bx,by,br,0,Math.PI*2);
@@ -2085,16 +2053,14 @@ function drawAnnotations(g){
   const rwpx=px(g.rwd);
   const sa=p.st_angle*DEG, ha=p.ht_angle*DEG;
 
-  // ── Reach — arrow sits just above HT top, close to the bike ──
   if(vis.ann_reach){
-    const reach_y = Math.min(bby,hty) - 22;  // 22px above highest point
+    const reach_y = Math.min(bby,hty) - 22;
     arrowH(bbx, htx, reach_y, ANN);
     label((bbx+htx)/2, reach_y-5, `reach  ${p.reach.toFixed(0)}`, ANN,'center','bottom',10);
     lineS(bbx, reach_y-4, bbx, bby+4, ANN, 1, [3,3]);
     lineS(htx, reach_y-4, htx, hty+4, ANN, 1, [3,3]);
   }
 
-  // ── Stack — just outside right edge of front wheel ──
   if(vis.ann_stack){
     const stack_x = fax + rwpx + 18;
     arrowV(bby, hty, stack_x, ANN);
@@ -2103,7 +2069,6 @@ function drawAnnotations(g){
     lineS(stack_x-4, hty, htx+4, hty, ANN, 1, [3,3]);
   }
 
-  // ── BB Drop — just outside left edge of rear wheel, dotted leaders ──
   if(vis.ann_bbdrop){
     const drop_x = rax - rwpx - 18;
     arrowV(ray, bby, drop_x, ANN2);
@@ -2112,67 +2077,79 @@ function drawAnnotations(g){
     lineS(drop_x+4, bby, bbx-4, bby, ANN2, 1, [3,3]);
   }
 
-  // ── Wheelbase ──
   const wb_y=Math.max(ray,fay)+rwpx+20;
   if(vis.ann_wheelbase){
     arrowH(rax,fax,wb_y,ANN2);
     label((rax+fax)/2,wb_y+6,`wheelbase  ${g.wheelbase.toFixed(0)}`,ANN2,'center','top',9);
   }
 
-  // ── Chainstay ──
   if(vis.ann_chainstay){
     const cs_y=wb_y-22;
     lineS(rax,cs_y,bbx,cs_y,ANN2,1);
     label((rax+bbx)/2,cs_y-4,`cs  ${p.chainstay_length.toFixed(0)}`,ANN2,'center','bottom',8);
   }
 
-  // ── HT Angle ──
   if(vis.ann_htangle){
     const arcR=px(38);
     const [hbx,hby]=mmToScreen(g.ht_bot[0],g.ht_bot[1]);
-    // Draw arc at HT bottom between vertical and HT axis direction
-    const htAng = Math.PI/2 - ha;  // angle from vertical
+    const htAng = Math.PI/2 - ha;
     ctx.beginPath();
     ctx.arc(hbx,hby,arcR, Math.PI/2, Math.PI/2+htAng, ha<Math.PI/2);
     ctx.strokeStyle=ANN2; ctx.lineWidth=1; ctx.setLineDash([3,3]); ctx.stroke(); ctx.setLineDash([]);
-    label(hbx+arcR*0.7+6, hby+8, `${p.ht_angle.toFixed(1)}°`, ANN2,'left','top',9);
+    label(hbx+arcR*0.7+6, hby+8, `${p.ht_angle.toFixed(1)}\u00b0`, ANN2,'left','top',9);
   }
 
-  // ── ST Angle ──
   if(vis.ann_stangle){
     const arcR2=px(32);
-    // ST angle is measured from horizontal; draw arc at BB
     const stAng = sa - Math.PI/2;
     ctx.beginPath();
     ctx.arc(bbx,bby,arcR2, -Math.PI/2, -Math.PI/2+stAng, false);
     ctx.strokeStyle=ANN; ctx.lineWidth=1; ctx.setLineDash([3,3]); ctx.stroke(); ctx.setLineDash([]);
-    label(bbx+arcR2*0.5+4, bby-arcR2*0.7, `${p.st_angle.toFixed(1)}°`, ANN,'left','bottom',9);
+    label(bbx+arcR2*0.5+4, bby-arcR2*0.7, `${p.st_angle.toFixed(1)}\u00b0`, ANN,'left','bottom',9);
   }
 
-  // ── ST Length ──
   if(vis.ann_stlength){
     const [scx,scy]=mmToScreen(g.seat_cluster[0],g.seat_cluster[1]);
     const mid=[(bbx+scx)/2,(bby+scy)/2];
-    const perp=[-(scy-bby), scx-bbx]; // perp offset for label
+    const perp=[-(scy-bby), scx-bbx];
     const pd=Math.hypot(perp[0],perp[1])||1;
     label(mid[0]+perp[0]/pd*18, mid[1]+perp[1]/pd*18,
       `st  ${p.st_length.toFixed(0)}`, ANN,'center','middle',9);
   }
 
-  // ── Tube ODs (placeholder callouts) ──
   if(vis.ann_tubeODs){
     const FS=8; const COL=ANN2;
-    label(bbx+14, bby-12, `DT ø${p.dt_OD}`, COL,'left','bottom',FS);
-    label((bbx+(htx+fax)*0.5)/2, (bby+hty)/2-8, `TT ø${p.tt_OD}`, COL,'center','bottom',FS);
+    label(bbx+14, bby-12, `DT \u00f8${p.dt_OD}`, COL,'left','bottom',FS);
+    label((bbx+(htx+fax)*0.5)/2, (bby+hty)/2-8, `TT \u00f8${p.tt_OD}`, COL,'center','bottom',FS);
     label(bbx-14, (bby+mmToScreen(g.seat_cluster[0],g.seat_cluster[1])[1])/2,
-      `ST ø${p.st_OD}`, COL,'right','middle',FS);
+      `ST \u00f8${p.st_OD}`, COL,'right','middle',FS);
   }
 
-  // ── Jig dimensions (placeholder) ──
   if(vis.ann_jig){
     const jt = params._jigType || 'type1';
     label(bbx, bby+px(40), `jig: ${jt}  [placeholder]`, ANN2,'center','top',9);
   }
+}
+
+// ═══════════════════════════════════════════════════════
+//  DESIGN METADATA OVERLAY
+// ═══════════════════════════════════════════════════════
+function drawDesignMeta(){
+  if(!designMeta.name && !designMeta.author) return;
+  const x = canvas.width - 12;
+  const y = canvas.height - 12;
+  const parts = [];
+  if(designMeta.name) parts.push(designMeta.name);
+  if(designMeta.version) parts.push(designMeta.version);
+  if(designMeta.author) parts.push(designMeta.author);
+  const text = parts.join('  \u00b7  ');
+  ctx.fillStyle = T('ground');
+  ctx.font = '10px Courier Prime, Courier New, monospace';
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'bottom';
+  ctx.globalAlpha = 0.6;
+  ctx.fillText(text, x, y);
+  ctx.globalAlpha = 1.0;
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2192,8 +2169,6 @@ function redraw(){
     return;
   }
 
-  // Always re-pin ground to fixed screen position
-  // (preserves horizontal pan/zoom but locks vertical)
   pinGroundY(g);
 
   ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -2206,6 +2181,7 @@ function redraw(){
     if(vis.fork)    drawFork(g);
     if(vis.cockpit) drawCockpit(g);
     drawAnnotations(g);
+    drawDesignMeta();
     updateStatus(g);
   } catch(e) {
     showError('Draw: '+e.message, e);
@@ -2235,9 +2211,9 @@ function showError(msg, err){
 // ═══════════════════════════════════════════════════════
 function updateStatus(g){
   document.getElementById('statusbar').textContent =
-    `Wheelbase: ${g.wheelbase.toFixed(1)} mm  ·  `+
-    `Front Centre: ${g.front_centre.toFixed(1)} mm  ·  `+
-    `Trail: ${g.trail.toFixed(1)} mm  ·  `+
+    `Wheelbase: ${g.wheelbase.toFixed(1)} mm  \u00b7  `+
+    `Front Centre: ${g.front_centre.toFixed(1)} mm  \u00b7  `+
+    `Trail: ${g.trail.toFixed(1)} mm  \u00b7  `+
     `Stack (derived): ${g.stack.toFixed(1)} mm`;
   document.getElementById('derived-wb').textContent = g.wheelbase.toFixed(1)+' mm';
 }
@@ -2248,25 +2224,16 @@ function updateStatus(g){
 function toggleMobilePanel(){
   const panel = document.getElementById('panel');
   panel.classList.toggle('collapsed-mobile');
-  // Canvas size doesn't change (fixed height), but re-fit after transition
   setTimeout(()=>{ resizeCanvas(); fitView(); redraw(); }, 280);
 }
 
 function zoomStep(factor) {
-  // Zoom around canvas centre
   scale = Math.max(0.05, Math.min(5, scale * factor));
   redraw();
 }
 
-// Recompute offset[1] so ground_y (mm) maps to groundFraction * canvas.height.
-// Called every redraw — this means geometry changes (wheel size, bb_drop) never
-// shift the ground line. groundFraction itself is only changed by fitView or
-// by vertical drag (so the user can still pan up/down deliberately).
 function pinGroundY(g) {
   if (!viewPinned) return;
-  // mmToScreen: sy = H/2 + offset[1] - y*scale
-  // Want:  sy_ground = H * groundFraction
-  // => offset[1] = H * (groundFraction - 0.5) + g.ground_y * scale
   offset[1] = canvas.height * (groundFraction - 0.5) + g.ground_y * scale;
 }
 
@@ -2277,22 +2244,16 @@ function fitView() {
   const W = canvas.width, H = canvas.height;
   const rwd = g.rwd, fwd = g.fwd;
 
-  // ── Horizontal fit ───────────────────────────────────────
-  // Rear wheel outer-left → front wheel outer-right, with margins
   const minX = g.rear_axle[0]  - rwd  - 65;
   const maxX = g.front_axle[0] + fwd  + 65;
   const mmW  = maxX - minX;
   if (mmW < 1) return;
 
-  scale = (W - 64) / mmW;           // 32px pad each side
+  scale = (W - 64) / mmW;
   offset[0] = -((minX + maxX) / 2) * scale;
 
-  // ── Vertical: pin ground at 80% of canvas height ─────────
-  // 80% leaves ~20% above the tallest point and ~20% for labels below.
-  // Increase this fraction to push the bike lower (0.85 = very low).
   groundFraction = 0.80;
-  viewPinned = true;   // re-enable pin on reset/resize
-  // offset[1] will be set by pinGroundY in the next redraw.
+  viewPinned = true;
 }
 
 function resetView(){
@@ -2304,13 +2265,7 @@ function setVis(key, val){
   vis[key] = val;
   redraw();
 }
-function toggleVis(key){   // kept for any legacy calls
-  vis[key] = !vis[key];
-  redraw();
-}
 
-
-// ── Toolbar dropdown logic ─────────────────────────────────
 function toggleDd(name){
   const menu = document.getElementById('ddm-'+name);
   const btn  = document.querySelector('#dd-'+name+' .tb-dd-btn');
@@ -2318,11 +2273,9 @@ function toggleDd(name){
   const isOpen = menu.classList.contains('open');
   closeAllDd();
   if(!isOpen){
-    // Position fixed menu below the button using viewport coords
     const r = btn.getBoundingClientRect();
     menu.style.top  = (r.bottom + 4) + 'px';
     menu.style.left = r.left + 'px';
-    // Prevent going off right edge
     menu.style.display = 'block';
     const mw = menu.offsetWidth;
     if(r.left + mw > window.innerWidth - 8){
@@ -2344,43 +2297,40 @@ function syncThemeRadios(){
   });
 }
 
-// ── Export modal ───────────────────────────────────────────
 function openSave(){
   document.getElementById('export-modal-overlay').classList.add('open');
 }
 function closeExportModal(){
   document.getElementById('export-modal-overlay').classList.remove('open');
+  // Reset to format selection view
+  document.getElementById('export-format-step').style.display = '';
+  document.getElementById('export-prompt').textContent = 'choose format \u2014 the current canvas view will be exported with all visible annotations.';
+  document.getElementById('json-meta-form').classList.remove('open');
 }
 function handleOverlayClick(e){
   if(e.target===document.getElementById('export-modal-overlay')) closeExportModal();
 }
+
 // ═══════════════════════════════════════════════════════
 //  EXPORT
 // ═══════════════════════════════════════════════════════
 
-// Print palette — black on white
 const PRINT_PALETTE = {
   bg:'#ffffff', grid:'#e0e0e0', ground:'#888888',
+  wheel:'#555555', wheelLbl:'#888888',
   tubeFill:'#e8e8e8', tubeStk:'#111111',
   lugFill:'#cccccc',  lugStk:'#111111',
+  bbBore:'#ffffff', crDash:'#cccccc',
+  forkFill:'#e8e8e8', forkStk:'#333333', forkAnn:'#555555',
   ann:'#111111', ann2:'#444444',
-  forkFill:'#e8e8e8', forkStk:'#111111', forkAnn:'#555555',
-  bbBore:'#ffffff', crDash:'#bbbbbb',
-  cockFill:'#e0e0e0', cockStk:'#111111',
-  stemFill:'#cccccc', stemStk:'#111111',
-  wheelRim:'#999999', wheelTyre:'#444444',
+  errFill:'#fff0f0',
 };
 
 function renderToDataURL() {
   const g = computeGeometry(params);
-
-  // Save live state
   const savedTheme = {...THEMES[currentTheme]};
-
-  // Apply print palette (no canvas resize — use current canvas size)
   Object.assign(THEMES[currentTheme], PRINT_PALETTE);
 
-  // Draw white background + bike over current canvas
   ctx.fillStyle = '#ffffff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   try {
@@ -2392,27 +2342,43 @@ function renderToDataURL() {
     drawAnnotations(g);
   } catch(err){ console.error('Export draw:', err); }
 
-  // Capture at current canvas size — low quality to keep blob small
   const dataURL = canvas.toDataURL('image/jpeg', 0.82);
 
-  // Restore live view
   Object.assign(THEMES[currentTheme], savedTheme);
   redraw();
 
   return dataURL;
 }
 
+// ── Helper: detect iOS/iPadOS ──
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+}
 
+// ── Helper: trigger a file download from a Blob ──
+function triggerDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.style.display = 'none';
+  document.body.appendChild(a);
+  a.click();
+  // Small delay before cleanup so the download starts
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 200);
+}
 
-
-async function exportJpegAsPdf(dataURL) {
-  // Decode JPEG bytes
+// ── Build a minimal PDF wrapping a JPEG image ──
+function buildPdfBlob(dataURL) {
   const b64 = dataURL.split(',')[1];
   const bin = atob(b64);
   const jpg = new Uint8Array(bin.length);
   for(let i=0;i<bin.length;i++) jpg[i]=bin.charCodeAt(i);
 
-  // Parse JPEG size
   let iw=1754, ih=1240;
   for(let i=0;i<jpg.length-8;i++){
     if(jpg[i]===0xFF&&(jpg[i+1]===0xC0||jpg[i+1]===0xC2)){
@@ -2463,8 +2429,7 @@ async function exportJpegAsPdf(dataURL) {
   const pdf=new Uint8Array(total);
   let wp=0; for(const c of parts){pdf.set(c,wp);wp+=c.length;}
 
-  const blob = new Blob([pdf], {type:'application/pdf'});
-  return URL.createObjectURL(blob);
+  return new Blob([pdf], {type:'application/pdf'});
 }
 
 function showExportResult(dataURL, fmt) {
@@ -2476,41 +2441,49 @@ function showExportResult(dataURL, fmt) {
   link.style.display = 'none';
 
   if(fmt === 'jpeg') {
+    // Desktop: auto-download. iOS: show image for long-press save.
+    if (!isIOS()) {
+      // Convert dataURL to blob and trigger download
+      const b64 = dataURL.split(',')[1];
+      const bin = atob(b64);
+      const arr = new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+      const blob = new Blob([arr], {type:'image/jpeg'});
+      triggerDownload(blob, 'frame_geometry.jpg');
+      return; // no overlay needed
+    }
+    // iOS fallback — show preview for long-press
     img.src = dataURL;
     img.style.display = 'block';
     msg.textContent = 'long-press the image to save';
-    // No download link — iOS doesn't support blob anchor download
-  } else if(fmt === 'pdf') {
-    msg.textContent = 'building pdf\u2026';
     overlay.classList.add('open');
-    exportJpegAsPdf(dataURL).then(blobUrl => {
-      // Navigate current page to blob URL — iOS opens native PDF viewer
-      // with share sheet where user can save/print
-      window.location.href = blobUrl;
-    }).catch(e => {
-      msg.textContent = 'PDF build failed: ' + e.message;
-    });
-    return; // overlay already opened
-  }
-  overlay.classList.add('open');
-}
 
+  } else if(fmt === 'pdf') {
+    // Build PDF blob and trigger download
+    try {
+      const blob = buildPdfBlob(dataURL);
+      if (!isIOS()) {
+        triggerDownload(blob, 'frame_geometry.pdf');
+        return; // no overlay needed
+      }
+      // iOS: open in new tab for native PDF viewer / share sheet
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+      return;
+    } catch(e) {
+      msg.textContent = 'PDF build failed: ' + e.message;
+      overlay.classList.add('open');
+      return;
+    }
+  }
+}
 
 function closeExportResult() {
   document.getElementById('export-result-overlay').classList.remove('open');
 }
 
 function doExport(fmt) {
-  if(fmt === 'json') {
-    const blob = new Blob([JSON.stringify(params,null,2)], {type:'application/json'});
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url; a.download = 'frame_params.json';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    closeExportModal();
-    return;
-  }
   closeExportModal();
   try {
     const dataURL = renderToDataURL();
@@ -2521,46 +2494,88 @@ function doExport(fmt) {
   }
 }
 
+function showJsonMetaForm() {
+  // Hide format buttons, show meta form
+  document.getElementById('export-format-step').style.display = 'none';
+  document.getElementById('export-prompt').textContent = 'design metadata \u2014 these fields are saved in the JSON file.';
+  const form = document.getElementById('json-meta-form');
+  form.classList.add('open');
 
-// ── Load JSON (reuse existing import logic) ────────────────
-function openLoad(){
-  importJSON();
+  // Populate fields
+  document.getElementById('meta-name').value = designMeta.name || '';
+  document.getElementById('meta-author').value = designMeta.author || sessionAuthor || '';
+  // Suggest bumped version if we already have one
+  document.getElementById('meta-version').value = designMeta.exported ? bumpVersion(designMeta.version) : designMeta.version || 'v1';
 }
+
+function doJsonExport() {
+  const name = document.getElementById('meta-name').value.trim();
+  const author = document.getElementById('meta-author').value.trim();
+  const version = document.getElementById('meta-version').value.trim() || 'v1';
+
+  // Remember author for session
+  if (author) sessionAuthor = author;
+
+  // Build metadata
+  const parentId = designMeta.id || '';
+  const newId = generateId();
+  const now = new Date().toISOString();
+
+  designMeta = {
+    name: name,
+    author: author,
+    version: version,
+    id: newId,
+    parent_id: parentId,
+    exported: now,
+  };
+
+  // Build export object
+  const exportObj = {
+    meta: { ...designMeta },
+    params: { ...params },
+  };
+
+  // File name from design name or fallback
+  const safeName = name ? name.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 40) : 'frame_design';
+  const filename = `${safeName}_${version}.json`;
+
+  const blob = new Blob([JSON.stringify(exportObj, null, 2)], {type: 'application/json'});
+  triggerDownload(blob, filename);
+  closeExportModal();
+  redraw(); // refresh canvas metadata display
+}
+
 
 // ═══════════════════════════════════════════════════════
 //  PARAM PANEL BUILD
 // ═══════════════════════════════════════════════════════
 const paramInputs={};
 
-// Helper to create a param input row with slider
 function makeParamRow(key, labelText, body) {
   const range = PARAM_RANGES[key] || [0, 1000, 1];
   const [rMin, rMax, rStep] = range;
 
   const row = document.createElement('div'); row.className = 'param-row';
-
-  // Label
   const lbl = document.createElement('span'); lbl.className = 'param-label';
   lbl.textContent = labelText;
   row.appendChild(lbl);
 
-  // Slider row: ← [range] → [input]
   const srow = document.createElement('div'); srow.className = 'slider-row';
 
   const btnL = document.createElement('button'); btnL.className = 'arrow-btn';
-  btnL.textContent = '‹';
+  btnL.textContent = '\u2039';
   const sld = document.createElement('input');
   sld.type = 'range'; sld.className = 'param-slider';
   sld.min = rMin; sld.max = rMax; sld.step = rStep;
   sld.value = params[key] !== undefined ? params[key] : (rMin+rMax)/2;
   const btnR = document.createElement('button'); btnR.className = 'arrow-btn';
-  btnR.textContent = '›';
+  btnR.textContent = '\u203a';
 
   const inp = document.createElement('input');
   inp.type = 'text'; inp.className = 'param-input';
   inp.value = params[key] !== undefined ? Number(params[key]).toFixed(rStep < 1 ? 1 : 0) : '';
 
-  // Sync helpers
   function apply(v) {
     const clamped = Math.max(rMin, Math.min(rMax, v));
     params[key] = clamped;
@@ -2586,7 +2601,6 @@ function makeParamRow(key, labelText, body) {
   body.appendChild(row);
 }
 
-// Helper to create a select row
 function makeSelectRow(labelText, options, initVal, onChange, body) {
   const row=document.createElement('div'); row.className='param-row';
   const lbl=document.createElement('span'); lbl.className='param-label'; lbl.textContent=labelText;
@@ -2601,7 +2615,6 @@ function makeSelectRow(labelText, options, initVal, onChange, body) {
   return sel;
 }
 
-// Helper to create a collapsible group
 function makeGroup(scroll, name, buildFn, startOpen=true) {
   const gw=document.createElement('div'); gw.className='group-wrap';
   const hdr=document.createElement('div'); hdr.className='group-hdr';
@@ -2623,10 +2636,8 @@ function buildPanel(){
   const scroll=document.getElementById('panel-scroll');
   scroll.innerHTML='';
 
-  // ── 1. GEOMETRY section ───────────────────────────────
   makeGroup(scroll, 'Geometry', body=>{
     GEOM_FIELDS.forEach(([key,lbl])=>makeParamRow(key,lbl,body));
-    // Wheel sizes — arrow toggles tracking by key label (not BSD value)
     function makeWheelRow(labelTxt, keyParam, diaParam, onSet, storeKey) {
       const row = document.createElement('div'); row.className = 'param-row';
       const lbl = document.createElement('span'); lbl.className = 'param-label';
@@ -2634,11 +2645,11 @@ function buildPanel(){
       row.appendChild(lbl);
 
       const trow = document.createElement('div'); trow.className = 'wheel-toggle-row';
-      const btnL = document.createElement('button'); btnL.className = 'arrow-btn'; btnL.textContent = '‹';
+      const btnL = document.createElement('button'); btnL.className = 'arrow-btn'; btnL.textContent = '\u2039';
       const valSpan = document.createElement('span'); valSpan.className = 'wheel-val';
-      const btnR = document.createElement('button'); btnR.className = 'arrow-btn'; btnR.textContent = '›';
+      const btnR = document.createElement('button'); btnR.className = 'arrow-btn'; btnR.textContent = '\u203a';
 
-      function getKey() { return params[keyParam] || WHEEL_KEYS[4]; }  // default '700c'
+      function getKey() { return params[keyParam] || WHEEL_KEYS[4]; }
       function setKey(k) {
         params[keyParam] = k;
         params[diaParam] = WHEEL_SIZES[k];
@@ -2654,7 +2665,6 @@ function buildPanel(){
       btnL.onclick = () => step(-1);
       btnR.onclick = () => step(1);
 
-      // syncDisplay called from setParams when loading a preset
       paramInputs[storeKey] = { syncDisplay: () => { valSpan.textContent = getKey(); } };
 
       trow.appendChild(btnL); trow.appendChild(valSpan); trow.appendChild(btnR);
@@ -2663,7 +2673,6 @@ function buildPanel(){
     }
 
     makeWheelRow('Front Wheel', 'front_wheel_key', 'front_wheel_dia', v=>{
-      // ATC minimum = outer wheel radius + 60mm crown clearance
       const minATC = v/2 + (params.tyre_width||57) + 60;
       if (params.fork_atc < minATC) {
         params.fork_atc = Math.round(minATC);
@@ -2675,25 +2684,20 @@ function buildPanel(){
     makeParamRow('tyre_width', 'Tyre Width (mm)', body);
   }, true);
 
-  // ── 2. FORK section ──────────────────────────────────
   makeGroup(scroll, 'Fork', body=>{
     FORK_FIELDS.forEach(([key,lbl])=>makeParamRow(key,lbl,body));
   }, true);
 
-  // ── 3. TUBE PARAMETERS label (non-collapsible divider) ──
   const divider=document.createElement('div');
   divider.style.cssText='padding:8px 11px 3px;font-size:9px;letter-spacing:2px;color:var(--text-lo);text-transform:uppercase;font-family:Courier New,monospace;border-top:1px solid var(--border);margin-top:4px;';
   divider.textContent='tube parameters';
   scroll.appendChild(divider);
 
-  // ── 4. Bottom Bracket (standard + width toggle) ──────────
   makeGroup(scroll, 'Bottom Bracket', body=>{
-    // Standard select
     const bbOpts=Object.keys(BB_STANDARDS).map(k=>[k,k]);
     makeSelectRow('Standard', bbOpts, 'BSA',
       v=>{ const std=BB_STANDARDS[v]; params.bb_diameter=std.shell; params.bb_bore=std.bore; redraw(); }, body);
 
-    // Width 3-way toggle: 68 / 73 / 83
     const BB_WIDTHS = [68, 73, 83];
     const wrow = document.createElement('div'); wrow.className='param-row';
     const wlbl = document.createElement('span'); wlbl.className='param-label';
@@ -2723,7 +2727,6 @@ function buildPanel(){
     wrow.appendChild(trow);
     body.appendChild(wrow);
 
-    // Store sync ref so setParams can update display
     paramInputs._bbWidthSync = ()=>{
       BB_WIDTHS.forEach((ww,i)=>{
         trow.children[i].style.background = params.bb_width===ww ? 'var(--accent)' : 'var(--hdr-bg)';
@@ -2731,17 +2734,14 @@ function buildPanel(){
         trow.children[i].style.borderColor= params.bb_width===ww ? 'var(--accent-br)':'var(--border)';
       });
     };
-    // Initial highlight
     paramInputs._bbWidthSync();
   }, true);
 
-  // ── 5. Tube groups ────────────────────────────────────
   GROUPS.forEach(({name,fields})=>{
-    // Bottom Bracket already done above — skip it here
     if(name==='Bottom Bracket') return;
     makeGroup(scroll, name, body=>{
       fields.forEach(([key,lbl])=>makeParamRow(key,lbl,body));
-    }, false);  // start collapsed to save space
+    }, false);
   });
 }
 
@@ -2750,11 +2750,10 @@ function setParams(p){
   for(const [k,inp] of Object.entries(paramInputs)){
     if(k.startsWith('_')) {
       if(inp && typeof inp.syncDisplay === 'function') inp.syncDisplay();
-      if(typeof inp === 'function') inp();  // _bbWidthSync
+      if(typeof inp === 'function') inp();
       continue;
     }
     if(k.endsWith('_sld')) {
-      // Sync slider position
       if(params[k.slice(0,-4)] !== undefined) inp.value = params[k.slice(0,-4)];
       continue;
     }
@@ -2771,12 +2770,15 @@ function setParams(p){
 // ═══════════════════════════════════════════════════════
 //  RESET / EXPORT / IMPORT
 // ═══════════════════════════════════════════════════════
-function resetParams(){ setParams({...DEFAULTS}); }
+function resetParams(){
+  designMeta = { name:'', author:sessionAuthor, version:'v1', id:'', parent_id:'', exported:'' };
+  setParams({...DEFAULTS});
+}
 
 function exportJSON(){
-  const blob=new Blob([JSON.stringify(params,null,2)],{type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob); a.download='frame_geometry.json'; a.click();
+  openSave();
+  // Auto-click into JSON meta form after a tick
+  setTimeout(() => showJsonMetaForm(), 50);
 }
 
 function importJSON(){
@@ -2784,7 +2786,29 @@ function importJSON(){
   inp.onchange=e=>{
     const f=e.target.files[0];
     const r=new FileReader();
-    r.onload=ev=>{ try{ setParams(JSON.parse(ev.target.result)); }catch(err){ alert('Invalid JSON'); } };
+    r.onload=ev=>{
+      try {
+        const data = JSON.parse(ev.target.result);
+        // New format: { meta: {...}, params: {...} }
+        if (data.meta && data.params) {
+          designMeta = {
+            name: data.meta.name || '',
+            author: data.meta.author || '',
+            version: data.meta.version || 'v1',
+            id: data.meta.id || '',
+            parent_id: data.meta.parent_id || '',
+            exported: data.meta.exported || '',
+          };
+          if (data.meta.author) sessionAuthor = data.meta.author;
+          setParams(data.params);
+        } else {
+          // Legacy format: flat params object
+          designMeta = { name:'', author:'', version:'v1', id:'', parent_id:'', exported:'' };
+          setParams(data);
+        }
+        redraw();
+      } catch(err) { alert('Invalid JSON'); }
+    };
     r.readAsText(f);
   };
   inp.click();
@@ -2861,16 +2885,12 @@ function loadPreset(){
   const cat=document.getElementById('preset-cat').value;
   const size=document.getElementById('preset-size').value;
   const p=PRESETS[cat]?.[size];
-  if(p) setParams(p);
+  if(p) {
+    designMeta = { name:cat+' '+size, author:sessionAuthor, version:'v1', id:'', parent_id:'', exported:'' };
+    setParams(p);
+  }
 }
 
-function togglePresets(){
-  const body=document.getElementById('preset-body');
-  const btn=document.getElementById('preset-toggle');
-  const open=body.classList.toggle('open');
-  btn.classList.toggle('open',open);
-  btn.textContent=open?'Presets ▾':'Presets ▸';
-}
 
 // ═══════════════════════════════════════════════════════
 //  PANEL RESIZER
@@ -2891,7 +2911,6 @@ window.addEventListener('mouseup',()=>rsz=null);
 // ═══════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════
-// Global error catcher — shows any uncaught error on canvas
 window.addEventListener('error', e=>{
   if(canvas.width>0){
     ctx.fillStyle=T('errFill'); ctx.fillRect(10,10,600,80);
@@ -2907,7 +2926,6 @@ window.addEventListener('error', e=>{
 try { buildPanel(); } catch(e){ console.error('buildPanel failed:',e); }
 try { buildPresetPanel(); } catch(e){ console.error('buildPresetPanel failed:',e); }
 
-// Delay initial draw until browser has computed layout
 requestAnimationFrame(()=>{
   requestAnimationFrame(()=>{
     canvas.width  = wrap.clientWidth;
@@ -2918,22 +2936,24 @@ requestAnimationFrame(()=>{
 });
 </script>
 
-<!-- Toolbar dropdown menus — direct body children so z-index is never trapped -->
+<!-- Toolbar dropdown menus -->
+
 <div class="tb-dd-menu" id="ddm-appearance">
   <div class="dd-label">theme</div>
   <div class="dd-radio-group" id="theme-radios">
-    <button class="dd-radio" data-val="dark"   onclick="setTheme('dark');  syncThemeRadios()">dark</button>
+    <button class="dd-radio active" data-val="dark"   onclick="setTheme('dark');  syncThemeRadios()">dark</button>
     <button class="dd-radio" data-val="light"  onclick="setTheme('light'); syncThemeRadios()">light</button>
-    <button class="dd-radio active" data-val="green"  onclick="setTheme('green'); syncThemeRadios()">green</button>
+    <button class="dd-radio" data-val="green"  onclick="setTheme('green'); syncThemeRadios()">green</button>
     <button class="dd-radio" data-val="orange" onclick="setTheme('orange');syncThemeRadios()">orange</button>
   </div>
 </div>
 
 <div class="tb-dd-menu" id="ddm-elements">
-  <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('grid',this.checked)"><span>grid</span></label>
+  <label class="dd-toggle-row"><input type="checkbox" onchange="setVis('grid',this.checked)"><span>grid</span></label>
   <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('wheels',this.checked)"><span>wheels</span></label>
   <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('fork',this.checked)"><span>fork diagram</span></label>
   <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('cockpit',this.checked)"><span>cockpit</span></label>
+  <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('silhouette',this.checked)"><span>silhouette</span></label>
 </div>
 
 <div class="tb-dd-menu" id="ddm-annotations">
@@ -2959,8 +2979,8 @@ requestAnimationFrame(()=>{
   </div>
 </div>
 
-
 <!-- Export result overlay -->
+
 <div id="export-result-overlay" onclick="if(event.target===this)closeExportResult()">
   <img id="export-result-img" alt="export preview">
   <div id="export-result-msg"></div>
