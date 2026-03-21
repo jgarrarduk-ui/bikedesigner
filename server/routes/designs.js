@@ -4,8 +4,8 @@
  * POST /api/designs
  *
  * Called by the frontend when the user clicks "Order Bespoke Files".
- * Saves the design + PDF to SQLite, creates a Shopify draft order,
- * and returns the Shopify checkout URL.
+ * Saves the design + PDF to SQLite, creates a WooCommerce order,
+ * and returns the WooCommerce checkout URL.
  *
  * Body: {
  *   customerName: string,
@@ -16,16 +16,16 @@
  *
  * Response: {
  *   designId: string,
- *   checkoutUrl: string,  // Shopify invoice URL or placeholder
+ *   checkoutUrl: string,  // WooCommerce order-pay URL or placeholder
  *   message: string,
  * }
  */
 
 const express  = require('express');
 const { v4: uuidv4 } = require('uuid');
-const db       = require('../db');
-const shopify  = require('../services/shopify');
-const email    = require('../services/email');
+const db           = require('../db');
+const woocommerce  = require('../services/woocommerce');
+const email        = require('../services/email');
 
 const router = express.Router();
 
@@ -62,44 +62,44 @@ router.post('/', async (req, res) => {
     return res.status(500).json({ error: 'Failed to save design. Please try again.' });
   }
 
-  // ── Create Shopify draft order ───────────────────────────────────────────────
+  // ── Create WooCommerce order ──────────────────────────────────────────────────
   let checkoutUrl;
-  let shopifyOrderId;
+  let wcOrderId;
 
-  if (shopify.isConfigured()) {
+  if (woocommerce.isConfigured()) {
     try {
-      const result = await shopify.createDraftOrder({
+      const result = await woocommerce.createOrder({
         designId,
         customerName: customerName.trim(),
         customerEmail: customerEmail.toLowerCase().trim(),
         params,
       });
-      checkoutUrl    = result.checkoutUrl;
-      shopifyOrderId = result.shopifyOrderId;
+      checkoutUrl = result.checkoutUrl;
+      wcOrderId   = result.wcOrderId;
 
       db.prepare(`
         UPDATE designs SET status = 'checkout_created',
-          shopify_order_id = ?, shopify_checkout_url = ?
+          wc_order_id = ?, wc_checkout_url = ?
         WHERE id = ?
-      `).run(shopifyOrderId, checkoutUrl, designId);
+      `).run(wcOrderId, checkoutUrl, designId);
     } catch (err) {
-      console.error('[designs] Shopify error:', err.message);
+      console.error('[designs] WooCommerce error:', err.message);
       // Don't fail the request — log and fall through to placeholder
       checkoutUrl = null;
     }
   }
 
-  // ── Fallback when Shopify isn't configured ───────────────────────────────────
+  // ── Fallback when WooCommerce isn't configured ────────────────────────────────
   if (!checkoutUrl) {
     const base = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3001}`;
     checkoutUrl = `${base}/order-confirmation?design=${designId}&status=pending`;
-    console.warn('[designs] Shopify not configured — using placeholder checkout URL:', checkoutUrl);
+    console.warn('[designs] WooCommerce not configured — using placeholder checkout URL:', checkoutUrl);
   }
 
   // ── Send confirmation email ──────────────────────────────────────────────────
   try {
     await email.sendOrderConfirmation({
-      to: customerEmail.toLowerCase().trim(),
+      to:           customerEmail.toLowerCase().trim(),
       customerName: customerName.trim(),
       designId,
     });

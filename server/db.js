@@ -26,8 +26,8 @@ db.exec(`
     pdf_base64           TEXT,                   -- PDF generated client-side, stored as base64
     status               TEXT NOT NULL DEFAULT 'pending',
                                                  -- pending | checkout_created | paid | delivered | failed
-    shopify_order_id     TEXT,
-    shopify_checkout_url TEXT,
+    wc_order_id          TEXT,
+    wc_checkout_url      TEXT,
     download_token       TEXT,
     download_expires_at  DATETIME,
     delivered_at         DATETIME
@@ -36,7 +36,7 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_designs_email        ON designs (customer_email);
   CREATE INDEX IF NOT EXISTS idx_designs_status       ON designs (status);
   CREATE INDEX IF NOT EXISTS idx_designs_download_tok ON designs (download_token);
-  CREATE INDEX IF NOT EXISTS idx_designs_shopify_id   ON designs (shopify_order_id);
+  CREATE INDEX IF NOT EXISTS idx_designs_wc_id        ON designs (wc_order_id);
 `);
 
 module.exports = db;

@@ -1,7 +1,7 @@
 {
   "name": "creature-cycles-backend",
   "version": "1.0.0",
-  "description": "Backend for Creature Cycles Bike Designer — stores designs, handles Shopify checkout, delivers files by email.",
+  "description": "Backend for Creature Cycles Bike Designer — stores designs, handles WooCommerce checkout, delivers files by email.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

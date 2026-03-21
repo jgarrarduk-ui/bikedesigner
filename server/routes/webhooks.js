@@ -1,93 +1,105 @@
 'use strict';
 
 /**
- * Shopify webhook handler
+ * WooCommerce webhook handler
  *
- * Listens for `orders/paid` events from Shopify.
- * On receipt: validates HMAC, finds matching design, generates download token,
- * sends email with download link.
+ * Listens for `order.updated` events from WooCommerce.
+ * On receipt: validates HMAC signature, checks order status is paid,
+ * finds matching design, generates download token, sends email with download link.
  *
- * Shopify setup:
- *   Admin → Settings → Notifications → Webhooks
- *   Topic: orders/paid
- *   URL:   https://your-domain.com/api/webhooks/shopify/orders-paid
- *   Format: JSON
- *   Secret: set as SHOPIFY_WEBHOOK_SECRET env var
+ * WooCommerce setup:
+ *   WooCommerce → Settings → Advanced → Webhooks → Add webhook
+ *   Name:   Order paid
+ *   Status: Active
+ *   Topic:  Order updated
+ *   URL:    https://your-domain.com/api/webhooks/woocommerce/order-updated
+ *   Secret: set as WC_WEBHOOK_SECRET env var
  */
 
 const express  = require('express');
 const crypto   = require('crypto');
 const { v4: uuidv4 } = require('uuid');
-const db       = require('../db');
-const email    = require('../services/email');
-const shopify  = require('../services/shopify');
+const db         = require('../db');
+const email      = require('../services/email');
+const woocommerce = require('../services/woocommerce');
 
 const router = express.Router();
 
+// Statuses that indicate a completed payment in WooCommerce
+const PAID_STATUSES = new Set(['processing', 'completed']);
+
 // ── HMAC validation middleware ───────────────────────────────────────────────
-function verifyShopifyHmac(req, res, next) {
-  const secret = process.env.SHOPIFY_WEBHOOK_SECRET;
+function verifyWooCommerceSignature(req, res, next) {
+  const secret = process.env.WC_WEBHOOK_SECRET;
   if (!secret) {
     // Webhook secret not configured — allow through in dev, warn loudly
-    console.warn('[webhook] SHOPIFY_WEBHOOK_SECRET not set — skipping HMAC check (dev mode only)');
+    console.warn('[webhook] WC_WEBHOOK_SECRET not set — skipping signature check (dev mode only)');
     return next();
   }
 
-  const hmacHeader = req.headers['x-shopify-hmac-sha256'];
-  if (!hmacHeader) {
-    return res.status(401).json({ error: 'Missing HMAC header' });
+  const sigHeader = req.headers['x-wc-webhook-signature'];
+  if (!sigHeader) {
+    return res.status(401).json({ error: 'Missing webhook signature header' });
   }
 
-  // req.rawBody is populated by express.raw() in index.js for this route
+  // req.rawBody is populated by express.raw() below
   const digest = crypto
     .createHmac('sha256', secret)
     .update(req.rawBody)
     .digest('base64');
 
-  const safe = Buffer.from(digest);
-  const provided = Buffer.from(hmacHeader);
+  const safe     = Buffer.from(digest);
+  const provided = Buffer.from(sigHeader);
 
   if (safe.length !== provided.length || !crypto.timingSafeEqual(safe, provided)) {
-    console.warn('[webhook] HMAC mismatch — rejecting request');
-    return res.status(401).json({ error: 'HMAC verification failed' });
+    console.warn('[webhook] Signature mismatch — rejecting request');
+    return res.status(401).json({ error: 'Signature verification failed' });
   }
 
   next();
 }
 
-// ── orders/paid ──────────────────────────────────────────────────────────────
+// ── order.updated ─────────────────────────────────────────────────────────────
 router.post(
-  '/shopify/orders-paid',
+  '/woocommerce/order-updated',
   express.raw({ type: 'application/json' }),  // raw body for HMAC
   (req, res, next) => {
     req.rawBody = req.body;
     try { req.body = JSON.parse(req.rawBody.toString('utf8')); } catch { req.body = {}; }
     next();
   },
-  verifyShopifyHmac,
+  verifyWooCommerceSignature,
   async (req, res) => {
-    // Acknowledge Shopify immediately (must respond within 5s)
+    // Acknowledge WooCommerce immediately
     res.status(200).json({ received: true });
 
-    const order = req.body;
-    const shopifyOrderId = String(order.id || '');
-    console.log(`[webhook] orders/paid — Shopify order ${shopifyOrderId}`);
+    const order    = req.body;
+    const wcOrderId = String(order.id || '');
+    const status   = order.status || '';
 
-    if (!shopifyOrderId) return;
+    console.log(`[webhook] order.updated — WooCommerce order ${wcOrderId}, status: ${status}`);
 
-    // ── Find design by Shopify order ID ─────────────────────────────────────
-    let design = db.prepare('SELECT * FROM designs WHERE shopify_order_id = ?').get(shopifyOrderId);
+    if (!wcOrderId) return;
 
-    // Fallback: look up design_id from note_attributes via Shopify API
+    // Only process paid statuses
+    if (!PAID_STATUSES.has(status)) {
+      console.info(`[webhook] Order ${wcOrderId} status '${status}' — not a paid status, ignoring`);
+      return;
+    }
+
+    // ── Find design by WooCommerce order ID ──────────────────────────────────
+    let design = db.prepare('SELECT * FROM designs WHERE wc_order_id = ?').get(wcOrderId);
+
+    // Fallback: look up design_id from order meta_data via WooCommerce API
     if (!design) {
-      const designId = await shopify.getDesignIdFromOrder(shopifyOrderId);
+      const designId = await woocommerce.getDesignIdFromOrder(wcOrderId);
       if (designId) {
         design = db.prepare('SELECT * FROM designs WHERE id = ?').get(designId);
       }
     }
 
     if (!design) {
-      console.warn(`[webhook] No design found for Shopify order ${shopifyOrderId}`);
+      console.warn(`[webhook] No design found for WooCommerce order ${wcOrderId}`);
       return;
     }
 
@@ -114,11 +126,11 @@ router.post(
 
     try {
       await email.sendDownloadEmail({
-        to: design.customer_email,
+        to:           design.customer_email,
         customerName: design.customer_name,
-        designId: design.id,
+        designId:     design.id,
         downloadUrl,
-        expiresAt: expiresText,
+        expiresAt:    expiresText,
       });
 
       db.prepare(`UPDATE designs SET status = 'delivered', delivered_at = CURRENT_TIMESTAMP WHERE id = ?`)

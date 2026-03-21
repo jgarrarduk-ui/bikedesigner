@@ -29,7 +29,7 @@ app.use(cors({
     cb(new Error(`CORS: origin ${origin} not allowed`));
   },
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'X-Shopify-Hmac-SHA256'],
+  allowedHeaders: ['Content-Type', 'X-WC-Webhook-Signature'],
 }));
 
 // ── Body parsing ──────────────────────────────────────────────────────────────
@@ -46,10 +46,10 @@ app.use('/api/download', downloadRouter);
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {
   res.json({
-    status: 'ok',
-    shopify: !!(process.env.SHOPIFY_STORE_DOMAIN && process.env.SHOPIFY_ADMIN_API_TOKEN),
-    email:   !!(process.env.SMTP_HOST && process.env.SMTP_USER),
-    ts:      new Date().toISOString(),
+    status:      'ok',
+    woocommerce: !!(process.env.WC_URL && process.env.WC_CONSUMER_KEY),
+    email:       !!(process.env.SMTP_HOST && process.env.SMTP_USER),
+    ts:          new Date().toISOString(),
   });
 });
 
@@ -73,7 +73,7 @@ app.use((err, _req, res, _next) => {
 // ── Start ─────────────────────────────────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`Creature Cycles backend listening on port ${PORT}`);
-  console.log(`  Shopify : ${process.env.SHOPIFY_STORE_DOMAIN || '(not configured)'}`);
-  console.log(`  Email   : ${process.env.SMTP_HOST            || '(not configured)'}`);
-  console.log(`  DB      : ${process.env.DB_PATH              || './data/designs.db'}`);
+  console.log(`  WooCommerce : ${process.env.WC_URL   || '(not configured)'}`);
+  console.log(`  Email       : ${process.env.SMTP_HOST || '(not configured)'}`);
+  console.log(`  DB          : ${process.env.DB_PATH   || './data/designs.db'}`);
 });
