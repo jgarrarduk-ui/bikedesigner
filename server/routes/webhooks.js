@@ -18,7 +18,6 @@
 
 const express  = require('express');
 const crypto   = require('crypto');
-const { v4: uuidv4 } = require('uuid');
 const db         = require('../db');
 const email      = require('../services/email');
 const woocommerce = require('../services/woocommerce');
@@ -103,43 +102,24 @@ router.post(
       return;
     }
 
-    if (design.status === 'paid' || design.status === 'delivered') {
-      console.info(`[webhook] Design ${design.id} already processed — skipping`);
+    if (!['pending', 'checkout_created'].includes(design.status)) {
+      console.info(`[webhook] Design ${design.id} status '${design.status}' — already past payment, skipping`);
       return;
     }
 
-    // ── Mark as paid, generate download token ────────────────────────────────
-    const downloadToken = uuidv4().replace(/-/g, '');
-    const expiryHours   = Number(process.env.DOWNLOAD_TOKEN_EXPIRES_HOURS) || 72;
-    const expiresAt     = new Date(Date.now() + expiryHours * 60 * 60 * 1000).toISOString();
+    // ── Mark as paid ─────────────────────────────────────────────────────────
+    db.prepare(`UPDATE designs SET status = 'paid' WHERE id = ?`).run(design.id);
 
-    db.prepare(`
-      UPDATE designs
-      SET status = 'paid', download_token = ?, download_expires_at = ?
-      WHERE id = ?
-    `).run(downloadToken, expiresAt, design.id);
-
-    // ── Send download email ──────────────────────────────────────────────────
-    const base        = process.env.BASE_URL || 'http://localhost:3001';
-    const downloadUrl = `${base}/api/download/${downloadToken}`;
-    const expiresText = `${expiryHours} hours`;
-
+    // ── Send payment confirmation (design now in review queue) ───────────────
     try {
-      await email.sendDownloadEmail({
+      await email.sendPaymentConfirmation({
         to:           design.customer_email,
         customerName: design.customer_name,
         designId:     design.id,
-        downloadUrl,
-        expiresAt:    expiresText,
       });
-
-      db.prepare(`UPDATE designs SET status = 'delivered', delivered_at = CURRENT_TIMESTAMP WHERE id = ?`)
-        .run(design.id);
-
-      console.log(`[webhook] Delivered design ${design.id} to ${design.customer_email}`);
+      console.log(`[webhook] Payment confirmed for design ${design.id} — sent review queue email to ${design.customer_email}`);
     } catch (err) {
-      console.error(`[webhook] Failed to send email for design ${design.id}:`, err.message);
-      db.prepare(`UPDATE designs SET status = 'failed' WHERE id = ?`).run(design.id);
+      console.error(`[webhook] Failed to send payment confirmation for design ${design.id}:`, err.message);
     }
   },
 );

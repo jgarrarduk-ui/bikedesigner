@@ -25,7 +25,7 @@ db.exec(`
     params               TEXT NOT NULL,          -- JSON string of bike parameters
     pdf_base64           TEXT,                   -- PDF generated client-side, stored as base64
     status               TEXT NOT NULL DEFAULT 'pending',
-                                                 -- pending | checkout_created | paid | delivered | failed
+                                                 -- pending | checkout_created | paid | in_review | accepted | delivered | failed
     wc_order_id          TEXT,
     wc_checkout_url      TEXT,
     download_token       TEXT,
@@ -38,5 +38,21 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_designs_download_tok ON designs (download_token);
   CREATE INDEX IF NOT EXISTS idx_designs_wc_id        ON designs (wc_order_id);
 `);
+
+// Migrations — add columns introduced after initial schema
+const existingCols = db.pragma('table_info(designs)').map(c => c.name);
+if (!existingCols.includes('review_token')) {
+  db.exec('ALTER TABLE designs ADD COLUMN review_token TEXT');
+  db.exec('CREATE INDEX IF NOT EXISTS idx_designs_review_tok ON designs (review_token)');
+}
+if (!existingCols.includes('review_pdf_base64')) {
+  db.exec('ALTER TABLE designs ADD COLUMN review_pdf_base64 TEXT');
+}
+if (!existingCols.includes('review_sent_at')) {
+  db.exec('ALTER TABLE designs ADD COLUMN review_sent_at DATETIME');
+}
+if (!existingCols.includes('accepted_at')) {
+  db.exec('ALTER TABLE designs ADD COLUMN accepted_at DATETIME');
+}
 
 module.exports = db;

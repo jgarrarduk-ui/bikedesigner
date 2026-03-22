@@ -31,8 +31,8 @@ router.get('/:token', (req, res) => {
     return res.status(410).send('This download link has expired. Please contact us to request a new one.');
   }
 
-  if (!['paid', 'delivered'].includes(design.status)) {
-    return res.status(402).send('Payment not yet confirmed. If you have just paid, please wait a few minutes and try again.');
+  if (!['accepted', 'delivered'].includes(design.status)) {
+    return res.status(402).send('Your design has not yet been accepted. Please accept the design review before downloading your final files.');
   }
 
   // ── Stream a ZIP ───────────────────────────────────────────────────────────
@@ -65,12 +65,11 @@ router.get('/:token', (req, res) => {
 
   archive.append(jsonExport, { name: 'design.json' });
 
-  // ── design.pdf (if available) ──────────────────────────────────────────────
-  if (design.pdf_base64) {
-    // Strip data URI prefix if present
-    const b64 = design.pdf_base64.replace(/^data:[^;]+;base64,/, '');
-    const pdfBuffer = Buffer.from(b64, 'base64');
-    archive.append(pdfBuffer, { name: 'design.pdf' });
+  // ── design.pdf — prefer the reviewed/final PDF from admin, fall back to original ──
+  const pdfSource = design.review_pdf_base64 || design.pdf_base64;
+  if (pdfSource) {
+    const b64 = pdfSource.replace(/^data:[^;]+;base64,/, '');
+    archive.append(Buffer.from(b64, 'base64'), { name: 'design.pdf' });
   }
 
   // ── README ─────────────────────────────────────────────────────────────────

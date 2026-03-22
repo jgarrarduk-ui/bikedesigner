@@ -9,6 +9,8 @@ const path    = require('path');
 const designsRouter   = require('./routes/designs');
 const webhooksRouter  = require('./routes/webhooks');
 const downloadRouter  = require('./routes/download');
+const reviewRouter    = require('./routes/review');
+const adminRouter     = require('./routes/admin');
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -29,7 +31,7 @@ app.use(cors({
     cb(new Error(`CORS: origin ${origin} not allowed`));
   },
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'X-WC-Webhook-Signature'],
+  allowedHeaders: ['Content-Type', 'X-WC-Webhook-Signature', 'Authorization'],
 }));
 
 // ── Body parsing ──────────────────────────────────────────────────────────────
@@ -42,6 +44,8 @@ app.use(express.json({ limit: '10mb' })); // 10 MB for PDF base64 payloads
 // ── API routes ────────────────────────────────────────────────────────────────
 app.use('/api/designs',  designsRouter);
 app.use('/api/download', downloadRouter);
+app.use('/api/review',   reviewRouter);
+app.use('/api/admin',    adminRouter);
 
 // ── Health check ──────────────────────────────────────────────────────────────
 app.get('/api/health', (_req, res) => {
@@ -51,6 +55,11 @@ app.get('/api/health', (_req, res) => {
     email:       !!(process.env.SMTP_HOST && process.env.SMTP_USER),
     ts:          new Date().toISOString(),
   });
+});
+
+// ── Admin panel ───────────────────────────────────────────────────────────────
+app.get('/admin', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
 // ── Serve static frontend ─────────────────────────────────────────────────────
