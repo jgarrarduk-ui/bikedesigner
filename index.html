@@ -1,14 +1,15 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="green">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Creature Cycles — Bike Designer</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
 
   :root {
-    --font: 'Courier Prime', 'Courier New', monospace;
+    --font:      'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Courier New', monospace;
     --err: #f87171;
   }
 
@@ -35,21 +36,21 @@
   /* ── LIGHT ── */
   [data-theme="light"] {
     --input-bg:    #ffffff;
-    --input-fg:    #1a1030;
-    --bg:          #f0eef8;
-    --panel-bg:    #e8e4f4;
-    --toolbar-bg:  #ddd8f0;
-    --hdr-bg:      #d0c8e8;
-    --border:      #b8b0d4;
-    --accent:      #6d28d9;
-    --accent-hi:   #7c3aed;
-    --accent-br:   #8b5cf6;
-    --text-lo:     #a89cc8;
-    --text-mid:    #5b4f7a;
-    --text-hi:     #3b2f5a;
-    --text-main:   #1a1030;
-    --lavender:    #5b21b6;
-    --lavender-br: #4c1d95;
+    --input-fg:    #111827;
+    --bg:          #f5f6f7;
+    --panel-bg:    #ffffff;
+    --toolbar-bg:  #f0f1f2;
+    --hdr-bg:      #e8e9eb;
+    --border:      #d8d9db;
+    --accent:      #166534;
+    --accent-hi:   #15803d;
+    --accent-br:   #16a34a;
+    --text-lo:     #c8cace;
+    --text-mid:    #6b7280;
+    --text-hi:     #374151;
+    --text-main:   #111827;
+    --lavender:    #15803d;
+    --lavender-br: #166534;
   }
 
   /* ── GREEN ── */
@@ -98,7 +99,7 @@
     background: var(--bg);
     color: var(--text-main);
     font-family: var(--font);
-    font-size: 13px;
+    font-size: 14px;
     display: flex;
     flex-direction: column;
     height: 100vh;
@@ -109,10 +110,10 @@
   #toolbar {
     background: var(--toolbar-bg);
     border-bottom: 1px solid var(--border);
-    height: 26px;
+    height: 34px;
     display: flex;
     align-items: center;
-    padding: 0 8px;
+    padding: 0 10px;
     gap: 0;
     flex-shrink: 0;
   }
@@ -125,13 +126,13 @@
   }
 
   #logo-text {
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 700;
     color: var(--lavender);
     letter-spacing: 3px;
     font-style: normal;
     text-transform: uppercase;
-    font-family: 'Courier New', monospace;
+    font-family: var(--font-mono);
   }
 
   #logo-sub {
@@ -153,12 +154,12 @@
     border: none;
     color: var(--text-mid);
     font-family: var(--font);
-    font-size: 10px;
-    padding: 3px 8px;
+    font-size: 12px;
+    padding: 4px 10px;
     cursor: pointer;
     border-radius: 3px;
     transition: background 0.15s, color 0.15s;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     white-space: nowrap;
   }
   .tb-btn:hover { background: var(--hdr-bg); color: var(--lavender); }
@@ -218,17 +219,17 @@
     background: var(--hdr-bg);
     color: var(--lavender-br);
     font-family: var(--font);
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 1.5px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
     text-transform: uppercase;
-    padding: 6px 10px;
+    padding: 7px 10px;
     border: none;
     text-align: left;
     cursor: pointer;
-    transition: background 0.1s;
+    transition: background 0.1s, color 0.1s;
   }
-  .group-btn:hover { background: #200d40; }
+  .group-btn:hover { background: var(--accent); color: #fff; }
 
   .group-body {
     padding: 2px 8px 4px 11px;
@@ -256,7 +257,8 @@
 
   .param-label {
     color: var(--text-hi);
-    font-size: 10px;
+    font-size: 12px;
+    font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -371,14 +373,14 @@
   }
 
   .param-input {
-    width: 54px;
+    width: 58px;
     background: var(--input-bg);
     color: var(--input-fg);
     border: 1px solid var(--accent);
     border-radius: 2px;
-    padding: 1px 4px;
-    font-family: var(--font);
-    font-size: 10px;
+    padding: 2px 4px;
+    font-family: var(--font-mono);
+    font-size: 11px;
     text-align: right;
     outline: none;
     flex-shrink: 0;
@@ -395,10 +397,10 @@
   .wheel-val {
     flex: 1;
     text-align: center;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     color: var(--lavender-br);
-    font-family: var(--font);
+    font-family: var(--font-mono);
     background: var(--hdr-bg);
     border: 1px solid var(--border);
     border-radius: 2px;
@@ -412,9 +414,9 @@
     color: var(--input-fg);
     border: 1px solid var(--accent);
     border-radius: 2px;
-    padding: 2px 4px;
+    padding: 3px 4px;
     font-family: var(--font);
-    font-size: 11px;
+    font-size: 12px;
     outline: none;
   }
 
@@ -422,13 +424,13 @@
   .derived-row {
     display: flex;
     justify-content: space-between;
-    padding: 3px 8px 3px 11px;
-    font-size: 10px;
+    padding: 5px 8px 5px 11px;
+    font-size: 12px;
     color: var(--text-mid);
     border-top: 1px solid var(--border);
     margin-top: 2px;
   }
-  .derived-val { color: var(--lavender-br); font-weight: 700; }
+  .derived-val { color: var(--lavender-br); font-weight: 700; font-family: var(--font-mono); }
 
   /* Panel buttons */
   #panel-btns {
@@ -451,13 +453,13 @@
     background: var(--hdr-bg);
     color: var(--lavender);
     border: 1px solid var(--accent);
-    border-radius: 2px;
+    border-radius: 3px;
     font-family: var(--font);
-    font-size: 11px;
-    font-weight: 700;
-    padding: 5px 4px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px 4px;
     cursor: pointer;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     transition: background 0.1s, color 0.1s;
   }
   .panel-btn:hover { background: var(--accent); color: #fff; }
@@ -492,8 +494,8 @@
     gap: 16px;
   }
   #order-modal h2 {
-    font-size: 12px;
-    letter-spacing: 2px;
+    font-size: 14px;
+    letter-spacing: 1px;
     text-transform: uppercase;
     color: var(--lavender);
     font-weight: 700;
@@ -501,8 +503,9 @@
   }
   .order-field { display: flex; flex-direction: column; gap: 5px; }
   .order-field label {
-    font-size: 10px;
-    letter-spacing: 1px;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
     text-transform: uppercase;
     color: var(--text-mid);
   }
@@ -523,13 +526,13 @@
     border: 1px solid var(--border);
     border-radius: 3px;
     padding: 10px 12px;
-    font-size: 11px;
+    font-size: 13px;
     color: var(--text-hi);
     line-height: 1.8;
   }
-  #order-summary .sum-label { color: var(--text-lo); margin-right: 4px; }
+  #order-summary .sum-label { color: var(--text-mid); margin-right: 4px; }
   #order-includes {
-    font-size: 11px;
+    font-size: 13px;
     color: var(--text-mid);
     line-height: 1.7;
   }
@@ -539,8 +542,8 @@
     border: 1px solid var(--border);
     color: var(--text-mid);
     font-family: var(--font);
-    font-size: 11px;
-    padding: 7px 18px;
+    font-size: 13px;
+    padding: 8px 18px;
     border-radius: 3px;
     cursor: pointer;
     transition: background 0.15s, color 0.15s;
@@ -582,9 +585,9 @@
   #statusbar {
     background: var(--panel-bg);
     border-top: 1px solid var(--border);
-    color: var(--text-lo);
-    font-size: 10px;
-    padding: 3px 12px;
+    color: var(--text-mid);
+    font-size: 11px;
+    padding: 4px 12px;
     flex-shrink: 0;
     white-space: nowrap;
     overflow: hidden;
@@ -643,13 +646,13 @@
     color: var(--accent-br);
     border: none;
     font-family: var(--font);
-    font-size: 11px;
-    font-weight: 700;
-    padding: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 7px;
     cursor: pointer;
     border-radius: 2px;
     margin-top: 4px;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     transition: background 0.15s;
   }
   #preset-load:hover { background: var(--accent); color: #fff; }
@@ -688,8 +691,8 @@
   @media (max-width: 900px) {
     #panel { width: 240px; min-width: 180px; }
     #logo-sub { display: none; }
-    .tb-btn { padding: 5px 7px; font-size: 10px; }
-    #logo-text { font-size: 13px; letter-spacing: 2px; }
+    .tb-btn { padding: 5px 8px; font-size: 11px; }
+    #logo-text { font-size: 12px; letter-spacing: 2px; }
   }
 
   /* Mobile: panel slides under canvas, toggled by hamburger */
@@ -697,8 +700,8 @@
     body { overflow: hidden; }
 
     #toolbar {
-      height: 48px;
-      padding: 0 8px;
+      height: 52px;
+      padding: 0 10px;
       gap: 2px;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
@@ -724,7 +727,7 @@
 
     #resizer { display: none; }
 
-    #canvas-wrap { flex: none; height: calc(58vh - 48px); min-height: 100px; }
+    #canvas-wrap { flex: none; height: calc(58vh - 52px); min-height: 100px; }
 
     /* Panel header toggle row */
     #panel-mobile-hdr {
@@ -739,9 +742,9 @@
       user-select: none;
     }
     #panel-mobile-hdr span {
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 1.5px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
       text-transform: uppercase;
       color: var(--lavender-br);
       font-family: var(--font);
@@ -755,9 +758,9 @@
       transform: rotate(180deg);
     }
 
-    .param-label { font-size: 10px; }
-    .param-input { width: 64px; font-size: 10px; }
-    .param-select { width: 80px; font-size: 10px; }
+    .param-label { font-size: 12px; }
+    .param-input { width: 64px; font-size: 12px; }
+    .param-select { width: 80px; font-size: 12px; }
 
     /* Preset panel repositioned on mobile */
     #preset-panel {
@@ -804,11 +807,12 @@
   }
   .tb-dd-menu.open { display: block; }
   .dd-label {
-    font-size: 9px;
-    letter-spacing: 1.5px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
     text-transform: uppercase;
-    color: var(--text-lo);
-    padding: 4px 10px 2px;
+    color: var(--text-mid);
+    padding: 6px 12px 3px;
   }
   .dd-radio-group {
     display: flex;
@@ -835,12 +839,12 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 14px;
+    padding: 9px 14px;
     cursor: pointer;
-    font-size: 12px;
-    color: var(--text-mid);
+    font-size: 13px;
+    color: var(--text-hi);
     transition: background 0.1s;
-    min-height: 36px;
+    min-height: 38px;
   }
   .dd-toggle-row:hover { background: var(--hdr-bg); }
   .dd-toggle-row input[type=checkbox] {
@@ -966,7 +970,7 @@
 
     #preset-panel {
       position: fixed;
-      top: 48px;
+      top: 52px;
       right: 0;
       left: 0;
       bottom: auto;
@@ -1003,7 +1007,7 @@
 
     #zoom-controls {
       bottom: auto;
-      top: 12px;
+      top: 56px;
       left: 8px;
     }
   }
