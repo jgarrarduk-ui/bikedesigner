@@ -1389,22 +1389,22 @@ const THEMES = {
     errFill:   '#1a0820',
   },
   light: {
-    bg:        '#f0eef8',
-    grid:      '#c8c0e0',
-    ground:    '#9b8fc0',
-    wheel:     '#6655aa',
-    wheelLbl:  '#9b8fc0',
-    tubeFill:  '#c4b5fd',
-    tubeStk:   '#4c1d95',
-    lugFill:   '#ddd6fe',
-    lugStk:    '#4c1d95',
-    bbBore:    '#f0eef8',
-    crDash:    '#a78bfa',
-    forkFill:  '#a78bfa',
-    forkStk:   '#4c1d95',
-    forkAnn:   '#6d28d9',
-    ann:       '#6d28d9',
-    ann2:      '#8b5cf6',
+    bg:        '#ffffff',
+    grid:      '#e8f5e9',
+    ground:    '#86efac',
+    wheel:     '#15803d',
+    wheelLbl:  '#166534',
+    tubeFill:  '#dcfce7',
+    tubeStk:   '#15803d',
+    lugFill:   '#bbf7d0',
+    lugStk:    '#15803d',
+    bbBore:    '#ffffff',
+    crDash:    '#86efac',
+    forkFill:  '#d1fae5',
+    forkStk:   '#15803d',
+    forkAnn:   '#16a34a',
+    ann:       '#15803d',
+    ann2:      '#16a34a',
     errFill:   '#fee2e2',
   },
   green: {
@@ -1447,7 +1447,7 @@ const THEMES = {
   },
 };
 
-let currentTheme = 'green';
+let currentTheme = 'light';
 
 function setTheme(name) {
   currentTheme = name;
@@ -1869,7 +1869,7 @@ function arrowV(sy1,sy2,sx,col,lw=1){
 
 function label(sx,sy,text,col,align='center',baseline='middle',size=10){
   ctx.fillStyle=col;
-  ctx.font=`${size}px 'Courier Prime','Courier New',monospace`;
+  ctx.font=`${size}px 'Inter',system-ui,sans-serif`;
   ctx.textAlign=align; ctx.textBaseline=baseline;
   ctx.fillText(text,sx,sy);
 }
