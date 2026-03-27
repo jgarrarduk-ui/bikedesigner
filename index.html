@@ -1254,6 +1254,7 @@ const DEFAULTS = {
 // ── Slider ranges for every parameter ────────────────────────
 const PARAM_RANGES = {
   reach:                    [200, 650, 1],
+  stack:                    [380, 800, 1],
   chainstay_length:         [300, 600, 1],
   ht_angle:                 [50,  90,  0.5],
   st_angle:                 [60,  85,  0.5],
@@ -1289,6 +1290,7 @@ const PARAM_RANGES = {
 // ── GEOMETRY section ─────────────────────────────────────────
 const GEOM_FIELDS = [
   ['reach',            'Reach (mm)'],
+  ['stack',            'Stack (mm)'],
   ['chainstay_length', 'CS Length (mm)'],
   ['ht_angle',         'HT Angle (°)'],
   ['st_angle',         'ST Angle (°)'],
@@ -2366,8 +2368,7 @@ function updateStatus(g){
   document.getElementById('statusbar').textContent =
     `Wheelbase: ${g.wheelbase.toFixed(1)} mm  ·  `+
     `Front Centre: ${g.front_centre.toFixed(1)} mm  ·  `+
-    `Trail: ${g.trail.toFixed(1)} mm  ·  `+
-    `Stack (derived): ${g.stack.toFixed(1)} mm`;
+    `Trail: ${g.trail.toFixed(1)} mm`;
   document.getElementById('derived-wb').textContent = g.wheelbase.toFixed(1)+' mm';
 }
 
@@ -2661,6 +2662,66 @@ function openLoad(){
 // ═══════════════════════════════════════════════════════
 const paramInputs={};
 
+// ── Stack ↔ Fork ATC coupling ─────────────────────────────────────────────────
+// Algebraic relationship (derived from the geometry engine):
+//   stack = front_axle_y + (f_along + lower_hs + ht_len) × sin(ha) − rake × cos(ha)
+//   where  f_along = √(atc² − rake²)
+//          front_axle_y = bb_drop + fwd − rwd  (relative to BB centre)
+//
+// Rules:
+//   stack slider moved   → recalculate fork_atc (HT angle / rake / headset stay fixed)
+//   fork_atc slider moved → recalculate stack
+//   any other param changed → stack follows from current fork_atc
+
+function calcStackFromAtc(p) {
+  const ha  = d2r(p.ht_angle);
+  const fo  = p.fork_offset;
+  const tw  = p.tyre_width || 57;
+  const rwd = p.rear_wheel_dia  / 2 + tw;
+  const fwd = p.front_wheel_dia / 2 + tw;
+  const front_axle_y = p.bb_drop + fwd - rwd;
+  const f_along = Math.sqrt(Math.max(0, p.fork_atc * p.fork_atc - fo * fo));
+  return front_axle_y
+    + (f_along + p.lower_headset_height + p.ht_length) * Math.sin(ha)
+    - fo * Math.cos(ha);
+}
+
+function calcAtcFromStack(p) {
+  const ha  = d2r(p.ht_angle);
+  const fo  = p.fork_offset;
+  const tw  = p.tyre_width || 57;
+  const rwd = p.rear_wheel_dia  / 2 + tw;
+  const fwd = p.front_wheel_dia / 2 + tw;
+  const front_axle_y = p.bb_drop + fwd - rwd;
+  const f_along = (p.stack + fo * Math.cos(ha) - front_axle_y) / Math.sin(ha)
+                  - p.lower_headset_height - p.ht_length;
+  if (f_along <= 0) return null;  // geometry not achievable
+  const atc = Math.sqrt(f_along * f_along + fo * fo);
+  const [mn, mx] = PARAM_RANGES.fork_atc;
+  return Math.max(mn, Math.min(mx, atc));
+}
+
+function syncParamDisplay(key, value) {
+  const rStep = (PARAM_RANGES[key] || [0, 1000, 1])[2];
+  if (paramInputs[key])          paramInputs[key].value          = Number(value).toFixed(rStep < 1 ? 1 : 0);
+  if (paramInputs[key + '_sld']) paramInputs[key + '_sld'].value = value;
+}
+
+function syncStackAtc(changedKey) {
+  if (changedKey === 'stack') {
+    const atc = calcAtcFromStack(params);
+    if (atc !== null) {
+      params.fork_atc = atc;
+      syncParamDisplay('fork_atc', atc);
+    }
+  } else {
+    // fork_atc changed, or any other param — stack follows
+    const st = calcStackFromAtc(params);
+    params.stack = st;
+    syncParamDisplay('stack', st);
+  }
+}
+
 // Helper to create a param input row with slider
 function makeParamRow(key, labelText, body) {
   const range = PARAM_RANGES[key] || [0, 1000, 1];
@@ -2695,6 +2756,7 @@ function makeParamRow(key, labelText, body) {
     params[key] = clamped;
     sld.value = clamped;
     inp.value = Number(clamped).toFixed(rStep < 1 ? 1 : 0);
+    syncStackAtc(key);
     redraw();
   }
 
@@ -2773,6 +2835,7 @@ function buildPanel(){
         params[diaParam] = WHEEL_SIZES[k];
         valSpan.textContent = k;
         if (onSet) onSet(WHEEL_SIZES[k]);
+        syncStackAtc('wheel');
         redraw();
       }
       function step(dir) {
@@ -2876,6 +2939,7 @@ function buildPanel(){
 
 function setParams(p){
   Object.assign(params,p);
+  params.stack = calcStackFromAtc(params);
   for(const [k,inp] of Object.entries(paramInputs)){
     if(k.startsWith('_')) {
       if(inp && typeof inp.syncDisplay === 'function') inp.syncDisplay();
@@ -3178,6 +3242,7 @@ async function submitOrder() {
 
 // ═══════════════════════════════════════════════════════
 
+params.stack = calcStackFromAtc(params);
 try { buildPanel(); } catch(e){ console.error('buildPanel failed:',e); }
 try { buildPresetPanel(); } catch(e){ console.error('buildPresetPanel failed:',e); }
 
