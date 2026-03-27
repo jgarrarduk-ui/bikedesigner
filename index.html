@@ -1616,9 +1616,11 @@ let params = {...DEFAULTS};
 const canvas  = document.getElementById('canvas');
 const ctx     = canvas.getContext('2d');
 const wrap    = document.getElementById('canvas-wrap');
+let dpr  = 1;
+let cssW = 0, cssH = 0;
 
 function mmToScreen(x,y) {
-  const cx=canvas.width/2+offset[0], cy=canvas.height/2+offset[1];
+  const cx=cssW/2+offset[0], cy=cssH/2+offset[1];
   return [cx+x*scale, cy-y*scale];
 }
 function px(mm){ return Math.max(0.5, mm*scale); }
@@ -1628,8 +1630,13 @@ function resizeCanvas(){
   const w = wrap.clientWidth;
   const h = wrap.clientHeight;
   if(w > 0 && h > 0){
-    canvas.width  = w;
-    canvas.height = h;
+    dpr   = window.devicePixelRatio || 1;
+    cssW  = w;  cssH  = h;
+    canvas.width  = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    canvas.style.width  = w + 'px';
+    canvas.style.height = h + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     fitView();  // refit scale/horizontal when canvas changes size
   }
   redraw();
@@ -1687,10 +1694,10 @@ canvas.addEventListener('touchmove', e => {
     const rect = canvas.getBoundingClientRect();
     const cx = mx - rect.left, cy = my - rect.top;
     // Adjust offset so zoom centres on finger midpoint
-    const wx = (cx - canvas.width/2  - offset[0]) / scale;
-    const wy = (cy - canvas.height/2 - offset[1]) / (-scale);
+    const wx = (cx - cssW/2  - offset[0]) / scale;
+    const wy = (cy - cssH/2 - offset[1]) / (-scale);
     scale = Math.max(0.05, Math.min(5, newScale));
-    offset[0] = cx - canvas.width/2  - wx * scale;
+    offset[0] = cx - cssW/2  - wx * scale;
     // Update groundFraction to match new offset[1] target
     // wy is in mm (Y-up), ground_y is in mm
     // We want pinGroundY to produce the same gy as the pinch centre intended.
@@ -1700,7 +1707,7 @@ canvas.addEventListener('touchmove', e => {
     //       = (cy - H/2 + (wy - g.ground_y)*scale) / H + 0.5
     // We don't have g here so just approximate with current groundFraction
     // adjusted for scale change:
-    const tentativeOff1 = cy - canvas.height/2 + wy * scale;
+    const tentativeOff1 = cy - cssH/2 + wy * scale;
     // Infer what groundFraction gives this offset:
     // tentativeOff1 = H*(gF-0.5) + g_y_approx*scale
     // We'll just do a raw fraction from the intended screen ground position
@@ -1887,10 +1894,10 @@ function drawDot(sx,sy,r,fill,stroke){
 //  DRAW GRID
 // ═══════════════════════════════════════════════════════
 function drawGrid(g){
-  const w=canvas.width, h=canvas.height;
+  const w=cssW, h=cssH;
   const step=50*scale;
   if(step<4) return;
-  const cx=canvas.width/2+offset[0], cy=canvas.height/2+offset[1];
+  const cx=cssW/2+offset[0], cy=cssH/2+offset[1];
   ctx.strokeStyle=T('grid'); ctx.lineWidth=1;
   const xi0=Math.floor(-cx/step)-1;
   for(let xi=xi0; xi*step+cx<w+step; xi++){
@@ -2310,15 +2317,16 @@ function drawAnnotations(g){
 //  MAIN REDRAW
 // ═══════════════════════════════════════════════════════
 function redraw(){
-  if(canvas.width===0 || canvas.height===0) return;
+  if(cssW===0 || cssH===0) return;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
   let g;
   try {
     g = computeGeometry(params);
   } catch(e) {
-    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.clearRect(0,0,cssW,cssH);
     ctx.fillStyle=T('bg');
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillRect(0,0,cssW,cssH);
     showError('Geometry: '+e.message, e);
     return;
   }
@@ -2327,9 +2335,9 @@ function redraw(){
   // (preserves horizontal pan/zoom but locks vertical)
   pinGroundY(g);
 
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.clearRect(0,0,cssW,cssH);
   ctx.fillStyle=T('bg');
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.fillRect(0,0,cssW,cssH);
   try {
     if(vis.grid)    drawGrid(g);
     if(vis.wheels)  drawWheels(g);
@@ -2345,9 +2353,9 @@ function redraw(){
 
 function showError(msg, err){
   ctx.fillStyle=T('errFill');
-  ctx.fillRect(10,10,canvas.width-20,120);
+  ctx.fillRect(10,10,cssW-20,120);
   ctx.strokeStyle='#f87171'; ctx.lineWidth=1;
-  ctx.strokeRect(10,10,canvas.width-20,120);
+  ctx.strokeRect(10,10,cssW-20,120);
   ctx.fillStyle='#f87171';
   ctx.font='bold 12px Courier New';
   ctx.textAlign='left'; ctx.textBaseline='top';
@@ -2397,14 +2405,14 @@ function pinGroundY(g) {
   // mmToScreen: sy = H/2 + offset[1] - y*scale
   // Want:  sy_ground = H * groundFraction
   // => offset[1] = H * (groundFraction - 0.5) + g.ground_y * scale
-  offset[1] = canvas.height * (groundFraction - 0.5) + g.ground_y * scale;
+  offset[1] = cssH * (groundFraction - 0.5) + g.ground_y * scale;
 }
 
 function fitView() {
   let g;
   try { g = computeGeometry(params); } catch(e) { return; }
 
-  const W = canvas.width, H = canvas.height;
+  const W = cssW, H = cssH;
   const rwd = g.rwd, fwd = g.fwd;
 
   // ── Horizontal fit ───────────────────────────────────────
@@ -2511,8 +2519,9 @@ function renderToDataURL() {
   Object.assign(THEMES[currentTheme], PRINT_PALETTE);
 
   // Draw white background + bike over current canvas
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, cssW, cssH);
   try {
     drawGrid(g);
     drawWheels(g);
@@ -3086,9 +3095,9 @@ window.addEventListener('mouseup',()=>rsz=null);
 // ═══════════════════════════════════════════════════════
 // Global error catcher — shows any uncaught error on canvas
 window.addEventListener('error', e=>{
-  if(canvas.width>0){
-    ctx.fillStyle=T('errFill'); ctx.fillRect(10,10,600,80);
-    ctx.strokeStyle='#f87171'; ctx.lineWidth=1; ctx.strokeRect(10,10,600,80);
+  if(cssW>0){
+    ctx.fillStyle=T('errFill'); ctx.fillRect(10,10,cssW-20,80);
+    ctx.strokeStyle='#f87171'; ctx.lineWidth=1; ctx.strokeRect(10,10,cssW-20,80);
     ctx.fillStyle='#f87171'; ctx.font='bold 12px Courier New';
     ctx.textAlign='left'; ctx.textBaseline='top';
     ctx.fillText('JS ERROR: '+e.message, 20, 24);
@@ -3249,8 +3258,14 @@ try { buildPresetPanel(); } catch(e){ console.error('buildPresetPanel failed:',e
 // Delay initial draw until browser has computed layout
 requestAnimationFrame(()=>{
   requestAnimationFrame(()=>{
-    canvas.width  = wrap.clientWidth;
-    canvas.height = wrap.clientHeight;
+    dpr   = window.devicePixelRatio || 1;
+    cssW  = wrap.clientWidth;
+    cssH  = wrap.clientHeight;
+    canvas.width  = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    canvas.style.width  = cssW + 'px';
+    canvas.style.height = cssH + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     fitView();
     redraw();
   });
