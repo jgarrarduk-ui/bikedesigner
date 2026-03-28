@@ -907,18 +907,31 @@
     flex-direction: column;
     padding-bottom: 0;
   }
-  .mob-pager-wrapper {
+  /* ── Title bar with inline nav arrows ── */
+  #mob-page-hdr {
     display: flex;
-    flex-direction: row;
-    flex: 1;
-    min-height: 0;
-    overflow: hidden;
-  }
-  .mob-nav-btn {
+    align-items: center;
+    padding: 3px 6px;
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
-    width: 18px;
+    gap: 6px;
+  }
+  #mob-page-title {
+    flex: 1;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--lavender-br);
+    font-family: var(--font-mono);
+  }
+  .mob-page-nav-btn {
+    width: 26px;
+    height: 26px;
     background: var(--hdr-bg);
-    border: none;
+    border: 1px solid var(--border);
+    border-radius: 3px;
     color: var(--accent-br);
     font-size: 16px;
     line-height: 1;
@@ -927,23 +940,19 @@
     align-items: center;
     justify-content: center;
     padding: 0;
-    font-family: var(--font);
+    flex-shrink: 0;
     user-select: none;
     -webkit-tap-highlight-color: transparent;
     transition: background 0.15s, color 0.15s;
   }
-  .mob-nav-btn:active  { background: var(--accent); color: #fff; }
-  .mob-nav-btn:disabled { color: var(--border); cursor: default; }
-  .mob-nav-btn.left  { border-right: 1px solid var(--border); }
-  .mob-nav-btn.right { border-left:  1px solid var(--border); }
-  .mob-pager-clip {
-    flex: 1;
-    overflow: hidden;
-  }
+  .mob-page-nav-btn:active  { background: var(--accent); color: #fff; }
+  .mob-page-nav-btn:disabled { color: var(--border); background: var(--hdr-bg); cursor: default; }
   .mob-pager-track {
     display: flex;
     flex-direction: row;
-    height: 100%;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
     transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
     will-change: transform;
   }
@@ -955,18 +964,7 @@
     overflow-y: auto;
     padding: 0 8px 2px 11px;
   }
-  .mob-page-title {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--lavender-br);
-    font-family: var(--font-mono);
-    padding: 4px 0 3px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 2px;
-    flex-shrink: 0;
-  }
+  /* .mob-page-title removed — title now lives in #mob-page-hdr */
   .mob-page-dots {
     display: flex;
     justify-content: center;
@@ -3236,6 +3234,8 @@ function goToPage(n){
   mobCurrentPage = Math.max(0, Math.min(MOBILE_PAGES.length-1, n));
   const track = document.getElementById('mob-pager-track');
   if(track) track.style.transform = 'translateX('+(-mobCurrentPage*100)+'%)';
+  const titleEl = document.getElementById('mob-page-title');
+  if(titleEl) titleEl.textContent = MOBILE_PAGES[mobCurrentPage].title;
   updatePageDots();
   const btnL = document.getElementById('mob-nav-left');
   const btnR = document.getElementById('mob-nav-right');
@@ -3350,28 +3350,34 @@ function buildMobilePanel(){
   scroll.innerHTML='';
   scroll.classList.add('mobile-pager');
 
-  // ── Wrapper row: [◀] [clip] [▶] ──────────────────────
-  const wrapper=document.createElement('div');
-  wrapper.className='mob-pager-wrapper';
+  // ── Title bar: [‹]  PAGE TITLE  [›] ──────────────────
+  const hdr=document.createElement('div');
+  hdr.id='mob-page-hdr';
 
   const btnL=document.createElement('button');
-  btnL.className='mob-nav-btn left'; btnL.id='mob-nav-left';
-  btnL.innerHTML='&#8249;';   // ‹
-  btnL.disabled=true;         // starts on first page
+  btnL.className='mob-page-nav-btn'; btnL.id='mob-nav-left';
+  btnL.innerHTML='&#8249;';
+  btnL.disabled=true;
   btnL.onclick=()=>goToPage(mobCurrentPage-1);
-  wrapper.appendChild(btnL);
 
-  const clip=document.createElement('div');
-  clip.className='mob-pager-clip';
+  const titleEl=document.createElement('span');
+  titleEl.id='mob-page-title';
+  titleEl.textContent=MOBILE_PAGES[0].title;
 
+  const btnR=document.createElement('button');
+  btnR.className='mob-page-nav-btn'; btnR.id='mob-nav-right';
+  btnR.innerHTML='&#8250;';
+  btnR.onclick=()=>goToPage(mobCurrentPage+1);
+
+  hdr.appendChild(btnL); hdr.appendChild(titleEl); hdr.appendChild(btnR);
+  scroll.appendChild(hdr);
+
+  // ── Pager track (full width, clips overflow) ──────────
   const track=document.createElement('div');
   track.className='mob-pager-track'; track.id='mob-pager-track';
 
   MOBILE_PAGES.forEach((pageData)=>{
     const page=document.createElement('div'); page.className='mob-page';
-    const titleEl=document.createElement('div');
-    titleEl.className='mob-page-title'; titleEl.textContent=pageData.title;
-    page.appendChild(titleEl);
     pageData.items.forEach(item=>{
       if(item.type==='slider')   makeParamRow(item.key, item.label, page);
       else if(item.type==='wheel')  buildMobileWheelRow(item, page);
@@ -3379,17 +3385,7 @@ function buildMobilePanel(){
     });
     track.appendChild(page);
   });
-
-  clip.appendChild(track);
-  wrapper.appendChild(clip);
-
-  const btnR=document.createElement('button');
-  btnR.className='mob-nav-btn right'; btnR.id='mob-nav-right';
-  btnR.innerHTML='&#8250;';   // ›
-  btnR.onclick=()=>goToPage(mobCurrentPage+1);
-  wrapper.appendChild(btnR);
-
-  scroll.appendChild(wrapper);
+  scroll.appendChild(track);
 
   // ── Page dots ─────────────────────────────────────────
   const dotsBar=document.createElement('div');
