@@ -42,14 +42,14 @@
     --toolbar-bg:  #f3f0ff;
     --hdr-bg:      #ede9fe;
     --border:      #ddd6fe;
-    --accent:      #6b46c1;
+    --accent:      #6d28d9;
     --accent-hi:   #7c3aed;
-    --accent-br:   #8b5cf6;
+    --accent-br:   #7c3aed;
     --text-lo:     #c4b5fd;
     --text-mid:    #7c3aed;
     --text-hi:     #4c1d95;
     --text-main:   #1e1b4b;
-    --lavender:    #6b46c1;
+    --lavender:    #6d28d9;
     --lavender-br: #7c3aed;
   }
 
@@ -1685,18 +1685,18 @@ const THEMES = {
     bg:        '#ffffff',
     grid:      '#f3f0ff',
     ground:    '#c4b5fd',
-    wheel:     '#6b46c1',
+    wheel:     '#6d28d9',
     wheelLbl:  '#4c1d95',
     tubeFill:  '#ede9fe',
-    tubeStk:   '#6b46c1',
+    tubeStk:   '#6d28d9',
     lugFill:   '#ddd6fe',
-    lugStk:    '#6b46c1',
+    lugStk:    '#6d28d9',
     bbBore:    '#ffffff',
     crDash:    '#c4b5fd',
     forkFill:  '#f5f3ff',
-    forkStk:   '#6b46c1',
+    forkStk:   '#6d28d9',
     forkAnn:   '#7c3aed',
-    ann:       '#6b46c1',
+    ann:       '#6d28d9',
     ann2:      '#7c3aed',
     errFill:   '#fee2e2',
   },
@@ -2511,7 +2511,7 @@ function drawAnnotations(g){
   const [htx,hty]=mmToScreen(g.ht_top[0],g.ht_top[1]);
   const [rax,ray]=mmToScreen(g.rear_axle[0],g.rear_axle[1]);
   const [fax,fay]=mmToScreen(g.front_axle[0],g.front_axle[1]);
-  const rwpx=px(g.rwd);
+  const rwpx=px(g.rwd), fwpx=px(g.fwd);
   const sa=p.st_angle*DEG, ha=p.ht_angle*DEG;
 
   // ── Reach — arrow sits just above HT top, close to the bike ──
@@ -2523,26 +2523,40 @@ function drawAnnotations(g){
     lineS(htx, reach_y-4, htx, hty+4, ANN, 1, [3,3]);
   }
 
-  // ── Stack — just right of head tube top (inside frame) ──
+  // ── Stack — right of front axle, rotated label to left of line ──
   if(vis.ann_stack){
-    const stack_x = htx + 22;
+    const stack_x = fax + fwpx * 0.30;
     arrowV(bby, hty, stack_x, ANN);
-    label(stack_x+6, (bby+hty)/2, `stack  ${g.stack.toFixed(0)}`, ANN,'left','middle',10);
-    lineS(stack_x-4, bby, bbx+4, bby, ANN, 1, [3,3]);
-    lineS(stack_x-4, hty, htx+4, hty, ANN, 1, [3,3]);
+    ctx.save();
+    ctx.translate(stack_x - 12, (bby + hty) / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = ANN;
+    ctx.font = "9px 'Inter',system-ui,sans-serif";
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(`stack  ${g.stack.toFixed(0)}`, 0, 0);
+    ctx.restore();
+    lineS(stack_x - 4, bby, bbx + 4, bby, ANN, 1, [3,3]);
+    lineS(stack_x - 4, hty, htx + 4, hty, ANN, 1, [3,3]);
   }
 
-  // ── BB Drop — between rear axle and BB, dotted leaders ──
+  // ── BB Drop — left of rear axle, rotated label to left of line ──
   if(vis.ann_bbdrop){
-    const drop_x = rax + 22;
+    const drop_x = rax - rwpx * 0.30;
     arrowV(ray, bby, drop_x, ANN2);
-    label(drop_x+6, (ray+bby)/2, `bb drop  ${p.bb_drop.toFixed(0)}`, ANN2,'left','middle',9);
-    lineS(drop_x-4, ray, rax, ray, ANN2, 1, [3,3]);
-    lineS(drop_x+4, bby, bbx-4, bby, ANN2, 1, [3,3]);
+    ctx.save();
+    ctx.translate(drop_x - 12, (ray + bby) / 2);
+    ctx.rotate(-Math.PI / 2);
+    ctx.fillStyle = ANN2;
+    ctx.font = "9px 'Inter',system-ui,sans-serif";
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText(`bb drop  ${p.bb_drop.toFixed(0)}`, 0, 0);
+    ctx.restore();
+    lineS(drop_x + 4, ray, rax, ray, ANN2, 1, [3,3]);
+    lineS(drop_x + 4, bby, bbx - 4, bby, ANN2, 1, [3,3]);
   }
 
-  // ── Wheelbase — between axles, just below them ──
-  const wb_y=Math.max(ray,fay)+20;
+  // ── Wheelbase — at ground plane ──
+  const [, wb_y]=mmToScreen(0, g.ground_y);
   if(vis.ann_wheelbase){
     arrowH(rax,fax,wb_y,ANN2);
     label((rax+fax)/2,wb_y+6,`wheelbase  ${g.wheelbase.toFixed(0)}`,ANN2,'center','top',9);
@@ -2709,8 +2723,8 @@ function fitView() {
   // ── Horizontal fit ───────────────────────────────────────
   // Fit to axle-to-axle + 45% of wheel radius each side so wheels clip
   // but the complete frame is always in view.
-  const minX = g.rear_axle[0]  - rwd * 0.45;
-  const maxX = g.front_axle[0] + fwd * 0.45;
+  const minX = g.rear_axle[0]  - rwd * 0.50;
+  const maxX = g.front_axle[0] + fwd * 0.50;
   const mmW  = maxX - minX;
   if (mmW < 1) return;
 
