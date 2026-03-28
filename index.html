@@ -706,7 +706,9 @@
     /* Derived-row (Wheelbase) is duplicated in statusbar — hide above buttons */
     #panel .derived-row { display: none; }
 
-    /* Mobile header shown by default (base style), hidden only on desktop */
+    /* Show floating options button and accent line */
+    #options-btn   { display: block; }
+    #mobile-top-line { display: block; }
 
     /* Panel becomes a bottom sheet */
     #main { flex-direction: column-reverse; }
@@ -723,7 +725,7 @@
 
     #resizer { display: none; }
 
-    #canvas-wrap { flex: none; height: calc(52vh - 44px); min-height: 100px; }
+    #canvas-wrap { flex: none; height: 52vh; min-height: 100px; }
 
     /* Compact param rows — target ~40px each so 5–6 fit per page */
     .param-row    { padding: 2px 0; gap: 1px; }
@@ -745,43 +747,15 @@
   }
 
   /* ── Mobile header — hidden on desktop, shown on mobile ── */
-  @media (min-width: 601px) {
-    #mobile-header { display: none !important; }
-  }
-  #mobile-header {
-    display: flex;
-    align-items: center;
-    padding: 0 12px;
-    gap: 10px;
-    height: 44px;
-    background: var(--hdr-bg);
-    border-bottom: 2px solid var(--accent);
-    flex-shrink: 0;
-  }
-  #mobile-logo {
-    flex: 1;
-    display: flex;
-    align-items: baseline;
-    justify-content: center;
-    gap: 6px;
-  }
-  #mobile-logo-text {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--lavender);
-    letter-spacing: 3px;
-    font-family: var(--font-mono);
-    text-transform: uppercase;
-  }
-  #mobile-logo-sub {
-    font-size: 9px;
-    color: var(--text-lo);
-    letter-spacing: 2px;
-    text-transform: lowercase;
-  }
-  #view-btn {
+  /* ── Options button — fixed floating, mobile only ── */
+  #options-btn {
+    display: none;
+    position: fixed;
+    top: 6px;
+    left: 8px;
+    z-index: 1100;
     background: var(--accent);
-    border: 1px solid var(--accent-hi);
+    border: none;
     color: #fff;
     font-family: var(--font);
     font-size: 13px;
@@ -790,18 +764,26 @@
     border-radius: 4px;
     cursor: pointer;
     letter-spacing: 0.5px;
-    flex-shrink: 0;
-    transition: background 0.15s;
     -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s;
   }
-  #view-btn.active { background: var(--accent-hi); }
-  #view-btn:active  { background: var(--accent-hi); }
+  #options-btn.active { background: var(--accent-hi); }
+  #options-btn:active  { background: var(--accent-hi); }
+  /* Thin accent line at very top of canvas — mobile only */
+  #mobile-top-line {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--accent);
+    z-index: 1200;
+  }
 
   /* ── View panel (floating) ── */
   #view-panel {
     display: none;
     position: fixed;
-    top: 44px; left: 0; right: 0;
+    top: 3px; left: 0; right: 0;
     background: var(--panel-bg);
     border-bottom: 2px solid var(--accent);
     box-shadow: 0 8px 32px rgba(0,0,0,0.22);
@@ -880,7 +862,7 @@
   #view-panel-backdrop {
     display: none;
     position: fixed;
-    top: 44px; left: 0; right: 0; bottom: 0;
+    top: 3px; left: 0; right: 0; bottom: 0;
     z-index: 1099;
   }
   #view-panel-backdrop.open { display: block; }
@@ -1269,14 +1251,9 @@
 </head>
 <body>
 
-<!-- Mobile-only compact header (hidden on desktop via CSS) -->
-<div id="mobile-header">
-  <button id="view-btn" onclick="toggleViewPanel()">view</button>
-  <div id="mobile-logo">
-    <span id="mobile-logo-text">CREATURE</span>
-    <span id="mobile-logo-sub">bike designer</span>
-  </div>
-</div>
+<!-- Mobile-only accent line and floating options button -->
+<div id="mobile-top-line"></div>
+<button id="options-btn" onclick="toggleViewPanel()">options</button>
 
 <!-- Toolbar -->
 <div id="toolbar">
@@ -2790,12 +2767,12 @@ function openViewPanel(){
   syncViewPanel();
   document.getElementById('view-panel').classList.add('open');
   document.getElementById('view-panel-backdrop').classList.add('open');
-  document.getElementById('view-btn').classList.add('active');
+  document.getElementById('options-btn').classList.add('active');
 }
 function closeViewPanel(){
   document.getElementById('view-panel').classList.remove('open');
   document.getElementById('view-panel-backdrop').classList.remove('open');
-  document.getElementById('view-btn').classList.remove('active');
+  document.getElementById('options-btn').classList.remove('active');
 }
 
 // Sync all toggle button states to current vis/theme
