@@ -707,11 +707,11 @@
     #panel .derived-row { display: none; }
 
     /* Show floating options button and accent line */
-    #options-btn   { display: block; }
-    #mobile-top-line { display: block; }
+    #options-btn      { display: block !important; }
+    #mobile-top-line  { display: block !important; }
 
-    /* Panel becomes a bottom sheet */
-    #main { flex-direction: column-reverse; }
+    /* Panel becomes a bottom sheet; position:relative makes it containing block for view-panel */
+    #main { flex-direction: column-reverse; position: relative; }
 
     #panel {
       width: 100% !important;
@@ -747,13 +747,13 @@
   }
 
   /* ── Mobile header — hidden on desktop, shown on mobile ── */
-  /* ── Options button — fixed floating, mobile only ── */
+  /* ── Options button — absolute in canvas-wrap, mobile only ── */
   #options-btn {
     display: none;
-    position: fixed;
+    position: absolute;
     top: 6px;
     left: 8px;
-    z-index: 1100;
+    z-index: 200;
     background: var(--accent);
     border: none;
     color: #fff;
@@ -772,24 +772,24 @@
   /* Thin accent line at very top of canvas — mobile only */
   #mobile-top-line {
     display: none;
-    position: fixed;
+    position: absolute;
     top: 0; left: 0; right: 0;
     height: 3px;
     background: var(--accent);
-    z-index: 1200;
+    z-index: 201;
   }
 
-  /* ── View panel (floating) ── */
+  /* ── View panel (absolute within #main, covers canvas + panel) ── */
   #view-panel {
     display: none;
-    position: fixed;
-    top: 3px; left: 0; right: 0;
+    position: absolute;
+    top: 0; left: 0; right: 0;
     background: var(--panel-bg);
     border-bottom: 2px solid var(--accent);
     box-shadow: 0 8px 32px rgba(0,0,0,0.22);
-    z-index: 1100;
+    z-index: 190;
     overflow-y: auto;
-    max-height: calc(100vh - 44px);
+    max-height: 100%;
   }
   #view-panel.open { display: block; }
   #view-panel-inner {
@@ -861,9 +861,9 @@
   /* backdrop to close panel when tapping canvas */
   #view-panel-backdrop {
     display: none;
-    position: fixed;
-    top: 3px; left: 0; right: 0; bottom: 0;
-    z-index: 1099;
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 188;
   }
   #view-panel-backdrop.open { display: block; }
 
@@ -1251,10 +1251,6 @@
 </head>
 <body>
 
-<!-- Mobile-only accent line and floating options button -->
-<div id="mobile-top-line"></div>
-<button id="options-btn" onclick="toggleViewPanel()">options</button>
-
 <!-- Toolbar -->
 <div id="toolbar">
   <div id="logo-area">
@@ -1286,78 +1282,79 @@
 <!-- Dropdown backdrop -->
 <div id="dd-backdrop" onclick="closeAllDd()"></div>
 
-<!-- View panel — floating overlay below mobile header -->
-<div id="view-panel-backdrop" onclick="closeViewPanel()"></div>
-<div id="view-panel">
-  <div id="view-panel-inner">
-
-    <!-- Theme -->
-    <div>
-      <div class="vp-section-title">theme</div>
-      <div class="vp-btn-row">
-        <button class="vp-btn" id="vp-theme-dark"   onclick="setTheme('dark');   syncViewPanel()">dark</button>
-        <button class="vp-btn" id="vp-theme-light"  onclick="setTheme('light');  syncViewPanel()">light</button>
-        <button class="vp-btn" id="vp-theme-green"  onclick="setTheme('green');  syncViewPanel()">green</button>
-        <button class="vp-btn" id="vp-theme-orange" onclick="setTheme('orange'); syncViewPanel()">orange</button>
-      </div>
-    </div>
-
-    <hr class="vp-divider">
-
-    <!-- Elements -->
-    <div>
-      <div class="vp-section-title">elements</div>
-      <div class="vp-btn-row">
-        <button class="vp-btn active" data-vis="grid"    onclick="vpToggle(this,'grid')">grid</button>
-        <button class="vp-btn active" data-vis="wheels"  onclick="vpToggle(this,'wheels')">wheels</button>
-        <button class="vp-btn active" data-vis="fork"    onclick="vpToggle(this,'fork')">fork</button>
-        <button class="vp-btn active" data-vis="cockpit" onclick="vpToggle(this,'cockpit')">cockpit</button>
-      </div>
-    </div>
-
-    <hr class="vp-divider">
-
-    <!-- Annotations -->
-    <div>
-      <div class="vp-section-title">annotations</div>
-      <div class="vp-btn-row">
-        <button class="vp-btn active" data-vis="ann_reach"     onclick="vpToggle(this,'ann_reach')">reach</button>
-        <button class="vp-btn active" data-vis="ann_stack"     onclick="vpToggle(this,'ann_stack')">stack</button>
-        <button class="vp-btn active" data-vis="ann_bbdrop"    onclick="vpToggle(this,'ann_bbdrop')">bb drop</button>
-        <button class="vp-btn active" data-vis="ann_wheelbase" onclick="vpToggle(this,'ann_wheelbase')">wheelbase</button>
-        <button class="vp-btn active" data-vis="ann_chainstay" onclick="vpToggle(this,'ann_chainstay')">chainstay</button>
-        <button class="vp-btn active" data-vis="ann_htangle"   onclick="vpToggle(this,'ann_htangle')">ht angle</button>
-        <button class="vp-btn active" data-vis="ann_stangle"   onclick="vpToggle(this,'ann_stangle')">st angle</button>
-        <button class="vp-btn active" data-vis="ann_stlength"  onclick="vpToggle(this,'ann_stlength')">st length</button>
-        <button class="vp-btn"        data-vis="ann_tubeODs"   onclick="vpToggle(this,'ann_tubeODs')">tube ODs</button>
-        <button class="vp-btn"        data-vis="ann_jig"       onclick="vpToggle(this,'ann_jig')">jig dims</button>
-      </div>
-    </div>
-
-    <hr class="vp-divider">
-
-    <!-- Presets -->
-    <div>
-      <div class="vp-section-title">presets</div>
-      <div class="vp-preset-row">
-        <select id="vp-preset-cat" onchange="vpUpdatePresetSizes()"></select>
-        <select id="vp-preset-size"></select>
-        <button class="vp-btn" onclick="vpLoadPreset()">load</button>
-      </div>
-    </div>
-
-    <hr class="vp-divider">
-
-    <!-- Actions -->
-    <div class="vp-btn-row">
-      <button class="vp-btn" onclick="resetView(); closeViewPanel()">reset view</button>
-    </div>
-
-  </div>
-</div>
-
 <!-- Main -->
 <div id="main">
+
+  <!-- View panel overlay (absolute within #main, covers canvas+panel on mobile) -->
+  <div id="view-panel-backdrop" onclick="closeViewPanel()"></div>
+  <div id="view-panel">
+    <div id="view-panel-inner">
+
+      <!-- Theme -->
+      <div>
+        <div class="vp-section-title">theme</div>
+        <div class="vp-btn-row">
+          <button class="vp-btn" id="vp-theme-dark"   onclick="setTheme('dark');   syncViewPanel()">dark</button>
+          <button class="vp-btn" id="vp-theme-light"  onclick="setTheme('light');  syncViewPanel()">light</button>
+          <button class="vp-btn" id="vp-theme-green"  onclick="setTheme('green');  syncViewPanel()">green</button>
+          <button class="vp-btn" id="vp-theme-orange" onclick="setTheme('orange'); syncViewPanel()">orange</button>
+        </div>
+      </div>
+
+      <hr class="vp-divider">
+
+      <!-- Elements -->
+      <div>
+        <div class="vp-section-title">elements</div>
+        <div class="vp-btn-row">
+          <button class="vp-btn active" data-vis="grid"    onclick="vpToggle(this,'grid')">grid</button>
+          <button class="vp-btn active" data-vis="wheels"  onclick="vpToggle(this,'wheels')">wheels</button>
+          <button class="vp-btn active" data-vis="fork"    onclick="vpToggle(this,'fork')">fork</button>
+          <button class="vp-btn active" data-vis="cockpit" onclick="vpToggle(this,'cockpit')">cockpit</button>
+        </div>
+      </div>
+
+      <hr class="vp-divider">
+
+      <!-- Annotations -->
+      <div>
+        <div class="vp-section-title">annotations</div>
+        <div class="vp-btn-row">
+          <button class="vp-btn active" data-vis="ann_reach"     onclick="vpToggle(this,'ann_reach')">reach</button>
+          <button class="vp-btn active" data-vis="ann_stack"     onclick="vpToggle(this,'ann_stack')">stack</button>
+          <button class="vp-btn active" data-vis="ann_bbdrop"    onclick="vpToggle(this,'ann_bbdrop')">bb drop</button>
+          <button class="vp-btn active" data-vis="ann_wheelbase" onclick="vpToggle(this,'ann_wheelbase')">wheelbase</button>
+          <button class="vp-btn active" data-vis="ann_chainstay" onclick="vpToggle(this,'ann_chainstay')">chainstay</button>
+          <button class="vp-btn active" data-vis="ann_htangle"   onclick="vpToggle(this,'ann_htangle')">ht angle</button>
+          <button class="vp-btn active" data-vis="ann_stangle"   onclick="vpToggle(this,'ann_stangle')">st angle</button>
+          <button class="vp-btn active" data-vis="ann_stlength"  onclick="vpToggle(this,'ann_stlength')">st length</button>
+          <button class="vp-btn"        data-vis="ann_tubeODs"   onclick="vpToggle(this,'ann_tubeODs')">tube ODs</button>
+          <button class="vp-btn"        data-vis="ann_jig"       onclick="vpToggle(this,'ann_jig')">jig dims</button>
+        </div>
+      </div>
+
+      <hr class="vp-divider">
+
+      <!-- Presets -->
+      <div>
+        <div class="vp-section-title">presets</div>
+        <div class="vp-preset-row">
+          <select id="vp-preset-cat" onchange="vpUpdatePresetSizes()"></select>
+          <select id="vp-preset-size"></select>
+          <button class="vp-btn" onclick="vpLoadPreset()">load</button>
+        </div>
+      </div>
+
+      <hr class="vp-divider">
+
+      <!-- Actions -->
+      <div class="vp-btn-row">
+        <button class="vp-btn" onclick="resetView(); closeViewPanel()">reset view</button>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Param panel -->
   <div id="panel">
     <div id="panel-mobile-hdr" onclick="toggleMobilePanel()">
@@ -1386,6 +1383,9 @@
   <!-- Canvas -->
   <div id="canvas-wrap">
     <canvas id="canvas"></canvas>
+    <!-- Mobile floating accent line + options button (absolute within canvas-wrap) -->
+    <div id="mobile-top-line"></div>
+    <button id="options-btn" onclick="toggleViewPanel()">options</button>
 
     <!-- Zoom controls -->
     <div id="zoom-controls">
