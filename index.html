@@ -749,16 +749,18 @@
   #mobile-header {
     display: none;
     align-items: center;
-    justify-content: space-between;
     padding: 0 12px;
+    gap: 10px;
     height: 44px;
     background: var(--hdr-bg);
     border-bottom: 2px solid var(--accent);
     flex-shrink: 0;
   }
   #mobile-logo {
+    flex: 1;
     display: flex;
     align-items: baseline;
+    justify-content: center;
     gap: 6px;
   }
   #mobile-logo-text {
@@ -775,7 +777,7 @@
     letter-spacing: 2px;
     text-transform: lowercase;
   }
-  #mobile-menu-btn {
+  #view-btn {
     background: var(--accent);
     border: 1px solid var(--accent-hi);
     color: #fff;
@@ -786,119 +788,100 @@
     border-radius: 4px;
     cursor: pointer;
     letter-spacing: 0.5px;
+    flex-shrink: 0;
     transition: background 0.15s;
     -webkit-tap-highlight-color: transparent;
   }
-  #mobile-menu-btn:active { background: var(--accent-hi); }
+  #view-btn.active { background: var(--accent-hi); }
+  #view-btn:active  { background: var(--accent-hi); }
 
-  /* ── Mobile menu overlay ── */
-  #mobile-menu {
+  /* ── View panel (floating) ── */
+  #view-panel {
     display: none;
     position: fixed;
-    top: 0; right: 0; bottom: 0; left: 0;
-    background: rgba(0,0,0,0.45);
-    z-index: 1100;
-    align-items: flex-start;
-    justify-content: flex-end;
-  }
-  #mobile-menu.open { display: flex !important; }
-  #mobile-menu-inner {
-    width: 85%;
-    max-width: 340px;
-    height: 100%;
+    top: 44px; left: 0; right: 0;
     background: var(--panel-bg);
-    border-left: 1px solid var(--border);
+    border-bottom: 2px solid var(--accent);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+    z-index: 1100;
     overflow-y: auto;
+    max-height: calc(100vh - 44px);
+  }
+  #view-panel.open { display: block; }
+  #view-panel-inner {
+    padding: 10px 12px 14px;
     display: flex;
     flex-direction: column;
-    transform: translateX(100%);
-    transition: transform 0.25s ease;
+    gap: 10px;
   }
-  #mobile-menu.open #mobile-menu-inner { transform: translateX(0); }
-  #mobile-menu-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 16px;
-    height: 44px;
-    background: var(--hdr-bg);
-    border-bottom: 1px solid var(--border);
-    flex-shrink: 0;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    color: var(--lavender-br);
-  }
-  #mobile-menu-close {
-    background: none;
-    border: none;
-    color: var(--text-mid);
-    font-size: 18px;
-    cursor: pointer;
-    padding: 4px 8px;
-    line-height: 1;
-  }
-  .mob-menu-section { border-bottom: 1px solid var(--border); padding: 8px 0; }
-  .mob-menu-section-title {
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 1px;
+  .vp-section-title {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
     color: var(--text-mid);
-    padding: 0 14px 5px;
+    margin-bottom: 5px;
+    font-family: var(--font-mono);
   }
-  .mob-menu-theme-row {
+  .vp-btn-row {
     display: flex;
-    gap: 4px;
-    padding: 0 10px 2px;
+    gap: 5px;
     flex-wrap: wrap;
   }
-  .mob-preset-row {
+  /* generic view-panel button */
+  .vp-btn {
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: var(--hdr-bg);
+    color: var(--text-mid);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.12s, color 0.12s;
+    white-space: nowrap;
+  }
+  .vp-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .vp-btn:active { opacity: 0.8; }
+  /* divider between sections */
+  .vp-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0;
+  }
+  /* preset row inside view panel */
+  .vp-preset-row {
     display: flex;
     gap: 6px;
     align-items: center;
-    padding: 4px 14px;
     flex-wrap: wrap;
   }
-  .mob-preset-row select {
+  .vp-preset-row select {
     flex: 1;
-    min-width: 80px;
+    min-width: 90px;
     background: var(--input-bg);
     color: var(--input-fg);
     border: 1px solid var(--accent);
     border-radius: 2px;
     font-family: var(--font);
     font-size: 11px;
-    padding: 4px 4px;
+    padding: 5px 4px;
     outline: none;
   }
-  .mob-preset-row button {
-    background: var(--hdr-bg);
-    color: var(--accent-br);
-    border: 1px solid var(--border);
-    font-family: var(--font);
-    font-size: 12px;
-    font-weight: 600;
-    padding: 5px 10px;
-    border-radius: 2px;
-    cursor: pointer;
+  /* backdrop to close panel when tapping canvas */
+  #view-panel-backdrop {
+    display: none;
+    position: fixed;
+    top: 44px; left: 0; right: 0; bottom: 0;
+    z-index: 1099;
   }
-  .mob-preset-row button:hover { background: var(--accent); color: #fff; }
-  .mob-menu-action-btn {
-    width: calc(100% - 28px);
-    margin: 4px 14px;
-    background: var(--hdr-bg);
-    color: var(--text-mid);
-    border: 1px solid var(--border);
-    font-family: var(--font);
-    font-size: 12px;
-    padding: 8px;
-    border-radius: 3px;
-    cursor: pointer;
-    text-align: center;
-  }
-  .mob-menu-action-btn:hover { background: var(--accent); color: #fff; }
+  #view-panel-backdrop.open { display: block; }
 
   /* ── Mobile pager ── */
   #panel-scroll.mobile-pager {
@@ -1286,11 +1269,11 @@
 
 <!-- Mobile-only compact header (hidden on desktop via CSS) -->
 <div id="mobile-header">
+  <button id="view-btn" onclick="toggleViewPanel()">view</button>
   <div id="mobile-logo">
     <span id="mobile-logo-text">CREATURE</span>
     <span id="mobile-logo-sub">bike designer</span>
   </div>
-  <button id="mobile-menu-btn" onclick="toggleMobileMenu()">&#9776; menu</button>
 </div>
 
 <!-- Toolbar -->
@@ -1324,63 +1307,73 @@
 <!-- Dropdown backdrop -->
 <div id="dd-backdrop" onclick="closeAllDd()"></div>
 
-<!-- Mobile menu overlay -->
-<div id="mobile-menu" onclick="handleMobileMenuBackdrop(event)">
-  <div id="mobile-menu-inner">
-    <div id="mobile-menu-header">
-      <span>menu</span>
-      <button id="mobile-menu-close" onclick="closeMobileMenu()">&#x2715;</button>
-    </div>
+<!-- View panel — floating overlay below mobile header -->
+<div id="view-panel-backdrop" onclick="closeViewPanel()"></div>
+<div id="view-panel">
+  <div id="view-panel-inner">
 
     <!-- Theme -->
-    <div class="mob-menu-section">
-      <div class="mob-menu-section-title">theme</div>
-      <div class="mob-menu-theme-row" id="mob-theme-radios">
-        <button class="dd-radio" data-val="dark"   onclick="setTheme('dark');  syncThemeRadios()">dark</button>
-        <button class="dd-radio" data-val="light"  onclick="setTheme('light'); syncThemeRadios()">light</button>
-        <button class="dd-radio" data-val="green"  onclick="setTheme('green'); syncThemeRadios()">green</button>
-        <button class="dd-radio" data-val="orange" onclick="setTheme('orange');syncThemeRadios()">orange</button>
+    <div>
+      <div class="vp-section-title">theme</div>
+      <div class="vp-btn-row">
+        <button class="vp-btn" id="vp-theme-dark"   onclick="setTheme('dark');   syncViewPanel()">dark</button>
+        <button class="vp-btn" id="vp-theme-light"  onclick="setTheme('light');  syncViewPanel()">light</button>
+        <button class="vp-btn" id="vp-theme-green"  onclick="setTheme('green');  syncViewPanel()">green</button>
+        <button class="vp-btn" id="vp-theme-orange" onclick="setTheme('orange'); syncViewPanel()">orange</button>
       </div>
     </div>
+
+    <hr class="vp-divider">
 
     <!-- Elements -->
-    <div class="mob-menu-section">
-      <div class="mob-menu-section-title">elements</div>
-      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('grid',this.checked)"><span>grid</span></label>
-      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('wheels',this.checked)"><span>wheels</span></label>
-      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('fork',this.checked)"><span>fork diagram</span></label>
-      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('cockpit',this.checked)"><span>cockpit</span></label>
-    </div>
-
-    <!-- Annotations -->
-    <div class="mob-menu-section">
-      <div class="mob-menu-section-title">annotations</div>
-      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('ann_reach',this.checked)"><span>reach</span></label>
-      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('ann_stack',this.checked)"><span>stack</span></label>
-      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('ann_bbdrop',this.checked)"><span>bb drop</span></label>
-      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('ann_wheelbase',this.checked)"><span>wheelbase</span></label>
-      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('ann_chainstay',this.checked)"><span>chainstay</span></label>
-      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('ann_htangle',this.checked)"><span>ht angle</span></label>
-      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('ann_stangle',this.checked)"><span>st angle</span></label>
-      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('ann_stlength',this.checked)"><span>st length</span></label>
-      <label class="dd-toggle-row"><input type="checkbox" onchange="setVis('ann_tubeODs',this.checked)"><span>tube ODs</span></label>
-      <label class="dd-toggle-row"><input type="checkbox" onchange="setVis('ann_jig',this.checked)"><span>jig dimensions</span></label>
-    </div>
-
-    <!-- Presets -->
-    <div class="mob-menu-section">
-      <div class="mob-menu-section-title">presets</div>
-      <div class="mob-preset-row">
-        <select id="mob-preset-cat" onchange="mobUpdatePresetSizes()"></select>
-        <select id="mob-preset-size"></select>
-        <button onclick="mobLoadPreset()">load</button>
+    <div>
+      <div class="vp-section-title">elements</div>
+      <div class="vp-btn-row">
+        <button class="vp-btn active" data-vis="grid"    onclick="vpToggle(this,'grid')">grid</button>
+        <button class="vp-btn active" data-vis="wheels"  onclick="vpToggle(this,'wheels')">wheels</button>
+        <button class="vp-btn active" data-vis="fork"    onclick="vpToggle(this,'fork')">fork</button>
+        <button class="vp-btn active" data-vis="cockpit" onclick="vpToggle(this,'cockpit')">cockpit</button>
       </div>
     </div>
 
-    <!-- Reset view -->
-    <div class="mob-menu-section">
-      <button class="mob-menu-action-btn" onclick="resetView(); closeMobileMenu()">reset view</button>
+    <hr class="vp-divider">
+
+    <!-- Annotations -->
+    <div>
+      <div class="vp-section-title">annotations</div>
+      <div class="vp-btn-row">
+        <button class="vp-btn active" data-vis="ann_reach"     onclick="vpToggle(this,'ann_reach')">reach</button>
+        <button class="vp-btn active" data-vis="ann_stack"     onclick="vpToggle(this,'ann_stack')">stack</button>
+        <button class="vp-btn active" data-vis="ann_bbdrop"    onclick="vpToggle(this,'ann_bbdrop')">bb drop</button>
+        <button class="vp-btn active" data-vis="ann_wheelbase" onclick="vpToggle(this,'ann_wheelbase')">wheelbase</button>
+        <button class="vp-btn active" data-vis="ann_chainstay" onclick="vpToggle(this,'ann_chainstay')">chainstay</button>
+        <button class="vp-btn active" data-vis="ann_htangle"   onclick="vpToggle(this,'ann_htangle')">ht angle</button>
+        <button class="vp-btn active" data-vis="ann_stangle"   onclick="vpToggle(this,'ann_stangle')">st angle</button>
+        <button class="vp-btn active" data-vis="ann_stlength"  onclick="vpToggle(this,'ann_stlength')">st length</button>
+        <button class="vp-btn"        data-vis="ann_tubeODs"   onclick="vpToggle(this,'ann_tubeODs')">tube ODs</button>
+        <button class="vp-btn"        data-vis="ann_jig"       onclick="vpToggle(this,'ann_jig')">jig dims</button>
+      </div>
     </div>
+
+    <hr class="vp-divider">
+
+    <!-- Presets -->
+    <div>
+      <div class="vp-section-title">presets</div>
+      <div class="vp-preset-row">
+        <select id="vp-preset-cat" onchange="vpUpdatePresetSizes()"></select>
+        <select id="vp-preset-size"></select>
+        <button class="vp-btn" onclick="vpLoadPreset()">load</button>
+      </div>
+    </div>
+
+    <hr class="vp-divider">
+
+    <!-- Actions -->
+    <div class="vp-btn-row">
+      <button class="vp-btn" onclick="resetView(); closeViewPanel()">reset view</button>
+    </div>
+
   </div>
 </div>
 
@@ -2778,49 +2771,55 @@ function closeAllDd(){
   if(bd) bd.classList.remove('open');
 }
 function syncThemeRadios(){
-  document.querySelectorAll('#theme-radios .dd-radio, #mob-theme-radios .dd-radio').forEach(b=>{
+  document.querySelectorAll('#theme-radios .dd-radio').forEach(b=>{
     b.classList.toggle('active', b.dataset.val===currentTheme);
   });
 }
 
 // ═══════════════════════════════════════════════════════
-//  MOBILE MENU
+//  VIEW PANEL (mobile floating overlay)
 // ═══════════════════════════════════════════════════════
-function toggleMobileMenu(){
-  const menu = document.getElementById('mobile-menu');
-  if(menu.classList.contains('open')){ closeMobileMenu(); }
-  else {
-    try { syncMobileMenuState(); } catch(e) {}
-    menu.classList.add('open');
-  }
+function toggleViewPanel(){
+  const panel = document.getElementById('view-panel');
+  if(panel.classList.contains('open')) closeViewPanel();
+  else openViewPanel();
 }
-function closeMobileMenu(){
-  document.getElementById('mobile-menu').classList.remove('open');
+function openViewPanel(){
+  syncViewPanel();
+  document.getElementById('view-panel').classList.add('open');
+  document.getElementById('view-panel-backdrop').classList.add('open');
+  document.getElementById('view-btn').classList.add('active');
 }
-function handleMobileMenuBackdrop(e){
-  if(e.target === document.getElementById('mobile-menu')) closeMobileMenu();
-}
-
-// Sync mobile menu checkboxes and theme radios to current state
-function syncMobileMenuState(){
-  syncThemeRadios();
-  const menu = document.getElementById('mobile-menu');
-  if(!menu) return;
-  const sections = menu.querySelectorAll('.mob-menu-section');
-  // sections[1] = elements, sections[2] = annotations
-  const elCbs  = sections[1].querySelectorAll('input[type=checkbox]');
-  const annCbs = sections[2].querySelectorAll('input[type=checkbox]');
-  const elKeys  = ['grid','wheels','fork','cockpit'];
-  const annKeys = ['ann_reach','ann_stack','ann_bbdrop','ann_wheelbase','ann_chainstay',
-                   'ann_htangle','ann_stangle','ann_stlength','ann_tubeODs','ann_jig'];
-  elKeys .forEach((k,i)=>{ if(elCbs[i])  elCbs[i].checked  = !!vis[k]; });
-  annKeys.forEach((k,i)=>{ if(annCbs[i]) annCbs[i].checked = !!vis[k]; });
+function closeViewPanel(){
+  document.getElementById('view-panel').classList.remove('open');
+  document.getElementById('view-panel-backdrop').classList.remove('open');
+  document.getElementById('view-btn').classList.remove('active');
 }
 
-// Mobile preset helpers
-function mobUpdatePresetSizes(){
-  const cat     = document.getElementById('mob-preset-cat').value;
-  const sizeSel = document.getElementById('mob-preset-size');
+// Sync all toggle button states to current vis/theme
+function syncViewPanel(){
+  // Theme buttons
+  ['dark','light','green','orange'].forEach(t=>{
+    const b = document.getElementById('vp-theme-'+t);
+    if(b) b.classList.toggle('active', t===currentTheme);
+  });
+  // Vis toggle buttons
+  document.querySelectorAll('#view-panel .vp-btn[data-vis]').forEach(b=>{
+    b.classList.toggle('active', !!vis[b.dataset.vis]);
+  });
+}
+
+// Toggle a vis key and update the button
+function vpToggle(btn, key){
+  vis[key] = !vis[key];
+  btn.classList.toggle('active', !!vis[key]);
+  redraw();
+}
+
+// Preset helpers
+function vpUpdatePresetSizes(){
+  const cat     = document.getElementById('vp-preset-cat').value;
+  const sizeSel = document.getElementById('vp-preset-size');
   sizeSel.innerHTML = '';
   Object.keys(PRESETS[cat]||{}).forEach(s=>{
     const o=document.createElement('option'); o.value=s; o.textContent=s;
@@ -2830,11 +2829,11 @@ function mobUpdatePresetSizes(){
   const def   = sizes.includes('M')?'M': sizes.includes('Large')?'Large': sizes[0];
   if(def) sizeSel.value=def;
 }
-function mobLoadPreset(){
-  const cat  = document.getElementById('mob-preset-cat').value;
-  const size = document.getElementById('mob-preset-size').value;
+function vpLoadPreset(){
+  const cat  = document.getElementById('vp-preset-cat').value;
+  const size = document.getElementById('vp-preset-size').value;
   const p    = PRESETS[cat]?.[size];
-  if(p){ setParams(p); closeMobileMenu(); }
+  if(p){ setParams(p); closeViewPanel(); }
 }
 
 // ── Export modal ───────────────────────────────────────────
@@ -3844,15 +3843,15 @@ params.stack = calcStackFromAtc(params);
 try { buildPanel(); } catch(e){ console.error('buildPanel failed:',e); }
 try { buildPresetPanel(); } catch(e){ console.error('buildPresetPanel failed:',e); }
 
-// Populate mobile menu preset selects
-(function buildMobilePresets(){
-  const catSel=document.getElementById('mob-preset-cat');
+// Populate view panel preset selects
+(function buildViewPanelPresets(){
+  const catSel=document.getElementById('vp-preset-cat');
   if(!catSel) return;
   Object.keys(PRESETS).forEach(cat=>{
     const o=document.createElement('option'); o.value=cat; o.textContent=cat;
     catSel.appendChild(o);
   });
-  mobUpdatePresetSizes();
+  vpUpdatePresetSizes();
 })();
 
 // Rebuild panel layout when crossing the mobile/desktop breakpoint
