@@ -35,22 +35,22 @@
 
   /* ── LIGHT ── */
   [data-theme="light"] {
-    --input-bg:    #ffffff;
-    --input-fg:    #111827;
-    --bg:          #f5f6f7;
+    --input-bg:    #fafafa;
+    --input-fg:    #1e1b4b;
+    --bg:          #f8f7ff;
     --panel-bg:    #ffffff;
-    --toolbar-bg:  #f0f1f2;
-    --hdr-bg:      #e8e9eb;
-    --border:      #d8d9db;
-    --accent:      #166534;
-    --accent-hi:   #15803d;
-    --accent-br:   #16a34a;
-    --text-lo:     #c8cace;
-    --text-mid:    #6b7280;
-    --text-hi:     #374151;
-    --text-main:   #111827;
-    --lavender:    #15803d;
-    --lavender-br: #166534;
+    --toolbar-bg:  #f3f0ff;
+    --hdr-bg:      #ede9fe;
+    --border:      #ddd6fe;
+    --accent:      #6b46c1;
+    --accent-hi:   #7c3aed;
+    --accent-br:   #8b5cf6;
+    --text-lo:     #c4b5fd;
+    --text-mid:    #7c3aed;
+    --text-hi:     #4c1d95;
+    --text-main:   #1e1b4b;
+    --lavender:    #6b46c1;
+    --lavender-br: #7c3aed;
   }
 
   /* ── GREEN ── */
@@ -702,6 +702,9 @@
     /* Hide desktop elements */
     #toolbar      { display: none !important; }
     #preset-panel { display: none !important; }
+    #zoom-controls { display: none !important; }
+    /* Derived-row (Wheelbase) is duplicated in statusbar — hide above buttons */
+    #panel .derived-row { display: none; }
 
     /* Show mobile header */
     #mobile-header { display: flex; }
@@ -773,19 +776,20 @@
     text-transform: lowercase;
   }
   #mobile-menu-btn {
-    background: var(--hdr-bg);
-    border: 1px solid var(--border);
-    color: var(--text-mid);
+    background: var(--accent);
+    border: 1px solid var(--accent-hi);
+    color: #fff;
     font-family: var(--font);
     font-size: 13px;
-    font-weight: 600;
-    padding: 6px 14px;
-    border-radius: 3px;
+    font-weight: 700;
+    padding: 7px 16px;
+    border-radius: 4px;
     cursor: pointer;
     letter-spacing: 0.5px;
-    transition: background 0.15s, color 0.15s;
+    transition: background 0.15s;
+    -webkit-tap-highlight-color: transparent;
   }
-  #mobile-menu-btn:hover { background: var(--accent); color: #fff; }
+  #mobile-menu-btn:active { background: var(--accent-hi); }
 
   /* ── Mobile menu overlay ── */
   #mobile-menu {
@@ -912,11 +916,11 @@
   }
   .mob-nav-btn {
     flex-shrink: 0;
-    width: 30px;
+    width: 18px;
     background: var(--hdr-bg);
     border: none;
     color: var(--accent-br);
-    font-size: 22px;
+    font-size: 16px;
     line-height: 1;
     cursor: pointer;
     display: flex;
@@ -1679,21 +1683,21 @@ const THEMES = {
   },
   light: {
     bg:        '#ffffff',
-    grid:      '#e8f5e9',
-    ground:    '#86efac',
-    wheel:     '#15803d',
-    wheelLbl:  '#166534',
-    tubeFill:  '#dcfce7',
-    tubeStk:   '#15803d',
-    lugFill:   '#bbf7d0',
-    lugStk:    '#15803d',
+    grid:      '#f3f0ff',
+    ground:    '#c4b5fd',
+    wheel:     '#6b46c1',
+    wheelLbl:  '#4c1d95',
+    tubeFill:  '#ede9fe',
+    tubeStk:   '#6b46c1',
+    lugFill:   '#ddd6fe',
+    lugStk:    '#6b46c1',
     bbBore:    '#ffffff',
-    crDash:    '#86efac',
-    forkFill:  '#d1fae5',
-    forkStk:   '#15803d',
-    forkAnn:   '#16a34a',
-    ann:       '#15803d',
-    ann2:      '#16a34a',
+    crDash:    '#c4b5fd',
+    forkFill:  '#f5f3ff',
+    forkStk:   '#6b46c1',
+    forkAnn:   '#7c3aed',
+    ann:       '#6b46c1',
+    ann2:      '#7c3aed',
     errFill:   '#fee2e2',
   },
   green: {
@@ -2519,26 +2523,26 @@ function drawAnnotations(g){
     lineS(htx, reach_y-4, htx, hty+4, ANN, 1, [3,3]);
   }
 
-  // ── Stack — just outside right edge of front wheel ──
+  // ── Stack — just right of head tube top (inside frame) ──
   if(vis.ann_stack){
-    const stack_x = fax + rwpx + 18;
+    const stack_x = htx + 22;
     arrowV(bby, hty, stack_x, ANN);
     label(stack_x+6, (bby+hty)/2, `stack  ${g.stack.toFixed(0)}`, ANN,'left','middle',10);
     lineS(stack_x-4, bby, bbx+4, bby, ANN, 1, [3,3]);
     lineS(stack_x-4, hty, htx+4, hty, ANN, 1, [3,3]);
   }
 
-  // ── BB Drop — just outside left edge of rear wheel, dotted leaders ──
+  // ── BB Drop — between rear axle and BB, dotted leaders ──
   if(vis.ann_bbdrop){
-    const drop_x = rax - rwpx - 18;
+    const drop_x = rax + 22;
     arrowV(ray, bby, drop_x, ANN2);
-    label(drop_x-6, (ray+bby)/2, `bb drop  ${p.bb_drop.toFixed(0)}`, ANN2,'right','middle',9);
-    lineS(drop_x+4, ray, rax, ray, ANN2, 1, [3,3]);
+    label(drop_x+6, (ray+bby)/2, `bb drop  ${p.bb_drop.toFixed(0)}`, ANN2,'left','middle',9);
+    lineS(drop_x-4, ray, rax, ray, ANN2, 1, [3,3]);
     lineS(drop_x+4, bby, bbx-4, bby, ANN2, 1, [3,3]);
   }
 
-  // ── Wheelbase ──
-  const wb_y=Math.max(ray,fay)+rwpx+20;
+  // ── Wheelbase — between axles, just below them ──
+  const wb_y=Math.max(ray,fay)+20;
   if(vis.ann_wheelbase){
     arrowH(rax,fax,wb_y,ANN2);
     label((rax+fax)/2,wb_y+6,`wheelbase  ${g.wheelbase.toFixed(0)}`,ANN2,'center','top',9);
@@ -2703,19 +2707,18 @@ function fitView() {
   const rwd = g.rwd, fwd = g.fwd;
 
   // ── Horizontal fit ───────────────────────────────────────
-  // Rear wheel outer-left → front wheel outer-right, with margins
-  const minX = g.rear_axle[0]  - rwd  - 65;
-  const maxX = g.front_axle[0] + fwd  + 65;
+  // Fit to axle-to-axle + 45% of wheel radius each side so wheels clip
+  // but the complete frame is always in view.
+  const minX = g.rear_axle[0]  - rwd * 0.45;
+  const maxX = g.front_axle[0] + fwd * 0.45;
   const mmW  = maxX - minX;
   if (mmW < 1) return;
 
-  scale = (W - 64) / mmW;           // 32px pad each side
+  scale = (W - 40) / mmW;           // 20px pad each side
   offset[0] = -((minX + maxX) / 2) * scale;
 
-  // ── Vertical: pin ground at 80% of canvas height ─────────
-  // 80% leaves ~20% above the tallest point and ~20% for labels below.
-  // Increase this fraction to push the bike lower (0.85 = very low).
-  groundFraction = 0.80;
+  // ── Vertical: pin ground at 78% of canvas height ─────────
+  groundFraction = 0.78;
   viewPinned = true;   // re-enable pin on reset/resize
   // offset[1] will be set by pinGroundY in the next redraw.
 }
@@ -3177,7 +3180,7 @@ const MOBILE_PAGES = [
     {type:'wheel',  keyParam:'front_wheel_key', diaParam:'front_wheel_dia', label:'Front Wheel', storeKey:'_frontWheelMob', isFront:true},
     {type:'wheel',  keyParam:'rear_wheel_key',  diaParam:'rear_wheel_dia',  label:'Rear Wheel',  storeKey:'_rearWheelMob',  isFront:false},
   ]},
-  { title: 'Head Tube', items: [
+  { title: 'BB & Head Tube', items: [
     {type:'bb_std'},
     {type:'slider', key:'ht_length',         label:'HT Length (mm)'},
     {type:'slider', key:'ht_OD',             label:'HT OD (mm)'},
