@@ -752,8 +752,8 @@
     justify-content: space-between;
     padding: 0 12px;
     height: 44px;
-    background: var(--toolbar-bg);
-    border-bottom: 1px solid var(--border);
+    background: var(--hdr-bg);
+    border-bottom: 2px solid var(--accent);
     flex-shrink: 0;
   }
   #mobile-logo {
@@ -795,13 +795,13 @@
   #mobile-menu {
     display: none;
     position: fixed;
-    inset: 0;
+    top: 0; right: 0; bottom: 0; left: 0;
     background: rgba(0,0,0,0.45);
     z-index: 1100;
     align-items: flex-start;
     justify-content: flex-end;
   }
-  #mobile-menu.open { display: flex; }
+  #mobile-menu.open { display: flex !important; }
   #mobile-menu-inner {
     width: 85%;
     max-width: 340px;
@@ -2789,7 +2789,10 @@ function syncThemeRadios(){
 function toggleMobileMenu(){
   const menu = document.getElementById('mobile-menu');
   if(menu.classList.contains('open')){ closeMobileMenu(); }
-  else { syncMobileMenuState(); menu.classList.add('open'); }
+  else {
+    try { syncMobileMenuState(); } catch(e) {}
+    menu.classList.add('open');
+  }
 }
 function closeMobileMenu(){
   document.getElementById('mobile-menu').classList.remove('open');
