@@ -903,11 +903,43 @@
     flex-direction: column;
     padding-bottom: 0;
   }
-  .mob-pager-track {
+  .mob-pager-wrapper {
     display: flex;
     flex-direction: row;
     flex: 1;
     min-height: 0;
+    overflow: hidden;
+  }
+  .mob-nav-btn {
+    flex-shrink: 0;
+    width: 30px;
+    background: var(--hdr-bg);
+    border: none;
+    color: var(--accent-br);
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    font-family: var(--font);
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s, color 0.15s;
+  }
+  .mob-nav-btn:active  { background: var(--accent); color: #fff; }
+  .mob-nav-btn:disabled { color: var(--border); cursor: default; }
+  .mob-nav-btn.left  { border-right: 1px solid var(--border); }
+  .mob-nav-btn.right { border-left:  1px solid var(--border); }
+  .mob-pager-clip {
+    flex: 1;
+    overflow: hidden;
+  }
+  .mob-pager-track {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
     transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
     will-change: transform;
   }
@@ -3188,6 +3220,10 @@ function goToPage(n){
   const track = document.getElementById('mob-pager-track');
   if(track) track.style.transform = 'translateX('+(-mobCurrentPage*100)+'%)';
   updatePageDots();
+  const btnL = document.getElementById('mob-nav-left');
+  const btnR = document.getElementById('mob-nav-right');
+  if(btnL) btnL.disabled = mobCurrentPage === 0;
+  if(btnR) btnR.disabled = mobCurrentPage === MOBILE_PAGES.length - 1;
 }
 function updatePageDots(){
   const bar = document.getElementById('mob-page-dots');
@@ -3297,23 +3333,48 @@ function buildMobilePanel(){
   scroll.innerHTML='';
   scroll.classList.add('mobile-pager');
 
+  // ── Wrapper row: [◀] [clip] [▶] ──────────────────────
+  const wrapper=document.createElement('div');
+  wrapper.className='mob-pager-wrapper';
+
+  const btnL=document.createElement('button');
+  btnL.className='mob-nav-btn left'; btnL.id='mob-nav-left';
+  btnL.innerHTML='&#8249;';   // ‹
+  btnL.disabled=true;         // starts on first page
+  btnL.onclick=()=>goToPage(mobCurrentPage-1);
+  wrapper.appendChild(btnL);
+
+  const clip=document.createElement('div');
+  clip.className='mob-pager-clip';
+
   const track=document.createElement('div');
   track.className='mob-pager-track'; track.id='mob-pager-track';
 
-  MOBILE_PAGES.forEach((pageData, pageIdx)=>{
+  MOBILE_PAGES.forEach((pageData)=>{
     const page=document.createElement('div'); page.className='mob-page';
     const titleEl=document.createElement('div');
     titleEl.className='mob-page-title'; titleEl.textContent=pageData.title;
     page.appendChild(titleEl);
     pageData.items.forEach(item=>{
-      if(item.type==='slider')  makeParamRow(item.key, item.label, page);
-      else if(item.type==='wheel') buildMobileWheelRow(item, page);
+      if(item.type==='slider')   makeParamRow(item.key, item.label, page);
+      else if(item.type==='wheel')  buildMobileWheelRow(item, page);
       else if(item.type==='bb_std') buildMobileBBRow(page);
     });
     track.appendChild(page);
   });
-  scroll.appendChild(track);
 
+  clip.appendChild(track);
+  wrapper.appendChild(clip);
+
+  const btnR=document.createElement('button');
+  btnR.className='mob-nav-btn right'; btnR.id='mob-nav-right';
+  btnR.innerHTML='&#8250;';   // ›
+  btnR.onclick=()=>goToPage(mobCurrentPage+1);
+  wrapper.appendChild(btnR);
+
+  scroll.appendChild(wrapper);
+
+  // ── Page dots ─────────────────────────────────────────
   const dotsBar=document.createElement('div');
   dotsBar.className='mob-page-dots'; dotsBar.id='mob-page-dots';
   MOBILE_PAGES.forEach((_,i)=>{
@@ -3326,7 +3387,6 @@ function buildMobilePanel(){
   scroll.appendChild(dotsBar);
 
   mobCurrentPage=0;
-  initMobileSwipe(scroll, track);
   updatePageDots();
 }
 
