@@ -695,79 +695,265 @@
     #logo-text { font-size: 12px; letter-spacing: 2px; }
   }
 
-  /* Mobile: panel slides under canvas, toggled by hamburger */
+  /* Mobile: swipeable panel + compact header */
   @media (max-width: 600px) {
     body { overflow: hidden; }
 
-    #toolbar {
-      height: 52px;
-      padding: 0 10px;
-      gap: 2px;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
+    /* Hide desktop elements */
+    #toolbar      { display: none !important; }
+    #preset-panel { display: none !important; }
 
-    /* Panel becomes a bottom sheet on mobile */
+    /* Show mobile header */
+    #mobile-header { display: flex; }
+
+    /* Panel becomes a bottom sheet */
     #main { flex-direction: column-reverse; }
 
     #panel {
       width: 100% !important;
-      height: 42vh;
+      height: 48vh;
       min-width: unset;
       border-right: none;
       border-top: 2px solid var(--accent);
       flex-shrink: 0;
-      transition: height 0.25s ease;
-      overflow: hidden;  /* needed for height transition to clip content */
-    }
-
-    #panel.collapsed-mobile {
-      height: 38px;
+      overflow: hidden;
     }
 
     #resizer { display: none; }
 
-    #canvas-wrap { flex: none; height: calc(58vh - 52px); min-height: 100px; }
+    #canvas-wrap { flex: none; height: calc(52vh - 44px); min-height: 100px; }
 
-    /* Panel header toggle row */
-    #panel-mobile-hdr {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px 12px;
-      background: var(--hdr-bg);
-      border-bottom: 1px solid var(--border);
-      cursor: pointer;
-      flex-shrink: 0;
-      user-select: none;
-    }
-    #panel-mobile-hdr span {
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--lavender-br);
-      font-family: var(--font);
-    }
-    #panel-mobile-hdr .arrow {
-      font-size: 12px;
-      color: var(--accent-br);
-      transition: transform 0.2s;
-    }
-    #panel.collapsed-mobile #panel-mobile-hdr .arrow {
-      transform: rotate(180deg);
-    }
+    /* Compact param rows — target ~40px each so 5–6 fit per page */
+    .param-row    { padding: 2px 0; gap: 1px; }
+    .param-label  { font-size: 10px; line-height: 1.2; padding: 0; white-space: nowrap; overflow: hidden; }
+    .param-slider { height: 22px; }
+    .param-slider::-webkit-slider-runnable-track { height: 3px; }
+    .param-slider::-webkit-slider-thumb { width: 18px; height: 18px; margin-top: -7.5px; border-width: 2px; }
+    .param-slider::-moz-range-thumb { width: 18px; height: 18px; }
+    .param-input  { width: 52px; font-size: 10px; }
+    .arrow-btn    { width: 16px; height: 16px; font-size: 9px; }
+    .wheel-val    { font-size: 11px; padding: 1px 3px; }
+    .param-select { font-size: 10px; padding: 2px 3px; }
 
-    .param-label { font-size: 12px; }
-    .param-input { width: 64px; font-size: 12px; }
-    .param-select { width: 80px; font-size: 12px; }
+    /* Compact panel footer */
+    #panel-btns   { padding: 3px 8px; gap: 4px; }
+    #panel-order  { padding: 0 8px 4px; }
+    .panel-btn    { font-size: 11px; padding: 4px 4px; }
+    .derived-row  { padding: 2px 8px 2px 11px; font-size: 11px; }
+  }
 
-    /* Preset panel repositioned on mobile */
-    #preset-panel {
-      bottom: auto;
-      top: 56px;
-      right: 8px;
-    }
+  /* ── Mobile header ── */
+  #mobile-header {
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    height: 44px;
+    background: var(--toolbar-bg);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  #mobile-logo {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  #mobile-logo-text {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--lavender);
+    letter-spacing: 3px;
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+  }
+  #mobile-logo-sub {
+    font-size: 9px;
+    color: var(--text-lo);
+    letter-spacing: 2px;
+    text-transform: lowercase;
+  }
+  #mobile-menu-btn {
+    background: var(--hdr-bg);
+    border: 1px solid var(--border);
+    color: var(--text-mid);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 3px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.15s, color 0.15s;
+  }
+  #mobile-menu-btn:hover { background: var(--accent); color: #fff; }
+
+  /* ── Mobile menu overlay ── */
+  #mobile-menu {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 1100;
+    align-items: flex-start;
+    justify-content: flex-end;
+  }
+  #mobile-menu.open { display: flex; }
+  #mobile-menu-inner {
+    width: 85%;
+    max-width: 340px;
+    height: 100%;
+    background: var(--panel-bg);
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.25s ease;
+  }
+  #mobile-menu.open #mobile-menu-inner { transform: translateX(0); }
+  #mobile-menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    height: 44px;
+    background: var(--hdr-bg);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--lavender-br);
+  }
+  #mobile-menu-close {
+    background: none;
+    border: none;
+    color: var(--text-mid);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+  }
+  .mob-menu-section { border-bottom: 1px solid var(--border); padding: 8px 0; }
+  .mob-menu-section-title {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-mid);
+    padding: 0 14px 5px;
+  }
+  .mob-menu-theme-row {
+    display: flex;
+    gap: 4px;
+    padding: 0 10px 2px;
+    flex-wrap: wrap;
+  }
+  .mob-preset-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    padding: 4px 14px;
+    flex-wrap: wrap;
+  }
+  .mob-preset-row select {
+    flex: 1;
+    min-width: 80px;
+    background: var(--input-bg);
+    color: var(--input-fg);
+    border: 1px solid var(--accent);
+    border-radius: 2px;
+    font-family: var(--font);
+    font-size: 11px;
+    padding: 4px 4px;
+    outline: none;
+  }
+  .mob-preset-row button {
+    background: var(--hdr-bg);
+    color: var(--accent-br);
+    border: 1px solid var(--border);
+    font-family: var(--font);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 5px 10px;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+  .mob-preset-row button:hover { background: var(--accent); color: #fff; }
+  .mob-menu-action-btn {
+    width: calc(100% - 28px);
+    margin: 4px 14px;
+    background: var(--hdr-bg);
+    color: var(--text-mid);
+    border: 1px solid var(--border);
+    font-family: var(--font);
+    font-size: 12px;
+    padding: 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    text-align: center;
+  }
+  .mob-menu-action-btn:hover { background: var(--accent); color: #fff; }
+
+  /* ── Mobile pager ── */
+  #panel-scroll.mobile-pager {
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 0;
+  }
+  .mob-pager-track {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+    min-height: 0;
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+    will-change: transform;
+  }
+  .mob-page {
+    flex: 0 0 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 0 8px 2px 11px;
+  }
+  .mob-page-title {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--lavender-br);
+    font-family: var(--font-mono);
+    padding: 4px 0 3px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2px;
+    flex-shrink: 0;
+  }
+  .mob-page-dots {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 7px;
+    padding: 3px 0 2px;
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+  }
+  .mob-page-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.15s, transform 0.15s;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    flex-shrink: 0;
+  }
+  .mob-page-dot.active {
+    background: var(--accent-br);
+    transform: scale(1.35);
   }
 
   /* Panel header hidden — no collapsible label needed */
@@ -1065,6 +1251,15 @@
 </head>
 <body>
 
+<!-- Mobile-only compact header (hidden on desktop via CSS) -->
+<div id="mobile-header">
+  <div id="mobile-logo">
+    <span id="mobile-logo-text">CREATURE</span>
+    <span id="mobile-logo-sub">bike designer</span>
+  </div>
+  <button id="mobile-menu-btn" onclick="toggleMobileMenu()">&#9776; menu</button>
+</div>
+
 <!-- Toolbar -->
 <div id="toolbar">
   <div id="logo-area">
@@ -1095,6 +1290,66 @@
 
 <!-- Dropdown backdrop -->
 <div id="dd-backdrop" onclick="closeAllDd()"></div>
+
+<!-- Mobile menu overlay -->
+<div id="mobile-menu" onclick="handleMobileMenuBackdrop(event)">
+  <div id="mobile-menu-inner">
+    <div id="mobile-menu-header">
+      <span>menu</span>
+      <button id="mobile-menu-close" onclick="closeMobileMenu()">&#x2715;</button>
+    </div>
+
+    <!-- Theme -->
+    <div class="mob-menu-section">
+      <div class="mob-menu-section-title">theme</div>
+      <div class="mob-menu-theme-row" id="mob-theme-radios">
+        <button class="dd-radio" data-val="dark"   onclick="setTheme('dark');  syncThemeRadios()">dark</button>
+        <button class="dd-radio" data-val="light"  onclick="setTheme('light'); syncThemeRadios()">light</button>
+        <button class="dd-radio" data-val="green"  onclick="setTheme('green'); syncThemeRadios()">green</button>
+        <button class="dd-radio" data-val="orange" onclick="setTheme('orange');syncThemeRadios()">orange</button>
+      </div>
+    </div>
+
+    <!-- Elements -->
+    <div class="mob-menu-section">
+      <div class="mob-menu-section-title">elements</div>
+      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('grid',this.checked)"><span>grid</span></label>
+      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('wheels',this.checked)"><span>wheels</span></label>
+      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('fork',this.checked)"><span>fork diagram</span></label>
+      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('cockpit',this.checked)"><span>cockpit</span></label>
+    </div>
+
+    <!-- Annotations -->
+    <div class="mob-menu-section">
+      <div class="mob-menu-section-title">annotations</div>
+      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('ann_reach',this.checked)"><span>reach</span></label>
+      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('ann_stack',this.checked)"><span>stack</span></label>
+      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('ann_bbdrop',this.checked)"><span>bb drop</span></label>
+      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('ann_wheelbase',this.checked)"><span>wheelbase</span></label>
+      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('ann_chainstay',this.checked)"><span>chainstay</span></label>
+      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('ann_htangle',this.checked)"><span>ht angle</span></label>
+      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('ann_stangle',this.checked)"><span>st angle</span></label>
+      <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('ann_stlength',this.checked)"><span>st length</span></label>
+      <label class="dd-toggle-row"><input type="checkbox" onchange="setVis('ann_tubeODs',this.checked)"><span>tube ODs</span></label>
+      <label class="dd-toggle-row"><input type="checkbox" onchange="setVis('ann_jig',this.checked)"><span>jig dimensions</span></label>
+    </div>
+
+    <!-- Presets -->
+    <div class="mob-menu-section">
+      <div class="mob-menu-section-title">presets</div>
+      <div class="mob-preset-row">
+        <select id="mob-preset-cat" onchange="mobUpdatePresetSizes()"></select>
+        <select id="mob-preset-size"></select>
+        <button onclick="mobLoadPreset()">load</button>
+      </div>
+    </div>
+
+    <!-- Reset view -->
+    <div class="mob-menu-section">
+      <button class="mob-menu-action-btn" onclick="resetView(); closeMobileMenu()">reset view</button>
+    </div>
+  </div>
+</div>
 
 <!-- Main -->
 <div id="main">
@@ -2477,9 +2732,60 @@ function closeAllDd(){
   if(bd) bd.classList.remove('open');
 }
 function syncThemeRadios(){
-  document.querySelectorAll('#theme-radios .dd-radio').forEach(b=>{
+  document.querySelectorAll('#theme-radios .dd-radio, #mob-theme-radios .dd-radio').forEach(b=>{
     b.classList.toggle('active', b.dataset.val===currentTheme);
   });
+}
+
+// ═══════════════════════════════════════════════════════
+//  MOBILE MENU
+// ═══════════════════════════════════════════════════════
+function toggleMobileMenu(){
+  const menu = document.getElementById('mobile-menu');
+  if(menu.classList.contains('open')){ closeMobileMenu(); }
+  else { syncMobileMenuState(); menu.classList.add('open'); }
+}
+function closeMobileMenu(){
+  document.getElementById('mobile-menu').classList.remove('open');
+}
+function handleMobileMenuBackdrop(e){
+  if(e.target === document.getElementById('mobile-menu')) closeMobileMenu();
+}
+
+// Sync mobile menu checkboxes and theme radios to current state
+function syncMobileMenuState(){
+  syncThemeRadios();
+  const menu = document.getElementById('mobile-menu');
+  if(!menu) return;
+  const sections = menu.querySelectorAll('.mob-menu-section');
+  // sections[1] = elements, sections[2] = annotations
+  const elCbs  = sections[1].querySelectorAll('input[type=checkbox]');
+  const annCbs = sections[2].querySelectorAll('input[type=checkbox]');
+  const elKeys  = ['grid','wheels','fork','cockpit'];
+  const annKeys = ['ann_reach','ann_stack','ann_bbdrop','ann_wheelbase','ann_chainstay',
+                   'ann_htangle','ann_stangle','ann_stlength','ann_tubeODs','ann_jig'];
+  elKeys .forEach((k,i)=>{ if(elCbs[i])  elCbs[i].checked  = !!vis[k]; });
+  annKeys.forEach((k,i)=>{ if(annCbs[i]) annCbs[i].checked = !!vis[k]; });
+}
+
+// Mobile preset helpers
+function mobUpdatePresetSizes(){
+  const cat     = document.getElementById('mob-preset-cat').value;
+  const sizeSel = document.getElementById('mob-preset-size');
+  sizeSel.innerHTML = '';
+  Object.keys(PRESETS[cat]||{}).forEach(s=>{
+    const o=document.createElement('option'); o.value=s; o.textContent=s;
+    sizeSel.appendChild(o);
+  });
+  const sizes = Object.keys(PRESETS[cat]||{});
+  const def   = sizes.includes('M')?'M': sizes.includes('Large')?'Large': sizes[0];
+  if(def) sizeSel.value=def;
+}
+function mobLoadPreset(){
+  const cat  = document.getElementById('mob-preset-cat').value;
+  const size = document.getElementById('mob-preset-size').value;
+  const p    = PRESETS[cat]?.[size];
+  if(p){ setParams(p); closeMobileMenu(); }
 }
 
 // ── Export modal ───────────────────────────────────────────
@@ -2819,9 +3125,217 @@ function makeGroup(scroll, name, buildFn, startOpen=true) {
   scroll.appendChild(gw);
 }
 
-function buildPanel(){
+// ═══════════════════════════════════════════════════════
+//  MOBILE PAGER — PAGE DEFINITIONS
+// ═══════════════════════════════════════════════════════
+const MOBILE_PAGES = [
+  { title: 'Fit', items: [
+    {type:'slider', key:'reach',            label:'Reach (mm)'},
+    {type:'slider', key:'stack',            label:'Stack (mm)'},
+    {type:'slider', key:'ht_angle',         label:'HT Angle (°)'},
+    {type:'slider', key:'st_angle',         label:'ST Angle (°)'},
+    {type:'slider', key:'bb_drop',          label:'BB Drop (mm)'},
+    {type:'slider', key:'chainstay_length', label:'Chainstay (mm)'},
+  ]},
+  { title: 'Fork & Wheels', items: [
+    {type:'slider', key:'fork_atc',             label:'Fork ATC (mm)'},
+    {type:'slider', key:'fork_offset',          label:'Fork Rake (mm)'},
+    {type:'slider', key:'lower_headset_height', label:'Lower Headset (mm)'},
+    {type:'slider', key:'tyre_width',           label:'Tyre Width (mm)'},
+    {type:'wheel',  keyParam:'front_wheel_key', diaParam:'front_wheel_dia', label:'Front Wheel', storeKey:'_frontWheelMob', isFront:true},
+    {type:'wheel',  keyParam:'rear_wheel_key',  diaParam:'rear_wheel_dia',  label:'Rear Wheel',  storeKey:'_rearWheelMob',  isFront:false},
+  ]},
+  { title: 'Head Tube', items: [
+    {type:'bb_std'},
+    {type:'slider', key:'ht_length',         label:'HT Length (mm)'},
+    {type:'slider', key:'ht_OD',             label:'HT OD (mm)'},
+    {type:'slider', key:'dt_weld_clearance', label:'DT Weld Clr (mm)'},
+    {type:'slider', key:'tt_weld_clearance', label:'TT Weld Clr (mm)'},
+  ]},
+  { title: 'Seat Tube', items: [
+    {type:'slider', key:'st_length',       label:'ST Length (mm)'},
+    {type:'slider', key:'st_OD',           label:'ST OD (mm)'},
+    {type:'slider', key:'st_WT',           label:'ST Wall (mm)'},
+    {type:'slider', key:'st_tt_clearance', label:'ST → TT Gap (mm)'},
+    {type:'slider', key:'tt_OD',           label:'TT OD (mm)'},
+    {type:'slider', key:'tt_WT',           label:'TT Wall (mm)'},
+  ]},
+  { title: 'Down & Chain', items: [
+    {type:'slider', key:'dt_OD',            label:'DT OD (mm)'},
+    {type:'slider', key:'dt_WT',            label:'DT Wall (mm)'},
+    {type:'slider', key:'cs_ds_drop_angle', label:'DS Drop Angle (°)'},
+    {type:'slider', key:'max_chainring',    label:'Max Chainring (T)'},
+    {type:'slider', key:'cs_OD',           label:'CS OD (mm)'},
+    {type:'slider', key:'cs_WT',           label:'CS Wall (mm)'},
+  ]},
+  { title: 'Stays & Cockpit', items: [
+    {type:'slider', key:'ss_OD',          label:'SS OD (mm)'},
+    {type:'slider', key:'ss_WT',          label:'SS Wall (mm)'},
+    {type:'slider', key:'stem_length',    label:'Stem Length (mm)'},
+    {type:'slider', key:'stem_angle',     label:'Stem Angle (°)'},
+    {type:'slider', key:'bar_diameter',   label:'Bar Diameter (mm)'},
+    {type:'slider', key:'steerer_height', label:'Steerer Above HT (mm)'},
+  ]},
+];
+
+// ═══════════════════════════════════════════════════════
+//  PAGER NAVIGATION
+// ═══════════════════════════════════════════════════════
+let mobCurrentPage = 0;
+
+function goToPage(n){
+  mobCurrentPage = Math.max(0, Math.min(MOBILE_PAGES.length-1, n));
+  const track = document.getElementById('mob-pager-track');
+  if(track) track.style.transform = 'translateX('+(-mobCurrentPage*100)+'%)';
+  updatePageDots();
+}
+function updatePageDots(){
+  const bar = document.getElementById('mob-page-dots');
+  if(!bar) return;
+  bar.querySelectorAll('.mob-page-dot').forEach((d,i)=>d.classList.toggle('active',i===mobCurrentPage));
+}
+function initMobileSwipe(scrollEl, track){
+  let startX=0, startY=0, dx=0, dragging=false, blocked=false;
+  const THRESHOLD=40, ANGLE_LOCK=35;
+  scrollEl.addEventListener('touchstart', e=>{
+    if(e.touches.length!==1) return;
+    startX=e.touches[0].clientX; startY=e.touches[0].clientY;
+    dx=0; dragging=false; blocked=false;
+  },{passive:true});
+  scrollEl.addEventListener('touchmove', e=>{
+    if(blocked) return;
+    const cx=e.touches[0].clientX, cy=e.touches[0].clientY;
+    const adx=Math.abs(cx-startX), ady=Math.abs(cy-startY);
+    if(!dragging && (adx>6 || ady>6)){
+      const angle=Math.atan2(ady,adx)*(180/Math.PI);
+      if(angle>ANGLE_LOCK){ blocked=true; return; }
+      dragging=true;
+    }
+    if(!dragging) return;
+    e.preventDefault();
+    dx=cx-startX;
+    const liveOffset=-mobCurrentPage*100+(dx/scrollEl.offsetWidth)*100;
+    track.style.transition='none';
+    track.style.transform='translateX('+liveOffset+'%)';
+  },{passive:false});
+  scrollEl.addEventListener('touchend', ()=>{
+    if(!dragging) return;
+    track.style.transition='';
+    goToPage(mobCurrentPage+(dx< -THRESHOLD?1: dx>THRESHOLD?-1:0));
+    dragging=false;
+  },{passive:true});
+}
+
+// ═══════════════════════════════════════════════════════
+//  MOBILE PANEL BUILD
+// ═══════════════════════════════════════════════════════
+function buildMobileBBRow(container){
+  const bbOpts=Object.keys(BB_STANDARDS).map(k=>[k,k]);
+  makeSelectRow('BB Standard', bbOpts, 'BSA',
+    v=>{ const std=BB_STANDARDS[v]; params.bb_diameter=std.shell; params.bb_bore=std.bore; redraw(); },
+    container);
+  const BB_WIDTHS=[68,73,83];
+  const wrow=document.createElement('div'); wrow.className='param-row';
+  const wlbl=document.createElement('span'); wlbl.className='param-label';
+  wlbl.textContent='BB Width (mm)';
+  wrow.appendChild(wlbl);
+  const trow=document.createElement('div');
+  trow.style.cssText='display:flex;gap:4px;width:100%;margin-top:2px;';
+  function sync(){
+    BB_WIDTHS.forEach((ww,i)=>{
+      trow.children[i].style.background  = params.bb_width===ww?'var(--accent)':'var(--hdr-bg)';
+      trow.children[i].style.color       = params.bb_width===ww?'#fff':'var(--text-mid)';
+      trow.children[i].style.borderColor = params.bb_width===ww?'var(--accent-br)':'var(--border)';
+    });
+  }
+  BB_WIDTHS.forEach(w=>{
+    const btn=document.createElement('button');
+    btn.textContent=w;
+    btn.style.cssText='flex:1;padding:3px 2px;font-family:var(--font);font-size:10px;font-weight:700;'+
+      'background:var(--hdr-bg);color:var(--text-mid);border:1px solid var(--border);'+
+      'border-radius:2px;cursor:pointer;transition:background 0.1s,color 0.1s;';
+    btn.onclick=()=>{ params.bb_width=w; sync(); redraw(); };
+    trow.appendChild(btn);
+  });
+  wrow.appendChild(trow); container.appendChild(wrow);
+  paramInputs._bbWidthSync=()=>sync();
+  sync();
+}
+
+function buildMobileWheelRow(item, container){
+  const row=document.createElement('div'); row.className='param-row';
+  const lbl=document.createElement('span'); lbl.className='param-label';
+  lbl.textContent=item.label; row.appendChild(lbl);
+  const trow=document.createElement('div'); trow.className='wheel-toggle-row';
+  const btnL=document.createElement('button'); btnL.className='arrow-btn'; btnL.textContent='‹';
+  const valSpan=document.createElement('span'); valSpan.className='wheel-val';
+  const btnR=document.createElement('button'); btnR.className='arrow-btn'; btnR.textContent='›';
+  function getKey(){ return params[item.keyParam]||WHEEL_KEYS[4]; }
+  function setKey(k){
+    params[item.keyParam]=k; params[item.diaParam]=WHEEL_SIZES[k];
+    valSpan.textContent=k;
+    if(item.isFront){
+      const minATC=WHEEL_SIZES[k]/2+(params.tyre_width||57)+60;
+      if(params.fork_atc<minATC){
+        params.fork_atc=Math.round(minATC);
+        if(paramInputs['fork_atc'])     paramInputs['fork_atc'].value=params.fork_atc;
+        if(paramInputs['fork_atc_sld']) paramInputs['fork_atc_sld'].value=params.fork_atc;
+      }
+    }
+    syncStackAtc('wheel'); redraw();
+  }
+  function step(dir){ const idx=WHEEL_KEYS.indexOf(getKey()); setKey(WHEEL_KEYS[(idx+dir+WHEEL_KEYS.length)%WHEEL_KEYS.length]); }
+  valSpan.textContent=getKey();
+  btnL.onclick=()=>step(-1); btnR.onclick=()=>step(1);
+  paramInputs[item.storeKey]={ syncDisplay:()=>{ valSpan.textContent=getKey(); } };
+  trow.appendChild(btnL); trow.appendChild(valSpan); trow.appendChild(btnR);
+  row.appendChild(trow); container.appendChild(row);
+}
+
+function buildMobilePanel(){
   const scroll=document.getElementById('panel-scroll');
   scroll.innerHTML='';
+  scroll.classList.add('mobile-pager');
+
+  const track=document.createElement('div');
+  track.className='mob-pager-track'; track.id='mob-pager-track';
+
+  MOBILE_PAGES.forEach((pageData, pageIdx)=>{
+    const page=document.createElement('div'); page.className='mob-page';
+    const titleEl=document.createElement('div');
+    titleEl.className='mob-page-title'; titleEl.textContent=pageData.title;
+    page.appendChild(titleEl);
+    pageData.items.forEach(item=>{
+      if(item.type==='slider')  makeParamRow(item.key, item.label, page);
+      else if(item.type==='wheel') buildMobileWheelRow(item, page);
+      else if(item.type==='bb_std') buildMobileBBRow(page);
+    });
+    track.appendChild(page);
+  });
+  scroll.appendChild(track);
+
+  const dotsBar=document.createElement('div');
+  dotsBar.className='mob-page-dots'; dotsBar.id='mob-page-dots';
+  MOBILE_PAGES.forEach((_,i)=>{
+    const dot=document.createElement('button');
+    dot.className='mob-page-dot'+(i===0?' active':'');
+    dot.title=MOBILE_PAGES[i].title;
+    dot.onclick=()=>goToPage(i);
+    dotsBar.appendChild(dot);
+  });
+  scroll.appendChild(dotsBar);
+
+  mobCurrentPage=0;
+  initMobileSwipe(scroll, track);
+  updatePageDots();
+}
+
+function buildPanel(){
+  if(window.innerWidth<=600){ buildMobilePanel(); return; }
+
+  const scroll=document.getElementById('panel-scroll');
+  scroll.innerHTML='';
+  scroll.classList.remove('mobile-pager');
 
   // ── 1. GEOMETRY section ───────────────────────────────
   makeGroup(scroll, 'Geometry', body=>{
@@ -3254,6 +3768,27 @@ async function submitOrder() {
 params.stack = calcStackFromAtc(params);
 try { buildPanel(); } catch(e){ console.error('buildPanel failed:',e); }
 try { buildPresetPanel(); } catch(e){ console.error('buildPresetPanel failed:',e); }
+
+// Populate mobile menu preset selects
+(function buildMobilePresets(){
+  const catSel=document.getElementById('mob-preset-cat');
+  if(!catSel) return;
+  Object.keys(PRESETS).forEach(cat=>{
+    const o=document.createElement('option'); o.value=cat; o.textContent=cat;
+    catSel.appendChild(o);
+  });
+  mobUpdatePresetSizes();
+})();
+
+// Rebuild panel layout when crossing the mobile/desktop breakpoint
+let _lastMobileState = window.innerWidth<=600;
+window.addEventListener('resize',()=>{
+  const isMobile=window.innerWidth<=600;
+  if(isMobile!==_lastMobileState){
+    _lastMobileState=isMobile;
+    try{ buildPanel(); }catch(e){ console.error('buildPanel resize:',e); }
+  }
+});
 
 // Delay initial draw until browser has computed layout
 requestAnimationFrame(()=>{
