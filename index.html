@@ -724,7 +724,8 @@
 
     #resizer { display: none; }
 
-    #canvas-wrap { flex: none; height: 52vh; min-height: 100px; border-top: 3px solid var(--accent); }
+    #canvas-wrap { flex: none; height: 36vh; min-height: 100px; border-top: 3px solid var(--accent); }
+    #panel { height: auto !important; flex: 1; min-height: 180px; }
 
     /* Compact param rows — target ~40px each so 5–6 fit per page */
     .param-row    { padding: 2px 0; gap: 1px; }
@@ -760,7 +761,7 @@
     font-size: 13px;
     font-weight: 700;
     padding: 7px 16px;
-    border-radius: 4px;
+    border-radius: 14px;
     cursor: pointer;
     letter-spacing: 0.5px;
     -webkit-tap-highlight-color: transparent;
@@ -1297,7 +1298,7 @@
       <div>
         <div class="vp-section-title">elements</div>
         <div class="vp-btn-row">
-          <button class="vp-btn active" data-vis="grid"    onclick="vpToggle(this,'grid')">grid</button>
+          <button class="vp-btn"        data-vis="grid"    onclick="vpToggle(this,'grid')">grid</button>
           <button class="vp-btn active" data-vis="wheels"  onclick="vpToggle(this,'wheels')">wheels</button>
           <button class="vp-btn active" data-vis="fork"    onclick="vpToggle(this,'fork')">fork</button>
           <button class="vp-btn active" data-vis="cockpit" onclick="vpToggle(this,'cockpit')">cockpit</button>
@@ -1850,7 +1851,7 @@ let viewPinned = true;        // true = pinGroundY active; released permanently 
 // Every redraw recomputes offset[1] from groundFraction + live geometry
 let drag   = null;
 let vis = {
-  grid:true, wheels:true, fork:true, cockpit:true,
+  grid:false, wheels:true, fork:true, cockpit:true,
   // Annotations — bike geometry
   ann_reach:true, ann_stack:true, ann_bbdrop:true,
   ann_wheelbase:true, ann_chainstay:true,
@@ -3861,7 +3862,7 @@ requestAnimationFrame(()=>{
 </div>
 
 <div class="tb-dd-menu" id="ddm-elements">
-  <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('grid',this.checked)"><span>grid</span></label>
+  <label class="dd-toggle-row"><input type="checkbox" onchange="setVis('grid',this.checked)"><span>grid</span></label>
   <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('wheels',this.checked)"><span>wheels</span></label>
   <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('fork',this.checked)"><span>fork diagram</span></label>
   <label class="dd-toggle-row"><input type="checkbox" checked onchange="setVis('cockpit',this.checked)"><span>cockpit</span></label>
