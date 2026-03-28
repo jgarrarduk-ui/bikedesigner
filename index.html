@@ -706,8 +706,7 @@
     /* Derived-row (Wheelbase) is duplicated in statusbar — hide above buttons */
     #panel .derived-row { display: none; }
 
-    /* Show mobile header */
-    #mobile-header { display: flex !important; }
+    /* Mobile header shown by default (base style), hidden only on desktop */
 
     /* Panel becomes a bottom sheet */
     #main { flex-direction: column-reverse; }
@@ -745,9 +744,12 @@
     .derived-row  { padding: 2px 8px 2px 11px; font-size: 11px; }
   }
 
-  /* ── Mobile header ── */
+  /* ── Mobile header — hidden on desktop, shown on mobile ── */
+  @media (min-width: 601px) {
+    #mobile-header { display: none !important; }
+  }
   #mobile-header {
-    display: none;
+    display: flex;
     align-items: center;
     padding: 0 12px;
     gap: 10px;
