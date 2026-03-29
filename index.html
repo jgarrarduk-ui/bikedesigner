@@ -710,7 +710,7 @@
     #options-btn     { display: block !important; }
 
     /* Panel becomes a bottom sheet; position:relative makes it containing block for view-panel */
-    #main { flex-direction: column-reverse; position: relative; }
+    #main { flex-direction: column-reverse; position: relative; justify-content: flex-end; overflow: hidden; }
 
     #panel {
       width: 100% !important;
@@ -2692,7 +2692,7 @@ function fitView() {
   offset[0] = -((minX + maxX) / 2) * scale;
 
   // ── Vertical: pin ground at 78% of canvas height ─────────
-  groundFraction = 0.78;
+  groundFraction = 0.85;
   viewPinned = true;   // re-enable pin on reset/resize
   // offset[1] will be set by pinGroundY in the next redraw.
 }
