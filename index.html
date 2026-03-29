@@ -697,7 +697,8 @@
 
   /* Mobile: swipeable panel + compact header */
   @media (max-width: 600px) {
-    body { overflow: hidden; }
+    body { overflow: hidden; height: auto; }
+    #main { flex: none; }
 
     /* Hide desktop elements */
     #toolbar      { display: none !important; }
