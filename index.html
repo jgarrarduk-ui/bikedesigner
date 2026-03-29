@@ -321,26 +321,34 @@
   /* Thumb — desktop */
   .param-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--accent-br);
-    border: 2px solid var(--accent-hi);
-    margin-top: -6px;
-    transition: background 0.1s, transform 0.1s;
+    width: 12px;
+    height: 26px;
+    border-radius: 3px;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0px, transparent 3px,
+        rgba(255,255,255,0.45) 3px, rgba(255,255,255,0.45) 4px
+      ) center / 100% 60% no-repeat,
+      var(--accent);
+    border: 1px solid var(--accent-hi);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 1px 3px rgba(0,0,0,0.25);
+    margin-top: -11px;
     cursor: grab;
+    transition: background-color 0.1s;
   }
-  .param-slider:active::-webkit-slider-thumb {
-    transform: scale(1.3);
-    cursor: grabbing;
-  }
-  .param-slider::-webkit-slider-thumb:hover { background: var(--lavender-br); }
+  .param-slider:active::-webkit-slider-thumb { background-color: var(--accent-hi); cursor: grabbing; }
+  .param-slider::-webkit-slider-thumb:hover  { background-color: var(--accent-hi); }
   .param-slider::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: var(--accent-br);
-    border: 2px solid var(--accent-hi);
+    width: 12px; height: 26px; border-radius: 3px;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        transparent 0px, transparent 3px,
+        rgba(255,255,255,0.45) 3px, rgba(255,255,255,0.45) 4px
+      ) center / 100% 60% no-repeat,
+      var(--accent);
+    border: 1px solid var(--accent-hi);
   }
 
   /* Mobile — bigger thumb, fatter track */
@@ -731,10 +739,10 @@
     /* Compact param rows — target ~40px each so 5–6 fit per page */
     .param-row    { padding: 2px 0; gap: 1px; }
     .param-label  { font-size: 10px; line-height: 1.2; padding: 0; white-space: nowrap; overflow: hidden; }
-    .param-slider { height: 22px; }
+    .param-slider { height: 32px; }
     .param-slider::-webkit-slider-runnable-track { height: 3px; }
-    .param-slider::-webkit-slider-thumb { width: 18px; height: 18px; margin-top: -7.5px; border-width: 2px; }
-    .param-slider::-moz-range-thumb { width: 18px; height: 18px; }
+    .param-slider::-webkit-slider-thumb { width: 14px; height: 30px; border-radius: 3px; margin-top: -13px; border-width: 1px; }
+    .param-slider::-moz-range-thumb { width: 14px; height: 30px; border-radius: 3px; }
     .param-input  { width: 52px; font-size: 10px; }
     .arrow-btn    { width: 16px; height: 16px; font-size: 9px; }
     .wheel-val    { font-size: 11px; padding: 1px 3px; }
