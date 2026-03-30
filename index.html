@@ -734,12 +734,12 @@
     #resizer { display: none; }
 
     #canvas-wrap { flex: none; height: 34vh; min-height: 100px; border-top: 3px solid var(--accent); }
-    #panel { height: auto !important; flex: 1; min-height: 180px; max-height: 48vh; }
+    #panel { height: auto !important; flex: 1; min-height: 180px; max-height: 55vh; }
 
-    /* Compact param rows — target ~40px each so 5–6 fit per page */
-    .param-row    { padding: 2px 0; gap: 1px; }
+    /* Compact param rows */
+    .param-row    { padding: 1px 0; gap: 0; }
     .param-label  { font-size: 10px; line-height: 1.2; padding: 0; white-space: nowrap; overflow: hidden; }
-    .param-slider { height: 44px; }
+    .param-slider { height: 36px; }
     .param-slider::-webkit-slider-runnable-track { height: 3px; }
     .param-slider::-webkit-slider-thumb { width: 16px; height: 18px; border-radius: 3px; margin-top: -7.5px; border-width: 1px; }
     .param-slider::-moz-range-thumb { width: 16px; height: 18px; border-radius: 3px; }
@@ -895,13 +895,13 @@
     font-family: var(--font-mono);
   }
   .mob-page-nav-btn {
-    width: 26px;
-    height: 26px;
+    width: 16px;
+    height: 16px;
     background: var(--hdr-bg);
     border: 1px solid var(--border);
-    border-radius: 3px;
-    color: var(--accent-br);
-    font-size: 16px;
+    border-radius: 2px;
+    color: var(--text-mid);
+    font-size: 9px;
     line-height: 1;
     cursor: pointer;
     display: flex;
