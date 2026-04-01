@@ -1375,7 +1375,7 @@
       <button class="panel-btn" onclick="importJSON()">Import</button>
     </div>
     <div id="panel-order">
-      <button class="panel-btn order-btn" onclick="openOrderModal()">&#x2192; Order Bespoke Files</button>
+      <button class="panel-btn order-btn" onclick="openOrderModal()">&#x2192; Submit Design</button>
     </div>
   </div>
 
@@ -1425,6 +1425,12 @@
   <div id="export-modal">
     <h2>export</h2>
     <p style="font-size:11px;color:var(--text-lo);margin:0">choose format — the current canvas view will be exported with all visible annotations.</p>
+    <div style="margin:10px 0 6px">
+      <label style="font-size:11px;color:var(--text-hi);display:block;margin-bottom:4px">Author / Designer</label>
+      <input id="export-author" type="text" placeholder="your name"
+        style="width:100%;padding:4px 6px;background:var(--input-bg);color:var(--input-fg);
+               border:1px solid var(--border);border-radius:3px;font-family:var(--font);font-size:11px;box-sizing:border-box;">
+    </div>
     <div class="exp-format-row">
       <button class="exp-fmt-btn" onclick="doExport('pdf')">PDF</button>
       <button class="exp-fmt-btn" onclick="doExport('jpeg')">JPEG</button>
@@ -1508,6 +1514,8 @@ const DEFAULTS = {
   front_wheel_dia:622, rear_wheel_dia:622, tyre_width:57,
   front_wheel_key:'29"', rear_wheel_key:'29"',
   stem_length:90, stem_angle:6, bar_diameter:31.8, steerer_height:40,
+  chainline:47.5, crank_length:170, crank_q_factor:146,
+  rear_hub_spacing:142, frame_material:'stainless', cable_guides:true,
 };
 
 
@@ -1545,6 +1553,8 @@ const PARAM_RANGES = {
   stem_angle:               [-45, 45,  1],
   bar_diameter:             [22,  35,  0.2],
   steerer_height:           [10,  100, 5],
+  crank_length:             [90,  200, 5],
+  crank_q_factor:           [120, 200, 2],
 };
 
 // ── GEOMETRY section ─────────────────────────────────────────
@@ -3173,36 +3183,46 @@ const MOBILE_PAGES = [
     {type:'wheel',  keyParam:'front_wheel_key', diaParam:'front_wheel_dia', label:'Front Wheel', storeKey:'_frontWheelMob', isFront:true},
     {type:'wheel',  keyParam:'rear_wheel_key',  diaParam:'rear_wheel_dia',  label:'Rear Wheel',  storeKey:'_rearWheelMob',  isFront:false},
   ]},
-  { title: 'BB & Head Tube', items: [
+  { title: 'Head Tube & Cockpit', items: [
     {type:'bb_std'},
-    {type:'slider', key:'ht_length',         label:'HT Length (mm)'},
-    {type:'slider', key:'ht_OD',             label:'HT OD (mm)'},
-    {type:'slider', key:'dt_weld_clearance', label:'DT Weld Clr (mm)'},
-    {type:'slider', key:'tt_weld_clearance', label:'TT Weld Clr (mm)'},
+    {type:'slider', key:'ht_length',      label:'HT Length (mm)'},
+    {type:'slider', key:'ht_OD',          label:'HT OD (mm)'},
+    {type:'slider', key:'stem_length',    label:'Stem Length (mm)'},
+    {type:'slider', key:'stem_angle',     label:'Stem Angle (°)'},
+    {type:'slider', key:'bar_diameter',   label:'Bar Diameter (mm)'},
+    {type:'slider', key:'steerer_height', label:'Steerer Above HT (mm)'},
   ]},
   { title: 'Seat Tube', items: [
     {type:'slider', key:'st_length',       label:'ST Length (mm)'},
     {type:'slider', key:'st_OD',           label:'ST OD (mm)'},
     {type:'slider', key:'st_WT',           label:'ST Wall (mm)'},
     {type:'slider', key:'st_tt_clearance', label:'ST → TT Gap (mm)'},
-    {type:'slider', key:'tt_OD',           label:'TT OD (mm)'},
-    {type:'slider', key:'tt_WT',           label:'TT Wall (mm)'},
   ]},
-  { title: 'Down & Chain', items: [
-    {type:'slider', key:'dt_OD',            label:'DT OD (mm)'},
-    {type:'slider', key:'dt_WT',            label:'DT Wall (mm)'},
+  { title: 'Top & Down Tubes', items: [
+    {type:'slider', key:'tt_OD',             label:'TT OD (mm)'},
+    {type:'slider', key:'tt_WT',             label:'TT Wall (mm)'},
+    {type:'slider', key:'dt_OD',             label:'DT OD (mm)'},
+    {type:'slider', key:'dt_WT',             label:'DT Wall (mm)'},
+    {type:'slider', key:'dt_weld_clearance', label:'DT Weld Clr (mm)'},
+    {type:'slider', key:'tt_weld_clearance', label:'TT Weld Clr (mm)'},
+  ]},
+  { title: 'Stays', items: [
+    {type:'slider', key:'cs_OD',            label:'CS OD (mm)'},
+    {type:'slider', key:'cs_WT',            label:'CS Wall (mm)'},
     {type:'slider', key:'cs_ds_drop_angle', label:'DS Drop Angle (°)'},
-    {type:'slider', key:'max_chainring',    label:'Max Chainring (T)'},
-    {type:'slider', key:'cs_OD',           label:'CS OD (mm)'},
-    {type:'slider', key:'cs_WT',           label:'CS Wall (mm)'},
+    {type:'slider', key:'ss_OD',            label:'SS OD (mm)'},
+    {type:'slider', key:'ss_WT',            label:'SS Wall (mm)'},
   ]},
-  { title: 'Stays & Cockpit', items: [
-    {type:'slider', key:'ss_OD',          label:'SS OD (mm)'},
-    {type:'slider', key:'ss_WT',          label:'SS Wall (mm)'},
-    {type:'slider', key:'stem_length',    label:'Stem Length (mm)'},
-    {type:'slider', key:'stem_angle',     label:'Stem Angle (°)'},
-    {type:'slider', key:'bar_diameter',   label:'Bar Diameter (mm)'},
-    {type:'slider', key:'steerer_height', label:'Steerer Above HT (mm)'},
+  { title: 'Drivetrain', items: [
+    {type:'slider',          key:'max_chainring',  label:'Max Chainring (T)'},
+    {type:'chainline_btns'},
+    {type:'slider',          key:'crank_length',   label:'Crank Length (mm)'},
+    {type:'slider',          key:'crank_q_factor', label:'Crank Q Factor (mm)'},
+    {type:'hub_spacing_btns'},
+  ]},
+  { title: 'Options', items: [
+    {type:'frame_material_btns'},
+    {type:'cable_guides_btns'},
   ]},
 ];
 
@@ -3263,37 +3283,43 @@ function initMobileSwipe(scrollEl, track){
 // ═══════════════════════════════════════════════════════
 //  MOBILE PANEL BUILD
 // ═══════════════════════════════════════════════════════
-function buildMobileBBRow(container){
-  const bbOpts=Object.keys(BB_STANDARDS).map(k=>[k,k]);
-  makeSelectRow('BB Standard', bbOpts, 'BSA',
-    v=>{ const std=BB_STANDARDS[v]; params.bb_diameter=std.shell; params.bb_bore=std.bore; redraw(); },
-    container);
-  const BB_WIDTHS=[68,73,83];
-  const wrow=document.createElement('div'); wrow.className='param-row';
-  const wlbl=document.createElement('span'); wlbl.className='param-label';
-  wlbl.textContent='BB Width (mm)';
-  wrow.appendChild(wlbl);
+// Generic toggle-button row (used for BB std/width, chainline, hub spacing, options, etc.)
+function makeMobileButtonRow(label, options, labels, getVal, setVal, syncKey, container){
+  const row=document.createElement('div'); row.className='param-row';
+  const lbl=document.createElement('span'); lbl.className='param-label';
+  lbl.textContent=label; row.appendChild(lbl);
   const trow=document.createElement('div');
   trow.style.cssText='display:flex;gap:4px;width:100%;margin-top:2px;';
   function sync(){
-    BB_WIDTHS.forEach((ww,i)=>{
-      trow.children[i].style.background  = params.bb_width===ww?'var(--accent)':'var(--hdr-bg)';
-      trow.children[i].style.color       = params.bb_width===ww?'#fff':'var(--text-mid)';
-      trow.children[i].style.borderColor = params.bb_width===ww?'var(--accent-br)':'var(--border)';
+    const cur=getVal();
+    options.forEach((v,i)=>{
+      const active=String(v)===String(cur);
+      trow.children[i].style.background  = active?'var(--accent)'   :'var(--hdr-bg)';
+      trow.children[i].style.color       = active?'#fff'            :'var(--text-mid)';
+      trow.children[i].style.borderColor = active?'var(--accent-br)':'var(--border)';
     });
   }
-  BB_WIDTHS.forEach(w=>{
+  options.forEach((v,i)=>{
     const btn=document.createElement('button');
-    btn.textContent=w;
+    btn.textContent=labels?labels[i]:v;
     btn.style.cssText='flex:1;padding:3px 2px;font-family:var(--font);font-size:10px;font-weight:700;'+
       'background:var(--hdr-bg);color:var(--text-mid);border:1px solid var(--border);'+
       'border-radius:2px;cursor:pointer;transition:background 0.1s,color 0.1s;';
-    btn.onclick=()=>{ params.bb_width=w; sync(); redraw(); };
+    btn.onclick=()=>{ setVal(v); sync(); redraw(); };
     trow.appendChild(btn);
   });
-  wrow.appendChild(trow); container.appendChild(wrow);
-  paramInputs._bbWidthSync=()=>sync();
+  row.appendChild(trow); container.appendChild(row);
+  if(syncKey) paramInputs[syncKey]=()=>sync();
   sync();
+}
+
+function buildMobileBBRow(container){
+  makeMobileButtonRow('BB Standard', Object.keys(BB_STANDARDS), null,
+    ()=>params._bbStd||'BSA',
+    v=>{ params._bbStd=v; const std=BB_STANDARDS[v]; params.bb_diameter=std.shell; params.bb_bore=std.bore; },
+    '_bbStdSync', container);
+  makeMobileButtonRow('BB Width (mm)', [68,73,83], null,
+    ()=>params.bb_width, v=>params.bb_width=v, '_bbWidthSync', container);
 }
 
 function buildMobileWheelRow(item, container){
@@ -3360,9 +3386,21 @@ function buildMobilePanel(){
   MOBILE_PAGES.forEach((pageData)=>{
     const page=document.createElement('div'); page.className='mob-page';
     pageData.items.forEach(item=>{
-      if(item.type==='slider')   makeParamRow(item.key, item.label, page);
-      else if(item.type==='wheel')  buildMobileWheelRow(item, page);
-      else if(item.type==='bb_std') buildMobileBBRow(page);
+      if     (item.type==='slider')             makeParamRow(item.key, item.label, page);
+      else if(item.type==='wheel')              buildMobileWheelRow(item, page);
+      else if(item.type==='bb_std')             buildMobileBBRow(page);
+      else if(item.type==='chainline_btns')
+        makeMobileButtonRow('Chainline (mm)',[47.5,49,52,56],null,
+          ()=>params.chainline,v=>{params.chainline=v;},'_chainlineSync',page);
+      else if(item.type==='hub_spacing_btns')
+        makeMobileButtonRow('Rear Hub Spacing (mm)',[142,148],null,
+          ()=>params.rear_hub_spacing,v=>{params.rear_hub_spacing=v;},'_hubSpacingSync',page);
+      else if(item.type==='frame_material_btns')
+        makeMobileButtonRow('Frame Material',['stainless','titanium'],['Stainless','Titanium'],
+          ()=>params.frame_material,v=>{params.frame_material=v;},'_frameMaterialSync',page);
+      else if(item.type==='cable_guides_btns')
+        makeMobileButtonRow('Integrated Cable Guides',[true,false],['Yes','No'],
+          ()=>params.cable_guides,v=>{params.cable_guides=v;},'_cableGuidesSync',page);
     });
     track.appendChild(page);
   });
@@ -3544,7 +3582,12 @@ function setParams(p){
 function resetParams(){ setParams({...DEFAULTS}); }
 
 function exportJSON(){
-  const blob=new Blob([JSON.stringify(params,null,2)],{type:'application/json'});
+  const author=(document.getElementById('export-author')||{}).value||'';
+  const out={
+    _meta:{ author, date:new Date().toISOString(), version:'1.0' },
+    ...params
+  };
+  const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob); a.download='frame_geometry.json'; a.click();
 }
@@ -3552,10 +3595,14 @@ function exportJSON(){
 function importJSON(){
   const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
   inp.onchange=e=>{
-    const f=e.target.files[0];
     const r=new FileReader();
-    r.onload=ev=>{ try{ setParams(JSON.parse(ev.target.result)); }catch(err){ alert('Invalid JSON'); } };
-    r.readAsText(f);
+    r.onload=ev=>{
+      try{
+        const {_meta,...frameParams}=JSON.parse(ev.target.result);
+        setParams(frameParams);
+      }catch(err){ alert('Invalid JSON'); }
+    };
+    r.readAsText(e.target.files[0]);
   };
   inp.click();
 }
@@ -3906,7 +3953,7 @@ requestAnimationFrame(()=>{
 <!-- Order modal -->
 <div id="order-modal-overlay" onclick="if(event.target===this)closeOrderModal()">
   <div id="order-modal">
-    <h2>&#x2192; Order Bespoke Files</h2>
+    <h2>&#x2192; Submit Design</h2>
     <p style="font-size:11px;color:var(--text-lo);margin:0">
       We'll store your design and send you a download link after checkout.
     </p>
