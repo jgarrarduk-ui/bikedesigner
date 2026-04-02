@@ -767,10 +767,10 @@
     border: none;
     color: #fff;
     font-family: var(--font);
-    font-size: 13px;
+    font-size: 10px;
     font-weight: 700;
-    padding: 7px 16px;
-    border-radius: 14px;
+    padding: 5px 12px;
+    border-radius: 11px;
     cursor: pointer;
     letter-spacing: 0.5px;
     -webkit-tap-highlight-color: transparent;
@@ -3393,7 +3393,7 @@ function buildMobilePanel(){
         makeMobileButtonRow('Chainline (mm)',[47.5,49,52,56],null,
           ()=>params.chainline,v=>{params.chainline=v;},'_chainlineSync',page);
       else if(item.type==='hub_spacing_btns')
-        makeMobileButtonRow('Rear Hub Spacing (mm)',[142,148],null,
+        makeMobileButtonRow('Rear Hub Spacing (mm)',[142,148,157],null,
           ()=>params.rear_hub_spacing,v=>{params.rear_hub_spacing=v;},'_hubSpacingSync',page);
       else if(item.type==='frame_material_btns')
         makeMobileButtonRow('Frame Material',['stainless','titanium'],['Stainless','Titanium'],
