@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Creature Cycles — Spoke Length Calculator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
+
+:root { --font: 'Courier Prime', 'Courier New', monospace; }
+
+[data-theme="dark"] {
+  --input-bg:    #1a1230;
+  --input-fg:    #d8b4fe;
+  --bg:          #0d0d16;
+  --panel-bg:    #0a0a14;
+  --toolbar-bg:  #130d24;
+  --hdr-bg:      #1a0f30;
+  --border:      #2a1f45;
+  --accent:      #4c1d95;
+  --accent-hi:   #7c3aed;
+  --accent-br:   #a855f7;
+  --text-lo:     #3d2b5a;
+  --text-mid:    #7c6d9a;
+  --text-hi:     #9d8ec0;
+  --text-main:   #e8dff5;
+  --lavender:    #c4b5fd;
+  --lavender-br: #d8b4fe;
+  --good:        #4ade80;
+  --good-dim:    #166534;
+  --warn:        #fbbf24;
+  --warn-dim:    #78350f;
+  --bad:         #f87171;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--text-main);
+  font-family: var(--font);
+  font-size: 13px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Toolbar ── */
+#toolbar {
+  background: var(--toolbar-bg);
+  border-bottom: 1px solid var(--border);
+  height: 36px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 0;
+  flex-shrink: 0;
+}
+.logo-text {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--lavender);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  font-family: 'Courier New', monospace;
+}
+.logo-sub {
+  font-size: 9px;
+  color: var(--text-lo);
+  letter-spacing: 2px;
+  margin-left: 6px;
+}
+.tb-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 8px;
+}
+.tb-btn {
+  background: none;
+  border: none;
+  color: var(--text-mid);
+  font-family: var(--font);
+  font-size: 10px;
+  padding: 3px 8px;
+  cursor: pointer;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+  text-decoration: none;
+  display: inline-block;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+.tb-btn:hover { background: var(--hdr-bg); color: var(--lavender); }
+.page-title {
+  font-size: 10px;
+  color: var(--text-hi);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* ── Main layout ── */
+#main {
+  flex: 1;
+  display: flex;
+  gap: 14px;
+  padding: 14px;
+  align-items: flex-start;
+  overflow-y: auto;
+}
+
+/* ── Shared panel ── */
+.panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.panel-hdr {
+  background: var(--hdr-bg);
+  border-bottom: 1px solid var(--border);
+  padding: 6px 12px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--lavender-br);
+}
+.panel-body { padding: 12px; }
+
+/* ── Section label ── */
+.sec {
+  font-size: 9px;
+  color: var(--accent-br);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 8px;
+  margin-top: 14px;
+}
+.sec:first-child { margin-top: 0; }
+
+/* ── Fields ── */
+.field {
+  display: flex;
+  align-items: center;
+  padding: 3px 0;
+  gap: 6px;
+}
+.field-lbl {
+  font-size: 10px;
+  color: var(--text-hi);
+  flex: 1;
+  line-height: 1.3;
+}
+.field-unit {
+  font-size: 9px;
+  color: var(--text-lo);
+  width: 16px;
+  text-align: right;
+  flex-shrink: 0;
+}
+.field-num {
+  width: 68px;
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  padding: 3px 6px;
+  font-family: var(--font);
+  font-size: 11px;
+  text-align: right;
+  outline: none;
+  flex-shrink: 0;
+}
+.field-num:focus { border-color: var(--accent-br); }
+.field-sel {
+  background: var(--input-bg);
+  color: var(--input-fg);
+  border: 1px solid var(--accent);
+  border-radius: 2px;
+  padding: 3px 6px;
+  font-family: var(--font);
+  font-size: 11px;
+  outline: none;
+}
+.field-sel:focus { border-color: var(--accent-br); }
+
+.preset-sel {
+  width: 100%;
+  background: var(--hdr-bg);
+  color: var(--text-mid);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 3px 6px;
+  font-family: var(--font);
+  font-size: 10px;
+  outline: none;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+.preset-sel:focus { border-color: var(--accent); }
+
+.hint {
+  font-size: 9px;
+  color: var(--text-lo);
+  line-height: 1.55;
+  margin-top: 4px;
+  margin-bottom: 2px;
+}
+
+/* ── Cross pattern ── */
+.cross-row {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.cross-btn {
+  flex: 1;
+  background: var(--hdr-bg);
+  border: 1px solid var(--border);
+  color: var(--text-mid);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 2px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  text-align: center;
+}
+.cross-btn:hover { background: var(--accent); color: var(--lavender-br); border-color: var(--accent); }
+.cross-btn.active { background: var(--accent); color: #fff; border-color: var(--accent-br); }
+
+.cross-note {
+  font-size: 9px;
+  color: var(--text-lo);
+  line-height: 1.5;
+  min-height: 26px;
+}
+
+/* ── Calculate button ── */
+#calc-btn {
+  width: 100%;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 10px 0;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-top: 14px;
+}
+#calc-btn:hover { background: var(--accent-hi); }
+
+/* ── Results ── */
+.result-pair {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.result-card {
+  flex: 1;
+  background: var(--hdr-bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 12px 10px;
+}
+.r-side {
+  font-size: 8px;
+  color: var(--text-lo);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.r-calc {
+  font-size: 10px;
+  color: var(--text-mid);
+  margin-bottom: 8px;
+}
+.r-calc strong { color: var(--lavender-br); }
+.r-buy-lbl {
+  font-size: 8px;
+  color: var(--text-lo);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.r-buy-val {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--good);
+  line-height: 1.1;
+  letter-spacing: 1px;
+}
+.r-buy-unit {
+  font-size: 12px;
+  color: var(--text-mid);
+  font-weight: 400;
+}
+.r-qty {
+  font-size: 9px;
+  color: var(--text-lo);
+  margin-top: 6px;
+}
+
+/* ── Notes ── */
+.note {
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 9px 12px;
+  font-size: 11px;
+  color: var(--text-mid);
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+.note.green { border-left: 3px solid var(--good); }
+.note.purple { border-left: 3px solid var(--accent-br); }
+.note strong { color: var(--lavender-br); }
+
+/* ── Size table ── */
+.sizes-wrap {
+  overflow-x: auto;
+  margin-top: 4px;
+}
+.sizes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10px;
+}
+.sizes-table th {
+  color: var(--text-lo);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.sizes-table td {
+  padding: 3px 8px;
+  color: var(--text-mid);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.sizes-table tr.sz-best td   { color: var(--good) !important; font-weight: 700; }
+.sizes-table tr.sz-ok td     { color: var(--lavender-br); }
+.sizes-table tr.sz-long td   { color: var(--warn); }
+.sizes-table tr.sz-short td  { color: var(--text-mid); }
+
+/* ── Placeholder ── */
+.placeholder {
+  color: var(--text-lo);
+  font-size: 11px;
+  text-align: center;
+  padding: 40px 0;
+  font-style: italic;
+}
+
+/* ── Layout ── */
+#input-panel  { width: 310px; min-width: 250px; flex-shrink: 0; }
+#result-panel { flex: 1; min-width: 260px; }
+
+@media (max-width: 680px) {
+  #main { flex-direction: column; }
+  #input-panel { width: 100%; }
+  .result-pair { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Toolbar ── -->
+<div id="toolbar">
+  <span class="logo-text">CREATURE</span>
+  <span class="logo-sub">bike designer</span>
+  <div class="tb-sep"></div>
+  <span class="page-title">spoke length calculator</span>
+  <div style="flex:1"></div>
+  <a href="index.html" class="tb-btn">&#9664; frame designer</a>
+</div>
+
+<!-- ── Main ── -->
+<div id="main">
+
+  <!-- ══ Input panel ══ -->
+  <div id="input-panel" class="panel">
+    <div class="panel-hdr">wheel dimensions — j-bend spokes</div>
+    <div class="panel-body">
+
+      <!-- Rim -->
+      <div class="sec">rim</div>
+      <select class="preset-sel" id="rim-preset" onchange="loadRimPreset()">
+        <option value="">— select rim preset —</option>
+        <optgroup label="700c / Road">
+          <option value="614">Mavic Open Pro / Ksyrium  614 mm</option>
+          <option value="612">DT Swiss R460              612 mm</option>
+          <option value="610">Shimano WH-RS010           610 mm</option>
+          <option value="607">Ryde Pulse                 607 mm</option>
+          <option value="606">Velocity A23               606 mm</option>
+          <option value="597">Zipp 303 Firecrest         597 mm</option>
+        </optgroup>
+        <optgroup label="29&quot; MTB">
+          <option value="601">WTB KOM i19 29             601 mm</option>
+          <option value="599">DT Swiss XR361 29          599 mm</option>
+          <option value="596">Stan's Arch MK3 29         596 mm</option>
+          <option value="590">Spank Oozy 395 29          590 mm</option>
+        </optgroup>
+        <optgroup label="27.5&quot; / 650b">
+          <option value="584">DT Swiss XR361 27.5        584 mm</option>
+          <option value="571">Stan's Flow MK3 27.5       571 mm</option>
+          <option value="569">Spank Oozy 395 27.5        569 mm</option>
+        </optgroup>
+        <optgroup label="26&quot;">
+          <option value="548">Stan's Arch 26             548 mm</option>
+          <option value="540">Generic 26"                540 mm</option>
+        </optgroup>
+      </select>
+
+      <div class="field">
+        <span class="field-lbl">ERD (Effective Rim Diameter)</span>
+        <span class="field-unit">mm</span>
+        <input class="field-num" type="number" id="erd" value="610" step="0.5" min="350" max="730">
+      </div>
+      <div class="hint">
+        ERD = the diameter at the spoke nipple seats inside the rim.<br>
+        To measure: insert 2 spokes in opposite holes, measure tip-to-tip, add 2 × spoke diameter (2.0mm).
+      </div>
+
+      <div class="field" style="margin-top:8px">
+        <span class="field-lbl">Total spoke holes</span>
+        <select class="field-sel" id="holes">
+          <option>16</option>
+          <option>20</option>
+          <option>24</option>
+          <option>28</option>
+          <option selected>32</option>
+          <option>36</option>
+          <option>40</option>
+          <option>48</option>
+        </select>
+      </div>
+
+      <!-- Hub -->
+      <div class="sec">hub</div>
+      <select class="preset-sel" id="hub-preset" onchange="loadHubPreset()">
+        <option value="">— select hub preset —</option>
+        <optgroup label="Front — QR">
+          <option value="fqr">Generic front  100mm QR</option>
+          <option value="fdt350">DT Swiss 350 front  100mm</option>
+        </optgroup>
+        <optgroup label="Front — Thru-Axle">
+          <option value="fboost">Generic front Boost 110mm TA</option>
+        </optgroup>
+        <optgroup label="Rear Road — QR 130mm">
+          <option value="r105-130">Shimano 105 R7000   130mm</option>
+          <option value="rult-130">Shimano Ultegra R8000 130mm</option>
+          <option value="rdt240-130">DT Swiss 240       130mm</option>
+        </optgroup>
+        <optgroup label="Rear Road — TA 142mm">
+          <option value="rdt240-142">DT Swiss 240       142mm TA</option>
+        </optgroup>
+        <optgroup label="Rear MTB — Boost 148mm">
+          <option value="rdeore-148">Shimano Deore       148mm Boost</option>
+          <option value="rxt-148">Shimano XT M8100    148mm Boost</option>
+          <option value="rdt350-148">DT Swiss 350       148mm Boost</option>
+        </optgroup>
+      </select>
+
+      <div class="field">
+        <span class="field-lbl">Left flange PCD  <span style="color:var(--text-lo)">(NDS)</span></span>
+        <span class="field-unit">mm</span>
+        <input class="field-num" type="number" id="fld-left"  value="55" step="0.5" min="10" max="130">
+      </div>
+      <div class="field">
+        <span class="field-lbl">Right flange PCD  <span style="color:var(--text-lo)">(DS)</span></span>
+        <span class="field-unit">mm</span>
+        <input class="field-num" type="number" id="fld-right" value="55" step="0.5" min="10" max="130">
+      </div>
+      <div class="field">
+        <span class="field-lbl">Left center-to-flange  <span style="color:var(--text-lo)">(NDS)</span></span>
+        <span class="field-unit">mm</span>
+        <input class="field-num" type="number" id="ctf-left"  value="20" step="0.5" min="1" max="120">
+      </div>
+      <div class="field">
+        <span class="field-lbl">Right center-to-flange  <span style="color:var(--text-lo)">(DS)</span></span>
+        <span class="field-unit">mm</span>
+        <input class="field-num" type="number" id="ctf-right" value="20" step="0.5" min="1" max="120">
+      </div>
+      <div class="field">
+        <span class="field-lbl">Spoke hole diameter (flange)</span>
+        <span class="field-unit">mm</span>
+        <input class="field-num" type="number" id="hole-dia"  value="2.5" step="0.1" min="1" max="6">
+      </div>
+      <div class="hint">
+        PCD = spoke hole pitch circle diameter on the flange.<br>
+        Center-to-flange = axial distance from hub axle midpoint to each flange.<br>
+        DS = drive side (cassette / sprocket). NDS = non-drive side.<br>
+        Flange hole Ø: 2.5 mm for standard 2.0 mm gauge spokes.
+      </div>
+
+      <!-- Lacing -->
+      <div class="sec">lacing pattern</div>
+      <div class="cross-row">
+        <button class="cross-btn" data-k="1" onclick="setCross(1)">1&times;</button>
+        <button class="cross-btn" data-k="2" onclick="setCross(2)">2&times;</button>
+        <button class="cross-btn active" data-k="3" onclick="setCross(3)">3&times;</button>
+      </div>
+      <div class="cross-note" id="cross-note">
+        3-cross: standard pattern — each spoke crosses 3 others before reaching the rim. Best strength and fatigue resistance for road and MTB wheels.
+      </div>
+
+      <button id="calc-btn" onclick="calculate()">Calculate Spoke Lengths</button>
+    </div>
+  </div>
+
+  <!-- ══ Result panel ══ -->
+  <div id="result-panel" class="panel">
+    <div class="panel-hdr">results</div>
+    <div class="panel-body" id="result-body">
+      <div class="placeholder">Enter wheel dimensions above and press Calculate.</div>
+    </div>
+  </div>
+
+</div><!-- #main -->
+
+<script>
+'use strict';
+
+// ── Cross pattern ─────────────────────────────────────────────
+let K = 3;
+
+const CROSS_NOTES = {
+  1: '1-cross: each spoke crosses just 1 other. Used with very high-flange hubs or low spoke-count track/fixed builds.',
+  2: '2-cross: each spoke crosses 2 others. Occasionally used on tandem rear wheels or specialty builds.',
+  3: '3-cross: standard pattern — each spoke crosses 3 others before reaching the rim. Best strength and fatigue resistance for road and MTB wheels.',
+};
+
+function setCross(n) {
+  K = n;
+  document.querySelectorAll('.cross-btn').forEach(b => {
+    b.classList.toggle('active', +b.dataset.k === n);
+  });
+  document.getElementById('cross-note').textContent = CROSS_NOTES[n];
+}
+
+// ── Rim presets ───────────────────────────────────────────────
+function loadRimPreset() {
+  const v = document.getElementById('rim-preset').value;
+  if (v) document.getElementById('erd').value = v;
+}
+
+// ── Hub presets ───────────────────────────────────────────────
+// Values are approximate — always verify against hub spec sheet.
+// fldL/R = left/right flange PCD (mm)
+// ctfL/R = left/right center-to-flange distance (mm)
+const HUB_PRESETS = {
+  'fqr':       { fldL:55.0, fldR:55.0, ctfL:20.0, ctfR:20.0 },
+  'fdt350':    { fldL:47.0, fldR:47.0, ctfL:20.5, ctfR:20.5 },
+  'fboost':    { fldL:55.0, fldR:55.0, ctfL:22.0, ctfR:22.0 },
+  'r105-130':  { fldL:44.8, fldR:44.8, ctfL:37.4, ctfR:18.8 },
+  'rult-130':  { fldL:44.8, fldR:44.8, ctfL:37.4, ctfR:18.8 },
+  'rdt240-130':{ fldL:47.0, fldR:47.0, ctfL:36.8, ctfR:17.4 },
+  'rdt240-142':{ fldL:47.0, fldR:47.0, ctfL:30.5, ctfR:24.5 },
+  'rdeore-148':{ fldL:56.0, fldR:53.0, ctfL:29.0, ctfR:23.0 },
+  'rxt-148':   { fldL:56.9, fldR:53.9, ctfL:29.0, ctfR:22.7 },
+  'rdt350-148':{ fldL:53.0, fldR:53.0, ctfL:28.5, ctfR:22.5 },
+};
+
+function loadHubPreset() {
+  const key = document.getElementById('hub-preset').value;
+  const p = HUB_PRESETS[key];
+  if (!p) return;
+  document.getElementById('fld-left').value  = p.fldL;
+  document.getElementById('fld-right').value = p.fldR;
+  document.getElementById('ctf-left').value  = p.ctfL;
+  document.getElementById('ctf-right').value = p.ctfR;
+}
+
+// ── Core formula ──────────────────────────────────────────────
+//
+// Standard J-bend spoke length:
+//
+//   L = sqrt( R² + F² - 2RF·cos(4πK/N) + O² ) - h/2
+//
+// Where:
+//   R = ERD/2              — rim radius to nipple seat
+//   F = flangePCD/2        — flange spoke-hole circle radius
+//   K = number of crosses  — lacing pattern
+//   N = total spoke count
+//   O = center-to-flange   — axial offset of flange from hub centre
+//   h = flange hole diam.  — spoke bends at inner edge of hole
+//
+// The 4πK/N term is the angle (radians) between the flange hole
+// and the corresponding rim hole, measured at the hub axis.
+// Each flange has N/2 holes so adjacent hole spacing = 4π/N.
+// A K-cross spoke spans K spacings → angle = 4πK/N.
+
+function calcSpoke(ERD, flangePCD, ctf, crosses, N, holeDia) {
+  const R     = ERD / 2;
+  const F     = flangePCD / 2;
+  const O     = ctf;
+  const theta = (4 * Math.PI * crosses) / N;
+  return Math.sqrt(R*R + F*F - 2*R*F*Math.cos(theta) + O*O) - holeDia / 2;
+}
+
+// ── Size recommendation ───────────────────────────────────────
+function floorMm(len) {
+  return Math.floor(len);
+}
+
+function diffLabel(spokeSz, calcLen) {
+  const d = calcLen - spokeSz;   // positive = spoke is shorter than needed
+  if (Math.abs(d) < 0.05) return 'exact';
+  if (d > 0)  return `${d.toFixed(1)} mm short`;
+  return `+${(-d).toFixed(1)} mm long`;
+}
+
+function rowClass(spokeSz, recSz, calcLen) {
+  const over = spokeSz - calcLen;  // positive = too long
+  if (spokeSz === recSz)            return 'sz-best';
+  if (over > 0 && over <= 1.0)     return 'sz-ok';
+  if (over > 1.0)                   return 'sz-long';
+  return 'sz-short';
+}
+
+// ── Main calculation ──────────────────────────────────────────
+function calculate() {
+  const ERD     = parseFloat(document.getElementById('erd').value);
+  const N       = parseInt(document.getElementById('holes').value);
+  const fldL    = parseFloat(document.getElementById('fld-left').value);
+  const fldR    = parseFloat(document.getElementById('fld-right').value);
+  const ctfL    = parseFloat(document.getElementById('ctf-left').value);
+  const ctfR    = parseFloat(document.getElementById('ctf-right').value);
+  const holeDia = parseFloat(document.getElementById('hole-dia').value);
+
+  if ([ERD, N, fldL, fldR, ctfL, ctfR, holeDia].some(v => isNaN(v) || v <= 0)) {
+    document.getElementById('result-body').innerHTML =
+      '<div class="placeholder" style="color:var(--warn)">Please enter valid values for all fields.</div>';
+    return;
+  }
+
+  // Validate cross pattern vs spoke count
+  const maxCross = Math.floor(N / 4);
+  if (K > maxCross) {
+    document.getElementById('result-body').innerHTML =
+      `<div class="placeholder" style="color:var(--warn)">${K}-cross is too high for a ${N}-hole wheel. Maximum is ${maxCross}-cross.</div>`;
+    return;
+  }
+
+  const Ll = calcSpoke(ERD, fldL, ctfL, K, N, holeDia);
+  const Lr = calcSpoke(ERD, fldR, ctfR, K, N, holeDia);
+  const spkPerSide = N / 2;
+  const recL = floorMm(Ll);
+  const recR = floorMm(Lr);
+  const symm = Math.abs(Ll - Lr) < 0.5;
+
+  let html = '';
+
+  // ── Result cards ──
+  html += '<div class="result-pair">';
+  [
+    { label: 'Left / Non-Drive Side (NDS)', len: Ll, rec: recL },
+    { label: 'Right / Drive Side (DS)',      len: Lr, rec: recR },
+  ].forEach(({ label, len, rec }) => {
+    html += `
+      <div class="result-card">
+        <div class="r-side">${label}</div>
+        <div class="r-calc">Calculated: <strong>${len.toFixed(2)} mm</strong></div>
+        <div class="r-buy-lbl">Buy</div>
+        <div class="r-buy-val">${rec}<span class="r-buy-unit"> mm</span></div>
+        <div class="r-qty">&times; ${spkPerSide} spokes</div>
+      </div>`;
+  });
+  html += '</div>';
+
+  // ── Symmetric note ──
+  if (symm) {
+    html += `<div class="note green">
+      Left and right lengths differ by less than 0.5 mm &mdash; you can use
+      <strong>${recL} mm</strong> for all <strong>${N}</strong> spokes.
+    </div>`;
+  }
+
+  // ── Buying guide ──
+  html += `<div class="note purple">
+    <strong>J-bend buying guide:</strong><br>
+    &bull; Always round <strong>down</strong> to the nearest mm &mdash; shorter is safer than longer.<br>
+    &bull; 0&ndash;2 mm shorter than calculated: fine &mdash; spoke thread fully grips nipple.<br>
+    &bull; 0&ndash;1 mm longer than calculated: usually acceptable &mdash; thread barely past nipple.<br>
+    &bull; &gt;1 mm longer: thread protrudes into tyre channel &mdash; puncture risk &mdash; avoid.<br>
+    &bull; If two sizes are equally close, choose the shorter one.<br>
+    &bull; Most quality spokes are sold in 1 mm increments (DT Swiss, Sapim, Pillar).
+  </div>`;
+
+  // ── Nearby sizes table ──
+  const lo = Math.min(recL, recR) - 3;
+  const hi = Math.max(recL, recR) + 4;
+
+  html += `<div class="sec" style="margin-top:6px">nearby spoke sizes</div>`;
+  html += `<div class="sizes-wrap">
+    <table class="sizes-table">
+      <thead><tr>
+        <th>Size (mm)</th>
+        <th>Left / NDS</th>
+        <th>Right / DS</th>
+      </tr></thead><tbody>`;
+
+  for (let sz = lo; sz <= hi; sz++) {
+    const rcL = rowClass(sz, recL, Ll);
+    const rcR = rowClass(sz, recR, Lr);
+    // Overall row class: best > ok > long > short
+    const priority = c => ({ 'sz-best':4, 'sz-ok':3, 'sz-long':2, 'sz-short':1 }[c] || 0);
+    const cls = priority(rcL) >= priority(rcR) ? rcL : rcR;
+
+    const noteL = sz === recL ? `&#10003; recommended (${diffLabel(sz, Ll)})` : diffLabel(sz, Ll);
+    const noteR = sz === recR ? `&#10003; recommended (${diffLabel(sz, Lr)})` : diffLabel(sz, Lr);
+
+    html += `<tr class="${cls}"><td>${sz}</td><td>${noteL}</td><td>${noteR}</td></tr>`;
+  }
+
+  html += `</tbody></table></div>`;
+
+  document.getElementById('result-body').innerHTML = html;
+}
+</script>
+</body>
+</html>
