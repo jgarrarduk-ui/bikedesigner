@@ -716,8 +716,8 @@ function calculate() {
   for (let sz = lo; sz <= hi; sz++) {
     const rcL = rowClass(sz, recL, Ll);
     const rcR = rowClass(sz, recR, Lr);
-    // Overall row class: best > ok > long > short
-    const priority = c => ({ 'sz-best':4, 'sz-ok':3, 'sz-long':2, 'sz-short':1 }[c] || 0);
+    // Overall row class: best > long > ok > short (long is more alarming than ok)
+    const priority = c => ({ 'sz-best':4, 'sz-long':3, 'sz-ok':2, 'sz-short':1 }[c] || 0);
     const cls = priority(rcL) >= priority(rcR) ? rcL : rcR;
 
     const noteL = sz === recL ? `&#10003; recommended (${diffLabel(sz, Ll)})` : diffLabel(sz, Ll);
