@@ -385,17 +385,31 @@ body {
 }
 
 @media (max-width: 680px) {
-  #main { flex-direction: column; }
+  html { height: auto; }
+  body { height: auto; overflow-y: auto; overflow-x: hidden; }
+  #main {
+    flex-direction: column;
+    overflow: visible;
+    padding: 8px;
+    gap: 8px;
+    align-items: stretch;
+  }
   #input-panel {
+    order: 2;
     width: 100%;
-    flex: 0 0 56%;
+    overflow-y: visible;
     border-right: none;
-    border-bottom: 2px solid var(--accent);
+    border-top: 1px solid var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
   }
   #result-panel {
-    flex: 0 0 44%;
+    order: 1;
     width: 100%;
-    overflow-y: auto;
+    overflow-y: visible;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
   }
   .result-pair { flex-direction: column; }
 }
@@ -766,6 +780,7 @@ function calculate() {
   html += `</tbody></table></div>`;
 
   document.getElementById('result-body').innerHTML = html;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 </script>
 </body>
