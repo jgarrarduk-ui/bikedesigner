@@ -34,7 +34,6 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { height: 100%; }
 
 body {
   background: var(--bg);
@@ -107,7 +106,6 @@ body {
   gap: 14px;
   padding: 14px;
   align-items: flex-start;
-  overflow-y: auto;
 }
 
 /* ── Shared panel ── */
@@ -729,6 +727,7 @@ function calculate() {
   html += `</tbody></table></div>`;
 
   document.getElementById('result-body').innerHTML = html;
+  document.getElementById('result-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 </script>
 </body>
