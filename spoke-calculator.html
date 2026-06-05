@@ -34,13 +34,15 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { height: 100%; }
 
 body {
   background: var(--bg);
   color: var(--text-main);
   font-family: var(--font);
   font-size: 13px;
-  min-height: 100vh;
+  height: 100%;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -103,9 +105,10 @@ body {
 #main {
   flex: 1;
   display: flex;
-  gap: 14px;
-  padding: 14px;
-  align-items: flex-start;
+  gap: 0;
+  padding: 0;
+  align-items: stretch;
+  overflow: hidden;
 }
 
 /* ── Shared panel ── */
@@ -363,12 +366,37 @@ body {
 }
 
 /* ── Layout ── */
-#input-panel  { width: 310px; min-width: 250px; flex-shrink: 0; }
-#result-panel { flex: 1; min-width: 260px; }
+#input-panel {
+  width: 300px;
+  min-width: 240px;
+  flex-shrink: 0;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+  border-radius: 0;
+  border-top: none;
+  border-left: none;
+  border-bottom: none;
+}
+#result-panel {
+  flex: 1;
+  overflow-y: auto;
+  border-radius: 0;
+  border: none;
+}
 
 @media (max-width: 680px) {
   #main { flex-direction: column; }
-  #input-panel { width: 100%; }
+  #input-panel {
+    width: 100%;
+    flex: 0 0 56%;
+    border-right: none;
+    border-bottom: 2px solid var(--accent);
+  }
+  #result-panel {
+    flex: 0 0 44%;
+    width: 100%;
+    overflow-y: auto;
+  }
   .result-pair { flex-direction: column; }
 }
 </style>
@@ -523,7 +551,18 @@ body {
   <div id="result-panel" class="panel">
     <div class="panel-hdr">results</div>
     <div class="panel-body" id="result-body">
-      <div class="placeholder">Enter wheel dimensions above and press Calculate.</div>
+      <div class="result-pair">
+        <div class="result-card">
+          <div class="r-side">Left / Non-Drive Side (NDS)</div>
+          <div class="r-buy-lbl">Buy</div>
+          <div class="r-buy-val" style="color:var(--border)">&#8212;<span class="r-buy-unit"> mm</span></div>
+        </div>
+        <div class="result-card">
+          <div class="r-side">Right / Drive Side (DS)</div>
+          <div class="r-buy-lbl">Buy</div>
+          <div class="r-buy-val" style="color:var(--border)">&#8212;<span class="r-buy-unit"> mm</span></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -727,7 +766,6 @@ function calculate() {
   html += `</tbody></table></div>`;
 
   document.getElementById('result-body').innerHTML = html;
-  document.getElementById('result-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 </script>
 </body>
