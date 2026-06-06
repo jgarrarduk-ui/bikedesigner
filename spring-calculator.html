@@ -1,29 +1,32 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="green">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Creature Cycles — Spring Rate Calculator</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap');
 
-:root { --font: 'Courier Prime', 'Courier New', monospace; }
+:root {
+  --font:      'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+}
 
-[data-theme="dark"] {
-  --bg:          #0d0d16;
-  --panel-bg:    #0a0a14;
-  --toolbar-bg:  #130d24;
-  --hdr-bg:      #1a0f30;
-  --border:      #2a1f45;
-  --accent:      #4c1d95;
-  --accent-hi:   #7c3aed;
-  --accent-br:   #a855f7;
-  --text-lo:     #3d2b5a;
-  --text-mid:    #7c6d9a;
-  --text-hi:     #9d8ec0;
-  --text-main:   #e8dff5;
-  --lavender:    #c4b5fd;
-  --lavender-br: #d8b4fe;
+[data-theme="green"] {
+  --bg:          #080f0a;
+  --panel-bg:    #060d08;
+  --toolbar-bg:  #0a1a0d;
+  --hdr-bg:      #0d2010;
+  --border:      #1a3d20;
+  --accent:      #166534;
+  --accent-hi:   #16a34a;
+  --accent-br:   #22c55e;
+  --text-lo:     #14532d;
+  --text-mid:    #4ade80;
+  --text-hi:     #86efac;
+  --text-main:   #dcfce7;
+  --lavender:    #4ade80;
+  --lavender-br: #86efac;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -53,7 +56,7 @@ body {
   color: var(--lavender);
   letter-spacing: 3px;
   text-transform: uppercase;
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-mono);
 }
 .logo-sub {
   font-size: 9px;

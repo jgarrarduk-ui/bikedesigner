@@ -1,32 +1,35 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="green">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Creature Cycles — Spoke Length Calculator</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap');
 
-:root { --font: 'Courier Prime', 'Courier New', monospace; }
+:root {
+  --font:      'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+}
 
-[data-theme="dark"] {
-  --input-bg:    #1a1230;
-  --input-fg:    #d8b4fe;
-  --bg:          #0d0d16;
-  --panel-bg:    #0a0a14;
-  --toolbar-bg:  #130d24;
-  --hdr-bg:      #1a0f30;
-  --border:      #2a1f45;
-  --accent:      #4c1d95;
-  --accent-hi:   #7c3aed;
-  --accent-br:   #a855f7;
-  --text-lo:     #3d2b5a;
-  --text-mid:    #7c6d9a;
-  --text-hi:     #9d8ec0;
-  --text-main:   #e8dff5;
-  --lavender:    #c4b5fd;
-  --lavender-br: #d8b4fe;
-  --good:        #4ade80;
+[data-theme="green"] {
+  --input-bg:    #080f0a;
+  --input-fg:    #4ade80;
+  --bg:          #080f0a;
+  --panel-bg:    #060d08;
+  --toolbar-bg:  #0a1a0d;
+  --hdr-bg:      #0d2010;
+  --border:      #1a3d20;
+  --accent:      #166534;
+  --accent-hi:   #16a34a;
+  --accent-br:   #22c55e;
+  --text-lo:     #14532d;
+  --text-mid:    #4ade80;
+  --text-hi:     #86efac;
+  --text-main:   #dcfce7;
+  --lavender:    #4ade80;
+  --lavender-br: #86efac;
+  --good:        #dcfce7;
   --good-dim:    #166534;
   --warn:        #fbbf24;
   --warn-dim:    #78350f;
@@ -64,7 +67,7 @@ body {
   color: var(--lavender);
   letter-spacing: 3px;
   text-transform: uppercase;
-  font-family: 'Courier New', monospace;
+  font-family: var(--font-mono);
 }
 .logo-sub {
   font-size: 9px;
@@ -170,7 +173,7 @@ body {
   border: 1px solid var(--accent);
   border-radius: 2px;
   padding: 3px 6px;
-  font-family: var(--font);
+  font-family: var(--font-mono);
   font-size: 11px;
   text-align: right;
   outline: none;
@@ -183,7 +186,7 @@ body {
   border: 1px solid var(--accent);
   border-radius: 2px;
   padding: 3px 6px;
-  font-family: var(--font);
+  font-family: var(--font-mono);
   font-size: 11px;
   outline: none;
 }
@@ -203,6 +206,14 @@ body {
   cursor: pointer;
 }
 .preset-sel:focus { border-color: var(--accent); }
+
+.hub-diagram-wrap {
+  margin-top: 10px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 8px 4px 4px;
+  background: var(--panel-bg);
+}
 
 .hint {
   font-size: 9px;
@@ -296,6 +307,7 @@ body {
 .r-buy-val {
   font-size: 26px;
   font-weight: 700;
+  font-family: var(--font-mono);
   color: var(--good);
   line-height: 1.1;
   letter-spacing: 1px;
@@ -603,6 +615,74 @@ body {
         Center-to-flange = axial distance from hub axle midpoint to each flange.<br>
         DS = drive side (cassette / sprocket). NDS = non-drive side.<br>
         Flange hole Ø: 2.5 mm for standard 2.0 mm gauge spokes.
+      </div>
+
+      <!-- Hub diagram -->
+      <div class="hub-diagram-wrap">
+        <svg id="hub-svg" viewBox="0 0 300 148" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
+          <!-- Axle centre line -->
+          <line x1="8" y1="74" x2="292" y2="74" stroke="var(--border)" stroke-width="1" stroke-dasharray="4,3"/>
+
+          <!-- Hub shell body -->
+          <rect id="hd-body" x="110" y="50" width="80" height="48" rx="2"
+                fill="var(--hdr-bg)" stroke="var(--accent-br)" stroke-width="1.2"/>
+
+          <!-- Left flange -->
+          <rect id="hd-fl-l" x="64" y="36" width="10" height="76" rx="2"
+                fill="var(--hdr-bg)" stroke="var(--accent-br)" stroke-width="1.2"/>
+          <!-- Left PCD circle (dashed) -->
+          <ellipse id="hd-pcd-l" cx="69" cy="74" rx="30" ry="30"
+                   fill="none" stroke="var(--accent-hi)" stroke-width="1" stroke-dasharray="3,3"/>
+          <!-- Left spoke hole dot -->
+          <circle id="hd-hole-l" cx="69" cy="44" r="2.5"
+                  fill="var(--accent-br)" stroke="var(--bg)" stroke-width="1"/>
+
+          <!-- Right flange -->
+          <rect id="hd-fl-r" x="226" y="36" width="10" height="76" rx="2"
+                fill="var(--hdr-bg)" stroke="var(--accent-br)" stroke-width="1.2"/>
+          <!-- Right PCD circle (dashed) -->
+          <ellipse id="hd-pcd-r" cx="231" cy="74" rx="24" ry="24"
+                   fill="none" stroke="var(--accent-hi)" stroke-width="1" stroke-dasharray="3,3"/>
+          <!-- Right spoke hole dot -->
+          <circle id="hd-hole-r" cx="231" cy="50" r="2.5"
+                  fill="var(--accent-br)" stroke="var(--bg)" stroke-width="1"/>
+
+          <!-- ── Dimension lines ── -->
+
+          <!-- CTF left: center → left flange mid -->
+          <line x1="150" y1="108" x2="69" y2="108" stroke="var(--text-lo)" stroke-width="0.8"/>
+          <polygon points="69,105 64,108 69,111" fill="var(--text-lo)"/>
+          <polygon points="150,105 155,108 150,111" fill="var(--text-lo)"/>
+          <text x="109" y="120" text-anchor="middle" fill="var(--text-mid)" font-size="8" font-family="var(--font-mono)">CTF left (NDS)</text>
+
+          <!-- CTF right: center → right flange mid -->
+          <line x1="150" y1="128" x2="231" y2="128" stroke="var(--text-lo)" stroke-width="0.8"/>
+          <polygon points="231,125 236,128 231,131" fill="var(--text-lo)"/>
+          <polygon points="150,125 145,128 150,131" fill="var(--text-lo)"/>
+          <text x="190" y="140" text-anchor="middle" fill="var(--text-mid)" font-size="8" font-family="var(--font-mono)">CTF right (DS)</text>
+
+          <!-- PCD left label -->
+          <line x1="69" y1="74" x2="69" y2="44" stroke="var(--text-lo)" stroke-width="0.8" stroke-dasharray="2,2"/>
+          <text x="34" y="58" text-anchor="middle" fill="var(--text-mid)" font-size="8" font-family="var(--font-mono)">PCD</text>
+          <text x="34" y="68" text-anchor="middle" fill="var(--text-mid)" font-size="8" font-family="var(--font-mono)">left</text>
+
+          <!-- PCD right label -->
+          <line x1="231" y1="74" x2="231" y2="50" stroke="var(--text-lo)" stroke-width="0.8" stroke-dasharray="2,2"/>
+          <text x="265" y="58" text-anchor="middle" fill="var(--text-mid)" font-size="8" font-family="var(--font-mono)">PCD</text>
+          <text x="265" y="68" text-anchor="middle" fill="var(--text-mid)" font-size="8" font-family="var(--font-mono)">right</text>
+
+          <!-- Flange hole Ø indicator (left) -->
+          <line x1="55" y1="44" x2="64" y2="44" stroke="var(--accent-hi)" stroke-width="0.8"/>
+          <text x="14" y="44" text-anchor="middle" fill="var(--text-lo)" font-size="7" font-family="var(--font-mono)">hole Ø</text>
+
+          <!-- NDS / DS labels -->
+          <text x="69" y="22" text-anchor="middle" fill="var(--text-lo)" font-size="8" font-family="var(--font)" letter-spacing="1">NDS</text>
+          <text x="231" y="22" text-anchor="middle" fill="var(--text-lo)" font-size="8" font-family="var(--font)" letter-spacing="1">DS</text>
+
+          <!-- Center tick -->
+          <line x1="150" y1="68" x2="150" y2="80" stroke="var(--accent-hi)" stroke-width="1"/>
+        </svg>
+        <div class="hint" style="margin-top:2px;text-align:center">hub cross-section — schematic</div>
       </div>
 
       <!-- Lacing -->
