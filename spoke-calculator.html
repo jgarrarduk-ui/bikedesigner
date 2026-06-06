@@ -528,11 +528,15 @@ body {
           <option value="dt350_fat197">DT Swiss 350 Fat rear  197&times;12</option>
         </optgroup>
         <optgroup label="Hope — Front">
+          <option value="hope_p2_f100">Hope Pro 2 / Pro 2 Evo front  100mm QR</option>
           <option value="hope_p4_f100">Hope Pro 4 front  100&times;15</option>
           <option value="hope_p4_f110b">Hope Pro 4 Boost front  110&times;15</option>
           <option value="hope_p5_f100">Hope Pro 5 front  100&times;15</option>
+          <option value="hope_p5_f110b">Hope Pro 5 Boost front  110&times;15</option>
         </optgroup>
         <optgroup label="Hope — Rear">
+          <option value="hope_p2_r135">Hope Pro 2 / Pro 2 Evo rear  135mm QR</option>
+          <option value="hope_p2_r142">Hope Pro 2 / Pro 2 Evo rear  142&times;12 TA</option>
           <option value="hope_p4_r142">Hope Pro 4 rear  135/142&times;12</option>
           <option value="hope_p4_r148b">Hope Pro 4 Boost rear  148&times;12</option>
           <option value="hope_p4_r157sb">Hope Pro 4 SuperBoost rear  157&times;12</option>
@@ -726,10 +730,16 @@ const HUB_PRESETS = {
   'dt350_r148b':   { fldL:46,   fldR:46,   ctfL:36,   ctfR:23.2, holeDia:2.5, flag:'2021+ models use PCD 47/47mm — verify model year' },
   'dt240_r148b':   { fldL:50.4, fldR:50.4, ctfL:37.3, ctfR:22.6, holeDia:2.5, flag:'' },
   'dt350_fat197':  { fldL:58,   fldR:52,   ctfL:61.1, ctfR:47.8, holeDia:2.5, flag:'' },
-  // Hope (Hope official PDF + Velodrop — high confidence; spoke hole 2.6mm)
+  // Hope (Hope official PDF + Velodrop + Freespoke — high confidence; spoke hole 2.6mm)
+  // Pro 2 / Pro 2 Evo: identical external geometry; CTF minor source variance flagged
+  'hope_p2_f100':  { fldL:56,   fldR:54,   ctfL:19.5, ctfR:34,   holeDia:2.6, flag:'CTF source variance: some sources cite 20/33 — verify by measurement' },
   'hope_p4_f100':  { fldL:57,   fldR:57,   ctfL:20,   ctfR:33,   holeDia:2.6, flag:'' },
   'hope_p4_f110b': { fldL:57,   fldR:57,   ctfL:25,   ctfR:33,   holeDia:2.6, flag:'' },
   'hope_p5_f100':  { fldL:58,   fldR:52,   ctfL:20,   ctfR:34,   holeDia:2.6, flag:'' },
+  'hope_p5_f110b': { fldL:58,   fldR:52,   ctfL:25,   ctfR:34,   holeDia:2.6, flag:'' },
+  // Pro 2 rear: 135mm and 142mm use identical flange geometry (142 uses adapter end caps)
+  'hope_p2_r135':  { fldL:56,   fldR:54,   ctfL:31.5, ctfR:20.5, holeDia:2.6, flag:'CTF source variance: some sources cite 33/20 — verify by measurement; 142×12 TA has identical flange geometry' },
+  'hope_p2_r142':  { fldL:56,   fldR:54,   ctfL:31.5, ctfR:20.5, holeDia:2.6, flag:'Identical flange geometry to 135mm QR (142mm uses adapter end caps); CTF some sources cite 33/20 — verify' },
   'hope_p4_r142':  { fldL:57,   fldR:57,   ctfL:33,   ctfR:19,   holeDia:2.6, flag:'' },
   'hope_p4_r148b': { fldL:57,   fldR:57,   ctfL:35,   ctfR:22,   holeDia:2.6, flag:'' },
   'hope_p4_r157sb':{ fldL:57,   fldR:57,   ctfL:38.5, ctfR:26.5, holeDia:2.6, flag:'' },
