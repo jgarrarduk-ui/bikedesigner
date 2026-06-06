@@ -208,11 +208,29 @@ body {
 .preset-sel:focus { border-color: var(--accent); }
 
 .hub-diagram-wrap {
-  margin-top: 10px;
-  border: 1px solid var(--border);
-  border-radius: 3px;
-  padding: 8px 4px 4px;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 12px 2px;
   background: var(--panel-bg);
+}
+
+.guide-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 20px;
+  margin-top: 6px;
+  list-style: none;
+  padding: 0;
+}
+.guide-cols li {
+  font-size: 10px;
+  line-height: 1.65;
+  color: var(--text-mid);
+  padding: 1px 0;
+}
+.guide-cols li::before { content: '• '; color: var(--accent-br); }
+
+@media (max-width: 480px) {
+  .guide-cols { grid-template-columns: 1fr; }
 }
 
 .hint {
@@ -617,74 +635,6 @@ body {
         Flange hole Ø: 2.5 mm for standard 2.0 mm gauge spokes.
       </div>
 
-      <!-- Hub diagram -->
-      <div class="hub-diagram-wrap">
-        <svg id="hub-svg" viewBox="0 0 300 148" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
-          <!-- Axle centre line -->
-          <line x1="8" y1="74" x2="292" y2="74" stroke="var(--border)" stroke-width="1" stroke-dasharray="4,3"/>
-
-          <!-- Hub shell body -->
-          <rect id="hd-body" x="110" y="50" width="80" height="48" rx="2"
-                fill="var(--hdr-bg)" stroke="var(--accent-br)" stroke-width="1.2"/>
-
-          <!-- Left flange -->
-          <rect id="hd-fl-l" x="64" y="36" width="10" height="76" rx="2"
-                fill="var(--hdr-bg)" stroke="var(--accent-br)" stroke-width="1.2"/>
-          <!-- Left PCD circle (dashed) -->
-          <ellipse id="hd-pcd-l" cx="69" cy="74" rx="30" ry="30"
-                   fill="none" stroke="var(--accent-hi)" stroke-width="1" stroke-dasharray="3,3"/>
-          <!-- Left spoke hole dot -->
-          <circle id="hd-hole-l" cx="69" cy="44" r="2.5"
-                  fill="var(--accent-br)" stroke="var(--bg)" stroke-width="1"/>
-
-          <!-- Right flange -->
-          <rect id="hd-fl-r" x="226" y="36" width="10" height="76" rx="2"
-                fill="var(--hdr-bg)" stroke="var(--accent-br)" stroke-width="1.2"/>
-          <!-- Right PCD circle (dashed) -->
-          <ellipse id="hd-pcd-r" cx="231" cy="74" rx="24" ry="24"
-                   fill="none" stroke="var(--accent-hi)" stroke-width="1" stroke-dasharray="3,3"/>
-          <!-- Right spoke hole dot -->
-          <circle id="hd-hole-r" cx="231" cy="50" r="2.5"
-                  fill="var(--accent-br)" stroke="var(--bg)" stroke-width="1"/>
-
-          <!-- ── Dimension lines ── -->
-
-          <!-- CTF left: center → left flange mid -->
-          <line x1="150" y1="108" x2="69" y2="108" stroke="var(--text-lo)" stroke-width="0.8"/>
-          <polygon points="69,105 64,108 69,111" fill="var(--text-lo)"/>
-          <polygon points="150,105 155,108 150,111" fill="var(--text-lo)"/>
-          <text x="109" y="120" text-anchor="middle" fill="var(--text-mid)" font-size="8" font-family="var(--font-mono)">CTF left (NDS)</text>
-
-          <!-- CTF right: center → right flange mid -->
-          <line x1="150" y1="128" x2="231" y2="128" stroke="var(--text-lo)" stroke-width="0.8"/>
-          <polygon points="231,125 236,128 231,131" fill="var(--text-lo)"/>
-          <polygon points="150,125 145,128 150,131" fill="var(--text-lo)"/>
-          <text x="190" y="140" text-anchor="middle" fill="var(--text-mid)" font-size="8" font-family="var(--font-mono)">CTF right (DS)</text>
-
-          <!-- PCD left label -->
-          <line x1="69" y1="74" x2="69" y2="44" stroke="var(--text-lo)" stroke-width="0.8" stroke-dasharray="2,2"/>
-          <text x="34" y="58" text-anchor="middle" fill="var(--text-mid)" font-size="8" font-family="var(--font-mono)">PCD</text>
-          <text x="34" y="68" text-anchor="middle" fill="var(--text-mid)" font-size="8" font-family="var(--font-mono)">left</text>
-
-          <!-- PCD right label -->
-          <line x1="231" y1="74" x2="231" y2="50" stroke="var(--text-lo)" stroke-width="0.8" stroke-dasharray="2,2"/>
-          <text x="265" y="58" text-anchor="middle" fill="var(--text-mid)" font-size="8" font-family="var(--font-mono)">PCD</text>
-          <text x="265" y="68" text-anchor="middle" fill="var(--text-mid)" font-size="8" font-family="var(--font-mono)">right</text>
-
-          <!-- Flange hole Ø indicator (left) -->
-          <line x1="55" y1="44" x2="64" y2="44" stroke="var(--accent-hi)" stroke-width="0.8"/>
-          <text x="14" y="44" text-anchor="middle" fill="var(--text-lo)" font-size="7" font-family="var(--font-mono)">hole Ø</text>
-
-          <!-- NDS / DS labels -->
-          <text x="69" y="22" text-anchor="middle" fill="var(--text-lo)" font-size="8" font-family="var(--font)" letter-spacing="1">NDS</text>
-          <text x="231" y="22" text-anchor="middle" fill="var(--text-lo)" font-size="8" font-family="var(--font)" letter-spacing="1">DS</text>
-
-          <!-- Center tick -->
-          <line x1="150" y1="68" x2="150" y2="80" stroke="var(--accent-hi)" stroke-width="1"/>
-        </svg>
-        <div class="hint" style="margin-top:2px;text-align:center">hub cross-section — schematic</div>
-      </div>
-
       <!-- Lacing -->
       <div class="sec">lacing pattern</div>
       <div class="cross-row">
@@ -703,20 +653,75 @@ body {
   <!-- ══ Result panel ══ -->
   <div id="result-panel" class="panel">
     <div class="panel-hdr">results</div>
-    <div class="panel-body" id="result-body">
-      <div class="result-pair">
-        <div class="result-card">
-          <div class="r-side">Left / Non-Drive Side (NDS)</div>
-          <div class="r-buy-lbl">Buy</div>
-          <div class="r-buy-val" style="color:var(--border)">&#8212;<span class="r-buy-unit"> mm</span></div>
-        </div>
-        <div class="result-card">
-          <div class="r-side">Right / Drive Side (DS)</div>
-          <div class="r-buy-lbl">Buy</div>
-          <div class="r-buy-val" style="color:var(--border)">&#8212;<span class="r-buy-unit"> mm</span></div>
-        </div>
-      </div>
+
+    <!-- Hub diagram — always visible -->
+    <div class="hub-diagram-wrap">
+      <svg viewBox="0 0 480 148" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">
+        <!-- Axle centre line -->
+        <line x1="10" y1="74" x2="470" y2="74" stroke="var(--border)" stroke-width="1" stroke-dasharray="5,4"/>
+
+        <!-- Hub shell body -->
+        <rect x="180" y="50" width="120" height="48" rx="2"
+              fill="var(--hdr-bg)" stroke="var(--accent-br)" stroke-width="1.2"/>
+
+        <!-- Left flange -->
+        <rect x="104" y="34" width="12" height="80" rx="2"
+              fill="var(--hdr-bg)" stroke="var(--accent-br)" stroke-width="1.2"/>
+        <!-- Left PCD circle -->
+        <ellipse cx="110" cy="74" rx="38" ry="38"
+                 fill="none" stroke="var(--accent-hi)" stroke-width="1" stroke-dasharray="4,3"/>
+        <!-- Left spoke hole -->
+        <circle cx="110" cy="36" r="3"
+                fill="var(--accent-br)" stroke="var(--bg)" stroke-width="1"/>
+
+        <!-- Right flange -->
+        <rect x="364" y="34" width="12" height="80" rx="2"
+              fill="var(--hdr-bg)" stroke="var(--accent-br)" stroke-width="1.2"/>
+        <!-- Right PCD circle -->
+        <ellipse cx="370" cy="74" rx="30" ry="30"
+                 fill="none" stroke="var(--accent-hi)" stroke-width="1" stroke-dasharray="4,3"/>
+        <!-- Right spoke hole -->
+        <circle cx="370" cy="44" r="3"
+                fill="var(--accent-br)" stroke="var(--bg)" stroke-width="1"/>
+
+        <!-- ── Dimension lines ── -->
+
+        <!-- CTF left -->
+        <line x1="240" y1="108" x2="110" y2="108" stroke="var(--text-lo)" stroke-width="0.8"/>
+        <polygon points="110,105 104,108 110,111" fill="var(--text-lo)"/>
+        <polygon points="240,105 246,108 240,111" fill="var(--text-lo)"/>
+        <text x="175" y="121" text-anchor="middle" fill="var(--text-mid)" font-size="9" font-family="var(--font-mono)">CTF left (NDS)</text>
+
+        <!-- CTF right -->
+        <line x1="240" y1="130" x2="370" y2="130" stroke="var(--text-lo)" stroke-width="0.8"/>
+        <polygon points="370,127 376,130 370,133" fill="var(--text-lo)"/>
+        <polygon points="240,127 234,130 240,133" fill="var(--text-lo)"/>
+        <text x="305" y="143" text-anchor="middle" fill="var(--text-mid)" font-size="9" font-family="var(--font-mono)">CTF right (DS)</text>
+
+        <!-- PCD left radius line + label -->
+        <line x1="110" y1="74" x2="110" y2="36" stroke="var(--text-lo)" stroke-width="0.8" stroke-dasharray="2,2"/>
+        <text x="60" y="53" text-anchor="middle" fill="var(--text-mid)" font-size="9" font-family="var(--font-mono)">PCD left</text>
+
+        <!-- PCD right radius line + label -->
+        <line x1="370" y1="74" x2="370" y2="44" stroke="var(--text-lo)" stroke-width="0.8" stroke-dasharray="2,2"/>
+        <text x="424" y="53" text-anchor="middle" fill="var(--text-mid)" font-size="9" font-family="var(--font-mono)">PCD right</text>
+
+        <!-- Hole Ø callout -->
+        <line x1="88" y1="36" x2="107" y2="36" stroke="var(--accent-hi)" stroke-width="0.8"/>
+        <text x="50" y="36" text-anchor="middle" fill="var(--text-lo)" font-size="8" font-family="var(--font-mono)">hole Ø</text>
+
+        <!-- NDS / DS side labels -->
+        <text x="110" y="20" text-anchor="middle" fill="var(--text-lo)" font-size="9" font-family="var(--font)" letter-spacing="1">NDS</text>
+        <text x="370" y="20" text-anchor="middle" fill="var(--text-lo)" font-size="9" font-family="var(--font)" letter-spacing="1">DS</text>
+
+        <!-- Centre tick -->
+        <line x1="240" y1="66" x2="240" y2="82" stroke="var(--accent-hi)" stroke-width="1"/>
+        <text x="240" y="62" text-anchor="middle" fill="var(--text-lo)" font-size="8" font-family="var(--font)">&#9650;</text>
+      </svg>
+      <div class="hint" style="text-align:center;padding-bottom:4px">hub cross-section — schematic (not to scale)</div>
     </div>
+
+    <div class="panel-body" id="result-body"></div>
   </div>
 
 </div><!-- #main -->
@@ -966,13 +971,15 @@ function calculate() {
 
   // ── Buying guide ──
   html += `<div class="note purple">
-    <strong>J-bend buying guide:</strong><br>
-    &bull; Always round <strong>down</strong> to the nearest mm &mdash; shorter is safer than longer.<br>
-    &bull; 0&ndash;2 mm shorter than calculated: fine &mdash; spoke thread fully grips nipple.<br>
-    &bull; 0&ndash;1 mm longer than calculated: usually acceptable &mdash; thread barely past nipple.<br>
-    &bull; &gt;1 mm longer: thread protrudes into tyre channel &mdash; puncture risk &mdash; avoid.<br>
-    &bull; If two sizes are equally close, choose the shorter one.<br>
-    &bull; Most quality spokes are sold in 1 mm increments (DT Swiss, Sapim, Pillar).
+    <strong>J-bend buying guide:</strong>
+    <ul class="guide-cols">
+      <li>Round <strong>down</strong> to nearest mm — shorter is safer.</li>
+      <li>0–1 mm longer: usually OK — thread barely past nipple.</li>
+      <li>0–2 mm shorter: fine — thread fully grips nipple.</li>
+      <li>&gt;1 mm longer: avoid — puncture risk in tyre channel.</li>
+      <li>If two sizes equally close, choose the shorter.</li>
+      <li>Quality spokes sold in 1 mm increments (DT, Sapim, Pillar).</li>
+    </ul>
   </div>`;
 
   // ── Nearby sizes table ──
@@ -1006,6 +1013,9 @@ function calculate() {
   document.getElementById('result-body').innerHTML = html;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+// Calculate with defaults on first load
+document.addEventListener('DOMContentLoaded', calculate);
 </script>
 </body>
 </html>
