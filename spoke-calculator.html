@@ -439,30 +439,52 @@ body {
       <div class="sec">rim</div>
       <select class="preset-sel" id="rim-preset" onchange="loadRimPreset()">
         <option value="">— select rim preset —</option>
-        <optgroup label="700c / Road">
-          <option value="614">Mavic Open Pro / Ksyrium  614 mm</option>
-          <option value="612">DT Swiss R460              612 mm</option>
-          <option value="610">Shimano WH-RS010           610 mm</option>
-          <option value="607">Ryde Pulse                 607 mm</option>
-          <option value="606">Velocity A23               606 mm</option>
-          <option value="597">Zipp 303 Firecrest         597 mm</option>
+        <optgroup label="700c Road">
+          <option value="rr511_700c">DT Swiss RR 511 — 581 mm</option>
+          <option value="cliffhanger_700c">Velocity Cliffhanger — 597 mm</option>
+          <option value="enve_classic65">Enve Classic 65 — 526 mm</option>
+          <option value="enve_found65">Enve Foundation 65 — measure ERD</option>
         </optgroup>
-        <optgroup label="29&quot; MTB">
-          <option value="601">WTB KOM i19 29             601 mm</option>
-          <option value="599">DT Swiss XR361 29          599 mm</option>
-          <option value="596">Stan's Arch MK3 29         596 mm</option>
-          <option value="590">Spank Oozy 395 29          590 mm</option>
+        <optgroup label="700c / 650b Gravel">
+          <option value="gr531_700c">DT Swiss GR 531 700c — 594 mm</option>
+          <option value="gr531_650b">DT Swiss GR 531 650b — 556 mm</option>
+          <option value="cliffhanger_650b">Velocity Cliffhanger 650b — 558 mm</option>
         </optgroup>
-        <optgroup label="27.5&quot; / 650b">
-          <option value="584">DT Swiss XR361 27.5        584 mm</option>
-          <option value="571">Stan's Flow MK3 27.5       571 mm</option>
-          <option value="569">Spank Oozy 395 27.5        569 mm</option>
+        <optgroup label="29&quot; MTB XC">
+          <option value="xr361_29">DT Swiss XR 361 asym — 607 mm</option>
+          <option value="xr331_29">DT Swiss XR 331 — 606 mm</option>
+          <option value="crest_mk4_29">Stan's Crest MK4 — 601 mm</option>
+          <option value="arch_mk4_29">Stan's Arch MK4 — 600 mm</option>
+          <option value="bluntss_29">Velocity Blunt SS — measure ERD</option>
         </optgroup>
-        <optgroup label="26&quot;">
-          <option value="548">Stan's Arch 26             548 mm</option>
-          <option value="540">Generic 26"                540 mm</option>
+        <optgroup label="29&quot; MTB Trail / Enduro">
+          <option value="ex511_29">DT Swiss EX 511 29 — 601 mm</option>
+          <option value="xm481_29">DT Swiss XM 481 29 — 601 mm</option>
+          <option value="flow_mk4_29">Stan's Flow MK4 29 — 600 mm</option>
+          <option value="flow_ex3_29">Stan's Flow EX3 29 — 602 mm</option>
+          <option value="kom_i30_29">WTB KOM Tough i30 29 — 605 mm</option>
+          <option value="oozy_395_29">Spank Oozy Trail 395+ 29 — 591 mm ⚠</option>
+          <option value="arc30_29">Race Face ARC 30 Offset 29 — 600 mm</option>
+        </optgroup>
+        <optgroup label="27.5&quot; MTB">
+          <option value="ex511_275">DT Swiss EX 511 27.5 — 563 mm</option>
+          <option value="xm481_275">DT Swiss XM 481 27.5 — 563 mm</option>
+          <option value="flow_mk4_275">Stan's Flow MK4 27.5 — 561 mm</option>
+          <option value="flow_ex3_275">Stan's Flow EX3 27.5 — 564 mm</option>
+          <option value="kom_i30_275">WTB KOM Tough i30 27.5 — 570 mm</option>
+          <option value="spike33_275">Spank Spike Race 33 27.5 — 554 mm ⚠</option>
+          <option value="350vib_275">Spank 350 Vibrocore 27.5 — 564 mm ⚠</option>
+          <option value="arc30_275">Race Face ARC 30 Offset 27.5 — 596 mm</option>
+        </optgroup>
+        <optgroup label="26&quot; MTB / DH">
+          <option value="spike33_26">Spank Spike Race 33 26 — 529 mm ⚠</option>
+          <option value="mulefut_26">Sun Ringle Mulefut 80 SL 26 — 551 mm (fat)</option>
+        </optgroup>
+        <optgroup label="24&quot; BMX">
+          <option value="spoon2824">Spank Spoon 28-24 — 474 mm ⚠</option>
         </optgroup>
       </select>
+      <div class="hint" id="rim-flag" style="min-height:0"></div>
 
       <div class="field">
         <span class="field-lbl">ERD (Effective Rim Diameter)</span>
@@ -470,8 +492,9 @@ body {
         <input class="field-num" type="number" id="erd" value="610" step="0.5" min="350" max="730">
       </div>
       <div class="hint">
-        ERD = the diameter at the spoke nipple seats inside the rim.<br>
-        To measure: insert 2 spokes in opposite holes, measure tip-to-tip, add 2 × spoke diameter (2.0mm).
+        ERD = diameter at the spoke nipple seats inside the rim.<br>
+        Measure: 2 spokes in opposite holes, tip-to-tip + 2&times; spoke Ø (2.0 mm).<br>
+        <strong style="color:var(--text-lo)">Always verify preset ERD by measurement before building.</strong>
       </div>
 
       <div class="field" style="margin-top:8px">
@@ -492,27 +515,59 @@ body {
       <div class="sec">hub</div>
       <select class="preset-sel" id="hub-preset" onchange="loadHubPreset()">
         <option value="">— select hub preset —</option>
-        <optgroup label="Front — QR">
-          <option value="fqr">Generic front  100mm QR</option>
-          <option value="fdt350">DT Swiss 350 front  100mm</option>
+        <optgroup label="DT Swiss — Front">
+          <option value="dt350_f100">DT Swiss 350 front  100&times;15</option>
+          <option value="dt350_f110b">DT Swiss 350 Boost front  110&times;15</option>
+          <option value="dt370_track">DT Swiss 370 Track front  100mm</option>
         </optgroup>
-        <optgroup label="Front — Thru-Axle">
-          <option value="fboost">Generic front Boost 110mm TA</option>
+        <optgroup label="DT Swiss — Rear">
+          <option value="dt350_r130">DT Swiss 350 road rear  130mm QR</option>
+          <option value="dt350_r142">DT Swiss 350 rear  142&times;12</option>
+          <option value="dt350_r148b">DT Swiss 350 Boost rear  148&times;12</option>
+          <option value="dt240_r148b">DT Swiss 240 EXP Boost rear  148&times;12</option>
+          <option value="dt350_fat197">DT Swiss 350 Fat rear  197&times;12</option>
         </optgroup>
-        <optgroup label="Rear Road — QR 130mm">
-          <option value="r105-130">Shimano 105 R7000   130mm</option>
-          <option value="rult-130">Shimano Ultegra R8000 130mm</option>
-          <option value="rdt240-130">DT Swiss 240       130mm</option>
+        <optgroup label="Hope — Front">
+          <option value="hope_p4_f100">Hope Pro 4 front  100&times;15</option>
+          <option value="hope_p4_f110b">Hope Pro 4 Boost front  110&times;15</option>
+          <option value="hope_p5_f100">Hope Pro 5 front  100&times;15</option>
         </optgroup>
-        <optgroup label="Rear Road — TA 142mm">
-          <option value="rdt240-142">DT Swiss 240       142mm TA</option>
+        <optgroup label="Hope — Rear">
+          <option value="hope_p4_r142">Hope Pro 4 rear  135/142&times;12</option>
+          <option value="hope_p4_r148b">Hope Pro 4 Boost rear  148&times;12</option>
+          <option value="hope_p4_r157sb">Hope Pro 4 SuperBoost rear  157&times;12</option>
+          <option value="hope_p4_rdh">Hope Pro 4 DH rear  150/157&times;12</option>
+          <option value="hope_p5_r148b">Hope Pro 5 Boost rear  148&times;12</option>
+          <option value="hope_rs4_r135">Hope RS4 rear  135mm QR</option>
         </optgroup>
-        <optgroup label="Rear MTB — Boost 148mm">
-          <option value="rdeore-148">Shimano Deore       148mm Boost</option>
-          <option value="rxt-148">Shimano XT M8100    148mm Boost</option>
-          <option value="rdt350-148">DT Swiss 350       148mm Boost</option>
+        <optgroup label="Industry Nine — Front">
+          <option value="i9_hydra_f110b">Industry Nine Hydra front  110&times;15 Boost</option>
+        </optgroup>
+        <optgroup label="Industry Nine — Rear">
+          <option value="i9_hydra_r148b">Industry Nine Hydra rear  148&times;12 Boost</option>
+          <option value="i9_hydra_r142">Industry Nine Hydra rear  142&times;12</option>
+          <option value="i9_11_r148b">Industry Nine 1/1 MTN rear  148&times;12 Boost</option>
+        </optgroup>
+        <optgroup label="Chris King — Front">
+          <option value="ck_boost_f110b">Chris King Boost front  110&times;15</option>
+        </optgroup>
+        <optgroup label="Chris King — Rear">
+          <option value="ck_r45d_r142">Chris King R45D CL rear  142&times;12</option>
+          <option value="ck_boost_r148b">Chris King Boost rear  148&times;12</option>
+          <option value="ck_sb_r157">Chris King SuperBoost CL rear  157&times;12</option>
+          <option value="ck_r45_r130">Chris King R45 rear  130mm QR</option>
+        </optgroup>
+        <optgroup label="Onyx — Front">
+          <option value="onyx_f110b">Onyx Classic front  110&times;15 Boost</option>
+        </optgroup>
+        <optgroup label="Onyx — Rear">
+          <option value="onyx_r148b">Onyx Classic rear  148&times;12 Boost</option>
+        </optgroup>
+        <optgroup label="Shimano — Rear (verify values)">
+          <option value="shi_m8000_r">Shimano XT M8000 rear  135/142&times;12 ⚠</option>
         </optgroup>
       </select>
+      <div class="hint" id="hub-flag" style="min-height:0"></div>
 
       <div class="field">
         <span class="field-lbl">Left flange PCD  <span style="color:var(--text-lo)">(NDS)</span></span>
@@ -603,36 +658,115 @@ function setCross(n) {
 }
 
 // ── Rim presets ───────────────────────────────────────────────
+// Source: verified library (manufacturer + independent cross-reference, June 2026)
+// erd: null = ERD not published — measure before building
+// Confidence: high = mfr + independent xref; medium = single reputable source; low = uncertain
+const RIM_PRESETS = {
+  // 700c Road
+  'rr511_700c':       { erd:581, flag:'DT Swiss: ERD includes PHR washers — verify by measurement', warn:false },
+  'cliffhanger_700c': { erd:597, flag:'Single reputable source — verify by measurement', warn:false },
+  'enve_classic65':   { erd:526, flag:'Enve: ERD corrected for internal nipples — verify', warn:false },
+  'enve_found65':     { erd:null, flag:'ERD not published numerically — check Enve spec database', warn:true },
+  // 700c / 650b Gravel
+  'gr531_700c':       { erd:594, flag:'DT Swiss: ERD includes PHR washers — verify by measurement', warn:false },
+  'gr531_650b':       { erd:556, flag:'DT Swiss: ERD includes PHR washers; confirmed 556mm — verify', warn:false },
+  'cliffhanger_650b': { erd:558, flag:'Source conflict: 558 mm vs 560 mm reported — measure before building', warn:true },
+  // 29" XC
+  'xr361_29':         { erd:607, flag:'DT Swiss: asymmetric rim (OSB); ERD includes PHR washers — verify', warn:false },
+  'xr331_29':         { erd:606, flag:'DT Swiss: ERD includes PHR washers; one loose 610mm reference — verify', warn:false },
+  'crest_mk4_29':     { erd:601, flag:'Stan\'s ERDs typically accurate to ~1mm — verify by measurement', warn:false },
+  'arch_mk4_29':      { erd:600, flag:'Stan\'s ERDs typically accurate to ~1mm — verify by measurement', warn:false },
+  'bluntss_29':       { erd:null, flag:'ERD not published by Velocity — measure before building', warn:true },
+  // 29" Trail/Enduro
+  'ex511_29':         { erd:601, flag:'DT Swiss: ERD includes PHR washers — verify by measurement', warn:false },
+  'xm481_29':         { erd:601, flag:'DT Swiss: ERD includes PHR washers; some builders measure ~608mm — verify', warn:true },
+  'flow_mk4_29':      { erd:600, flag:'Stan\'s ERDs typically accurate to ~1mm — verify by measurement', warn:false },
+  'flow_ex3_29':      { erd:602, flag:'Stan\'s ERDs typically accurate to ~1mm — verify by measurement', warn:false },
+  'kom_i30_29':       { erd:605, flag:'Confirmed at 605mm by multiple retailers — verify by measurement', warn:false },
+  'oozy_395_29':      { erd:591, flag:'⚠ Spank ERD+ convention: published figure excludes nipple-shoulder height — correct or measure before use', warn:true },
+  'arc30_29':         { erd:600, flag:'Race Face: assumes 2mm nipple head height; asymmetric rim (OSB ±4.5mm) — verify ERD', warn:false },
+  // 27.5"
+  'ex511_275':        { erd:563, flag:'DT Swiss: ERD includes PHR washers — verify by measurement', warn:false },
+  'xm481_275':        { erd:563, flag:'DT Swiss: ERD includes PHR washers — verify by measurement', warn:false },
+  'flow_mk4_275':     { erd:561, flag:'Stan\'s official 561mm; one retailer listed 564mm — verify', warn:false },
+  'flow_ex3_275':     { erd:564, flag:'Single source — verify by measurement', warn:false },
+  'kom_i30_275':      { erd:570, flag:'Confirmed 570mm at two retailers — verify by measurement', warn:false },
+  'spike33_275':      { erd:554, flag:'⚠ Spank ERD+ convention: excludes nipple-shoulder height; one builder measured 553mm — correct or measure', warn:true },
+  '350vib_275':       { erd:564, flag:'⚠ Spank ERD+ convention: excludes nipple-shoulder height — correct or measure before use', warn:true },
+  'arc30_275':        { erd:596, flag:'Race Face: assumes 2mm nipple head height; asymmetric rim (OSB ±4.5mm) — verify ERD', warn:false },
+  // 26" / Fat
+  'spike33_26':       { erd:529, flag:'⚠ Spank ERD+ convention: excludes nipple-shoulder height — correct or measure before use', warn:true },
+  'mulefut_26':       { erd:551, flag:'Fat rim: 19mm offset spoke bed, 64-hole dual-row — verify by measurement', warn:false },
+  // 24" BMX
+  'spoon2824':        { erd:474, flag:'⚠ Spank ERD+ convention: excludes nipple-shoulder height — correct or measure before use', warn:true },
+};
+
 function loadRimPreset() {
-  const v = document.getElementById('rim-preset').value;
-  if (v) document.getElementById('erd').value = v;
+  const key = document.getElementById('rim-preset').value;
+  const flagEl = document.getElementById('rim-flag');
+  if (!key) { flagEl.textContent = ''; flagEl.style.marginBottom = '0'; return; }
+  const p = RIM_PRESETS[key];
+  if (!p) return;
+  if (p.erd !== null) document.getElementById('erd').value = p.erd;
+  flagEl.textContent = p.flag;
+  flagEl.style.color = p.warn ? 'var(--warn)' : 'var(--text-lo)';
+  flagEl.style.marginBottom = '6px';
 }
 
 // ── Hub presets ───────────────────────────────────────────────
-// Values are approximate — always verify against hub spec sheet.
-// fldL/R = left/right flange PCD (mm)
-// ctfL/R = left/right center-to-flange distance (mm)
+// Source: verified library (manufacturer + independent cross-reference, June 2026)
+// fldL/R = left/right flange PCD (mm) | ctfL/R = center-to-flange (mm) | holeDia = flange hole Ø (mm)
 const HUB_PRESETS = {
-  'fqr':       { fldL:55.0, fldR:55.0, ctfL:20.0, ctfR:20.0 },
-  'fdt350':    { fldL:47.0, fldR:47.0, ctfL:20.5, ctfR:20.5 },
-  'fboost':    { fldL:55.0, fldR:55.0, ctfL:22.0, ctfR:22.0 },
-  'r105-130':  { fldL:44.8, fldR:44.8, ctfL:37.4, ctfR:18.8 },
-  'rult-130':  { fldL:44.8, fldR:44.8, ctfL:37.4, ctfR:18.8 },
-  'rdt240-130':{ fldL:47.0, fldR:47.0, ctfL:36.8, ctfR:17.4 },
-  'rdt240-142':{ fldL:47.0, fldR:47.0, ctfL:30.5, ctfR:24.5 },
-  'rdeore-148':{ fldL:56.0, fldR:53.0, ctfL:29.0, ctfR:23.0 },
-  'rxt-148':   { fldL:56.9, fldR:53.9, ctfL:29.0, ctfR:22.7 },
-  'rdt350-148':{ fldL:53.0, fldR:53.0, ctfL:28.5, ctfR:22.5 },
+  // DT Swiss (Velodrop + DT Swiss official — high confidence)
+  'dt350_f100':    { fldL:44,   fldR:44,   ctfL:22.4, ctfR:35,   holeDia:2.5, flag:'' },
+  'dt350_f110b':   { fldL:44,   fldR:44,   ctfL:27.4, ctfR:40,   holeDia:2.5, flag:'' },
+  'dt370_track':   { fldL:64,   fldR:64,   ctfL:34.6, ctfR:34.6, holeDia:2.5, flag:'' },
+  'dt350_r130':    { fldL:46,   fldR:46,   ctfL:33.5, ctfR:16.8, holeDia:2.5, flag:'' },
+  'dt350_r142':    { fldL:46,   fldR:46,   ctfL:33,   ctfR:20.2, holeDia:2.5, flag:'2021+ models use PCD 47/47mm — verify model year' },
+  'dt350_r148b':   { fldL:46,   fldR:46,   ctfL:36,   ctfR:23.2, holeDia:2.5, flag:'2021+ models use PCD 47/47mm — verify model year' },
+  'dt240_r148b':   { fldL:50.4, fldR:50.4, ctfL:37.3, ctfR:22.6, holeDia:2.5, flag:'' },
+  'dt350_fat197':  { fldL:58,   fldR:52,   ctfL:61.1, ctfR:47.8, holeDia:2.5, flag:'' },
+  // Hope (Hope official PDF + Velodrop — high confidence; spoke hole 2.6mm)
+  'hope_p4_f100':  { fldL:57,   fldR:57,   ctfL:20,   ctfR:33,   holeDia:2.6, flag:'' },
+  'hope_p4_f110b': { fldL:57,   fldR:57,   ctfL:25,   ctfR:33,   holeDia:2.6, flag:'' },
+  'hope_p5_f100':  { fldL:58,   fldR:52,   ctfL:20,   ctfR:34,   holeDia:2.6, flag:'' },
+  'hope_p4_r142':  { fldL:57,   fldR:57,   ctfL:33,   ctfR:19,   holeDia:2.6, flag:'' },
+  'hope_p4_r148b': { fldL:57,   fldR:57,   ctfL:35,   ctfR:22,   holeDia:2.6, flag:'' },
+  'hope_p4_r157sb':{ fldL:57,   fldR:57,   ctfL:38.5, ctfR:26.5, holeDia:2.6, flag:'' },
+  'hope_p4_rdh':   { fldL:60,   fldR:64,   ctfL:34.25,ctfR:34.75,holeDia:2.6, flag:'' },
+  'hope_p5_r148b': { fldL:57,   fldR:59,   ctfL:35,   ctfR:22.6, holeDia:2.6, flag:'' },
+  'hope_rs4_r135': { fldL:47,   fldR:57,   ctfL:32,   ctfR:19,   holeDia:2.6, flag:'' },
+  // Industry Nine (Velodrop + NOBL + i9 PDF — high confidence)
+  'i9_hydra_f110b':{ fldL:58,   fldR:45,   ctfL:27,   ctfR:42,   holeDia:2.5, flag:'' },
+  'i9_hydra_r148b':{ fldL:58,   fldR:60,   ctfL:38,   ctfR:25,   holeDia:2.5, flag:'' },
+  'i9_hydra_r142': { fldL:58,   fldR:60,   ctfL:35,   ctfR:22,   holeDia:2.5, flag:'' },
+  'i9_11_r148b':   { fldL:58,   fldR:60,   ctfL:37,   ctfR:23,   holeDia:2.5, flag:'' },
+  // Chris King (CK official + Velodrop + NOBL — high confidence)
+  'ck_boost_f110b':{ fldL:57.4, fldR:57.4, ctfL:27.3, ctfR:36.3, holeDia:2.6, flag:'' },
+  'ck_r45d_r142':  { fldL:57.4, fldR:57.4, ctfL:33,   ctfR:18.7, holeDia:2.6, flag:'' },
+  'ck_boost_r148b':{ fldL:57.4, fldR:57.4, ctfL:36.3, ctfR:24,   holeDia:2.6, flag:'' },
+  'ck_sb_r157':    { fldL:57.4, fldR:57.4, ctfL:40.3, ctfR:28.8, holeDia:2.6, flag:'' },
+  'ck_r45_r130':   { fldL:51,   fldR:51,   ctfL:34.3, ctfR:17,   holeDia:2.6, flag:'' },
+  // Onyx (NOBL hub chart — medium confidence)
+  'onyx_f110b':    { fldL:57,   fldR:57,   ctfL:25,   ctfR:33.5, holeDia:2.5, flag:'Single source (NOBL) — verify' },
+  'onyx_r148b':    { fldL:60,   fldR:60,   ctfL:35.7, ctfR:22.9, holeDia:2.5, flag:'⚠ Onyx\'s own calculator lists drive on LEFT — verify NDS/DS orientation; single source' },
+  // Shimano (low confidence — derived values)
+  'shi_m8000_r':   { fldL:44,   fldR:45,   ctfL:35.1, ctfR:22.3, holeDia:2.5, flag:'⚠ Low confidence: derived from Shimano spacing + offset, not directly published — verify before building' },
 };
 
 function loadHubPreset() {
   const key = document.getElementById('hub-preset').value;
+  const flagEl = document.getElementById('hub-flag');
   const p = HUB_PRESETS[key];
-  if (!p) return;
+  if (!p) { flagEl.textContent = ''; flagEl.style.marginBottom = '0'; return; }
   document.getElementById('fld-left').value  = p.fldL;
   document.getElementById('fld-right').value = p.fldR;
   document.getElementById('ctf-left').value  = p.ctfL;
   document.getElementById('ctf-right').value = p.ctfR;
+  document.getElementById('hole-dia').value  = p.holeDia;
+  flagEl.textContent = p.flag;
+  flagEl.style.color = p.flag && p.flag.startsWith('⚠') ? 'var(--warn)' : 'var(--text-lo)';
+  flagEl.style.marginBottom = p.flag ? '6px' : '0';
 }
 
 // ── Core formula ──────────────────────────────────────────────
