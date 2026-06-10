@@ -409,30 +409,43 @@ body {
   overflow-y: auto;
   min-width: 0;
 }
-#hub-section {
+/* ── Upper row: hub image left, result cards right ── */
+#upper-row {
+  display: flex;
+  flex-direction: row;
   flex-shrink: 0;
-  background: var(--panel-bg);
   border-bottom: 1px solid var(--border);
 }
+#hub-section {
+  flex: 0 0 52%;
+  min-width: 0;
+  border-right: 1px solid var(--border);
+  background: var(--panel-bg);
+}
 .hub-diagram-wrap {
-  display: flex;
-  justify-content: center;
   padding: 8px 12px;
 }
 .hub-diagram-wrap picture {
   display: block;
-  width: 50%;
+  width: 100%;
 }
 .hub-diagram-wrap img {
   width: 100%;
   height: auto;
   display: block;
 }
-#result-panel {
+#result-cards {
   flex: 1;
-  overflow-y: auto;
-  border-radius: 0;
-  border: none;
+  min-width: 0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* ── Lower area: buying guide + nearby sizes ── */
+#result-info {
+  flex-shrink: 0;
+  padding: 12px;
 }
 
 @media (max-width: 680px) {
@@ -445,13 +458,14 @@ body {
     gap: 8px;
     align-items: stretch;
   }
-  /* display:contents lets #right-col's children participate in #main's flex order */
-  #right-col { display: contents; }
+  #right-col  { display: contents; }
+  #upper-row  { display: contents; }
   #hub-section {
     order: 1;
     width: 100%;
     border: 1px solid var(--border);
     border-radius: 4px;
+    border-right: 1px solid var(--border);
     background: var(--panel-bg);
   }
   #input-panel {
@@ -463,10 +477,16 @@ body {
     border-radius: 4px;
     flex-shrink: 0;
   }
-  #result-panel {
+  #result-cards {
     order: 3;
     width: 100%;
-    overflow-y: visible;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  #result-info {
+    order: 4;
+    width: 100%;
     border: 1px solid var(--border);
     border-radius: 4px;
     flex-shrink: 0;
@@ -680,25 +700,30 @@ body {
     </div>
   </div>
 
-  <!-- ══ Right column: hub diagram + results ══ -->
+  <!-- ══ Right column ══ -->
   <div id="right-col">
 
-    <!-- Hub dimensions -->
-    <div id="hub-section">
-      <div class="panel-hdr">hub dimensions</div>
-      <div class="hub-diagram-wrap">
-        <picture>
-          <source srcset="hub-diagram.webp" type="image/webp">
-          <img src="hub-diagram.png" alt="Hub cross-section diagram showing hub width, CTF left, CTF right, flange PCD left and flange PCD right dimensions">
-        </picture>
-      </div>
-    </div>
+    <!-- Upper row: hub image left + result cards right -->
+    <div id="upper-row">
 
-    <!-- Results -->
-    <div id="result-panel" class="panel">
-      <div class="panel-hdr">results</div>
-      <div class="panel-body" id="result-body"></div>
-    </div>
+      <div id="hub-section">
+        <div class="panel-hdr">hub dimensions</div>
+        <div class="hub-diagram-wrap">
+          <picture>
+            <source srcset="hub-diagram.webp" type="image/webp">
+            <img src="hub-diagram.png" alt="Hub cross-section diagram showing hub width, CTF left, CTF right, flange PCD left and flange PCD right dimensions">
+          </picture>
+        </div>
+      </div>
+
+      <div id="result-cards">
+        <div class="panel-hdr" style="margin:-12px -12px 10px">results</div>
+      </div>
+
+    </div><!-- #upper-row -->
+
+    <!-- Lower area: buying guide + nearby sizes -->
+    <div id="result-info"></div>
 
   </div><!-- #right-col -->
 
@@ -900,16 +925,18 @@ function calculate() {
   const holeDia = parseFloat(document.getElementById('hole-dia').value);
 
   if ([ERD, N, fldL, fldR, ctfL, ctfR, holeDia].some(v => isNaN(v) || v <= 0)) {
-    document.getElementById('result-body').innerHTML =
+    document.getElementById('result-cards').innerHTML =
       '<div class="placeholder" style="color:var(--warn)">Please enter valid values for all fields.</div>';
+    document.getElementById('result-info').innerHTML = '';
     return;
   }
 
   // Validate cross pattern vs spoke count
   const maxCross = Math.floor(N / 4);
   if (K > maxCross) {
-    document.getElementById('result-body').innerHTML =
+    document.getElementById('result-cards').innerHTML =
       `<div class="placeholder" style="color:var(--warn)">${K}-cross is too high for a ${N}-hole wheel. Maximum is ${maxCross}-cross.</div>`;
+    document.getElementById('result-info').innerHTML = '';
     return;
   }
 
@@ -920,15 +947,14 @@ function calculate() {
   const recR = floorMm(Lr);
   const symm = Math.abs(Ll - Lr) < 0.5;
 
-  let html = '';
-
-  // ── Result cards ──
-  html += '<div class="result-pair">';
+  // ── Result cards (upper-right) ──
+  let cardsHtml = '<div class="panel-hdr" style="margin:-12px -12px 10px">results</div>';
+  cardsHtml += '<div class="result-pair">';
   [
     { label: 'Left / Non-Drive Side (NDS)', len: Ll, rec: recL },
     { label: 'Right / Drive Side (DS)',      len: Lr, rec: recR },
   ].forEach(({ label, len, rec }) => {
-    html += `
+    cardsHtml += `
       <div class="result-card">
         <div class="r-side">${label}</div>
         <div class="r-calc">Calculated: <strong>${len.toFixed(2)} mm</strong></div>
@@ -937,18 +963,19 @@ function calculate() {
         <div class="r-qty">&times; ${spkPerSide} spokes</div>
       </div>`;
   });
-  html += '</div>';
+  cardsHtml += '</div>';
 
-  // ── Symmetric note ──
   if (symm) {
-    html += `<div class="note green">
+    cardsHtml += `<div class="note green">
       Left and right lengths differ by less than 0.5 mm &mdash; you can use
       <strong>${recL} mm</strong> for all <strong>${N}</strong> spokes.
     </div>`;
   }
 
-  // ── Buying guide ──
-  html += `<div class="note purple">
+  document.getElementById('result-cards').innerHTML = cardsHtml;
+
+  // ── Buying guide + nearby sizes (lower area) ──
+  let infoHtml = `<div class="note purple">
     <strong>J-bend buying guide:</strong>
     <ul class="guide-cols">
       <li>Round <strong>down</strong> to nearest mm — shorter is safer.</li>
@@ -960,12 +987,11 @@ function calculate() {
     </ul>
   </div>`;
 
-  // ── Nearby sizes table ──
   const lo = Math.min(recL, recR) - 3;
   const hi = Math.max(recL, recR) + 4;
 
-  html += `<div class="sec" style="margin-top:6px">nearby spoke sizes</div>`;
-  html += `<div class="sizes-wrap">
+  infoHtml += `<div class="sec" style="margin-top:6px">nearby spoke sizes</div>`;
+  infoHtml += `<div class="sizes-wrap">
     <table class="sizes-table">
       <thead><tr>
         <th>Size (mm)</th>
@@ -976,27 +1002,23 @@ function calculate() {
   for (let sz = lo; sz <= hi; sz++) {
     const rcL = rowClass(sz, recL, Ll);
     const rcR = rowClass(sz, recR, Lr);
-    // Overall row class: best > long > ok > short (long is more alarming than ok)
     const priority = c => ({ 'sz-best':4, 'sz-long':3, 'sz-ok':2, 'sz-short':1 }[c] || 0);
     const cls = priority(rcL) >= priority(rcR) ? rcL : rcR;
-
     const noteL = sz === recL ? `&#10003; recommended (${diffLabel(sz, Ll)})` : diffLabel(sz, Ll);
     const noteR = sz === recR ? `&#10003; recommended (${diffLabel(sz, Lr)})` : diffLabel(sz, Lr);
-
-    html += `<tr class="${cls}"><td>${sz}</td><td>${noteL}</td><td>${noteR}</td></tr>`;
+    infoHtml += `<tr class="${cls}"><td>${sz}</td><td>${noteL}</td><td>${noteR}</td></tr>`;
   }
 
-  html += `</tbody></table></div>`;
+  infoHtml += `</tbody></table></div>`;
 
-  document.getElementById('result-body').innerHTML = html;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.getElementById('result-info').innerHTML = infoHtml;
 }
 
 // Calculate with defaults on first load
 function calculateAndScroll() {
   calculate();
   if (window.innerWidth <= 680) {
-    document.getElementById('result-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    document.getElementById('result-cards').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }
 
