@@ -670,7 +670,7 @@ body {
         3-cross: standard pattern — each spoke crosses 3 others before reaching the rim. Best strength and fatigue resistance for road and MTB wheels.
       </div>
 
-      <button id="calc-btn" onclick="calculate()">Calculate Spoke Lengths</button>
+      <button id="calc-btn" onclick="calculateAndScroll()">Calculate Spoke Lengths</button>
     </div>
   </div>
 
@@ -987,6 +987,13 @@ function calculate() {
 }
 
 // Calculate with defaults on first load
+function calculateAndScroll() {
+  calculate();
+  if (window.innerWidth <= 680) {
+    document.getElementById('result-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
 document.addEventListener('DOMContentLoaded', calculate);
 </script>
 </body>
