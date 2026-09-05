@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Flex-stay kinematics — Slate Frameworks</title>
+<style>
+:root{
+  --paper:#eef1f3; --grid:#dbe2e7; --grid2:#cbd6dd;
+  --ink:#16202a; --ink-soft:#5c6b78;
+  --rear:#1f5f8b; --link:#0f766e; --flex:#b32c1e; --shock:#8a5a00;
+  --ok:#2f7d32; --rule:#c3ccd3; --panel:#f7f9fa;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:13px/1.45 var(--sans)}
+#app{display:grid;grid-template-columns:250px minmax(560px,1fr) 268px;height:100vh}
+.rail{overflow-y:auto;background:var(--panel);padding:14px 14px 40px}
+.rail.left{border-right:1px solid var(--rule)}
+.rail.right{border-left:1px solid var(--rule)}
+#stage{display:flex;flex-direction:column;min-width:0}
+#draw{flex:1;min-height:260px;display:block;background:var(--paper)}
+h1{font-size:14px;margin:0 0 2px;font-weight:650;letter-spacing:.2px}
+.sub{color:var(--ink-soft);font-size:11px;margin:0 0 14px}
+h2{font-size:11px;font-weight:650;color:var(--ink-soft);margin:18px 0 7px;
+   padding-bottom:4px;border-bottom:1px solid var(--rule)}
+h2:first-of-type{margin-top:4px}
+label{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:5px 0}
+label span{flex:1;min-width:0}
+input[type=number],select{width:64px;font:12px var(--mono);padding:3px 5px;
+  border:1px solid var(--rule);border-radius:3px;background:#fff;color:var(--ink)}
+input[type=number]:focus,select:focus{outline:2px solid var(--rear);outline-offset:-1px}
+select{width:auto}
+.pt{display:grid;grid-template-columns:1fr 60px 60px;gap:5px;align-items:center;margin:4px 0}
+.pt span{font-size:12px}
+.pt input{width:100%}
+.pt .sw{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:1px}
+.readout{display:flex;justify-content:space-between;gap:8px;padding:3px 0;
+  border-bottom:1px dotted var(--rule);font-size:12px}
+.readout b{font:12px/1.4 var(--mono);font-weight:600}
+.warn b{color:var(--flex)}
+.good b{color:var(--ok)}
+.note{font-size:11px;color:var(--ink-soft);margin:6px 0 0}
+#bar{display:flex;align-items:center;gap:14px;padding:8px 14px;border-top:1px solid var(--rule);
+  background:var(--panel);flex-wrap:wrap}
+#bar label{margin:0;gap:6px}
+button{font:12px var(--sans);padding:4px 11px;border:1px solid var(--rule);border-radius:3px;
+  background:#fff;color:var(--ink);cursor:pointer}
+button:hover{background:#e9eef1}
+button[aria-pressed=true]{background:var(--rear);border-color:var(--rear);color:#fff}
+input[type=range]{width:190px;accent-color:var(--rear)}
+#charts{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule);
+  border-top:1px solid var(--rule);height:250px;flex:none}
+.chart{background:var(--panel);position:relative}
+.chart figcaption{position:absolute;top:6px;left:10px;font-size:12px;font-weight:600;color:var(--ink-soft)}
+.chart svg{width:100%;height:100%;display:block}
+svg text{font-family:var(--mono)}
+.drag{cursor:grab}
+.drag:active{cursor:grabbing}
+#msg{padding:6px 14px;font-size:12px;color:var(--flex);background:#fbeceb;
+  border-top:1px solid var(--rule);display:none}
+#msg.on{display:block}
+@media (max-width:900px){
+  #app{grid-template-columns:1fr;height:auto;min-height:100vh}
+  #stage{order:-1}
+  .rail{overflow-y:visible;max-height:none}
+  .rail.left{border-right:none;border-top:1px solid var(--rule)}
+  .rail.right{border-left:none;border-top:1px solid var(--rule)}
+  #draw{height:44vh;min-height:260px}
+  #charts{grid-template-columns:1fr 1fr;height:320px}
+  input[type=range]{width:140px}
+  .pt{grid-template-columns:1fr 72px 72px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+<div class="rail left">
+  <h1>Flex-stay kinematics</h1>
+  <p class="sub">Single pivot with shock link. Seat stay carries the compliance.<br>
+   <span id="build" style="font:11px var(--mono);color:var(--rear)">build 1.8</span></p>
+
+  <h2>Pivots and mounts</h2>
+  <div id="points"></div>
+  <p class="note">Drag points on the drawing or type coordinates. Datum:
+    <select id="datum">
+      <option value="BB">bottom bracket</option>
+      <option value="AX">rear axle</option>
+      <option value="FA">front axle</option>
+    </select>
+  </p>
+
+  <h2>Shock</h2>
+  <label><span>Eye to eye</span><input type="number" id="eye" step="1"></label>
+  <label><span>Stroke</span><input type="number" id="stroke" step="0.5"></label>
+  <label><span>Rear sag, % of travel</span><input type="number" id="sag" step="1"></label>
+
+  <h2>Seat stay</h2>
+  <label><span>Tube outside dia.</span><input type="number" id="od" step="0.5"></label>
+  <label><span>Bend radius</span><input type="number" id="bendR" step="10"></label>
+  <label><span>Bend angle</span><input type="number" id="bendA" step="1"></label>
+  <label><span>Straight before bend</span><input type="number" id="bendStart" step="5"></label>
+  <label><span>Lean bend from yoke</span><input type="number" id="leanEnd" step="5"></label>
+  <label><span>Lean bend angle</span><input type="number" id="leanA" step="1"></label>
+  <label><span>Half spacing, dropout</span><input type="number" id="dropZ" step="0.5"></label>
+  <label><span>Half spacing, yoke</span><input type="number" id="yokeZ" step="0.5"></label>
+  <label><span>Wall thickness</span><input type="number" id="wall" step="0.05"></label>
+
+  <h2>Fork</h2>
+  <label><span>Travel</span><input type="number" id="forkTravel" step="5"></label>
+  <label><span>Axle to crown, extended</span><input type="number" id="a2c" step="5"></label>
+  <label><span>Offset</span><input type="number" id="offset" step="1"></label>
+  <label><span>Front sag, % of travel</span><input type="number" id="fsag" step="1"></label>
+
+  <h2>Frame</h2>
+  <label><span>Reach</span><input type="number" id="reach" step="5"></label>
+  <label><span>Stack</span><input type="number" id="stack" step="5"></label>
+  <label><span>Head angle</span><input type="number" id="ha" step="0.5"></label>
+  <label><span>Head tube length</span><input type="number" id="htl" step="5"></label>
+  <label><span>Seat angle</span><input type="number" id="sa" step="0.5"></label>
+  <label><span>Seat tube length</span><input type="number" id="st" step="5"></label>
+  <label><span>Top tube drop at seat tube</span><input type="number" id="ttDrop" step="5"></label>
+  <label><span>Bottom bracket drop</span><input type="number" id="drop" step="1"></label>
+
+  <h2>Cockpit</h2>
+  <label><span>Stem length</span><input type="number" id="stemL" step="5"></label>
+  <label><span>Stem rise above head tube</span><input type="number" id="stemH" step="5"></label>
+
+  <h2>Wheels</h2>
+  <label><span>Rear wheel</span><select id="rw"><option value="559">26 in</option><option value="584">27.5 in</option><option value="622">29 in</option><option value="686">32 in</option></select></label>
+  <label><span>Front wheel</span><select id="fw"><option value="559">26 in</option><option value="584">27.5 in</option><option value="622">29 in</option><option value="686">32 in</option></select></label>
+  <label><span>Tyre height</span><input type="number" id="tyre" step="1"></label>
+
+  <h2>Transmission</h2>
+  <label><span>Chainring teeth</span><input type="number" id="ring" step="1"></label>
+  <label><span>Sprocket teeth</span><input type="number" id="cog" step="1"></label>
+  <label><span>Chain links</span><input type="number" id="links" step="2"></label>
+  <label><span>Mech cage length</span><input type="number" id="cage" step="2"></label>
+
+  <h2>Rider and load</h2>
+  <label><span>Rider plus kit, kg</span><input type="number" id="mass" step="1"></label>
+  <label><span>Peak load, g</span><input type="number" id="peakG" step="0.5"></label>
+  <label><span>Rear wheel share, %</span><input type="number" id="bias" step="1"></label>
+  <label><span>Centre of mass height</span><input type="number" id="cogh" step="10"></label>
+</div>
+
+<div id="stage">
+  <svg id="draw" preserveAspectRatio="xMidYMid meet"></svg>
+  <div id="msg"></div>
+  <div id="bar">
+    <button id="play">Cycle suspension</button>
+    <label><span>Position</span><input type="range" id="pos" min="0" max="1000" value="0"></label>
+    <span id="poslabel" style="font:12px var(--mono);color:var(--ink-soft)"></span>
+    <button id="showsag" aria-pressed="false">Hold at sag</button>
+    <button id="locklen" aria-pressed="false">Lock shock length</button>
+    <button id="reset">Reset geometry</button>
+  </div>
+  <div id="charts">
+    <figure class="chart"><figcaption>Leverage ratio</figcaption><svg id="c-lr"></svg></figure>
+    <figure class="chart"><figcaption>Anti-squat, %</figcaption><svg id="c-as"></svg></figure>
+    <figure class="chart"><figcaption>Anti-rise, %</figcaption><svg id="c-ar"></svg></figure>
+    <figure class="chart"><figcaption>Chain shortening, deg</figcaption><svg id="c-ck"></svg></figure>
+  </div>
+</div>
+
+<div class="rail right">
+  <h2>Travel and rate</h2>
+  <div id="out-rate"></div>
+  <h2>Seat stay flex</h2>
+  <div id="out-flex"></div>
+  <p class="note">Steel tubing, constant section, load shared by two stays. Out of
+     plane bending from the lean does not cancel against the flex, so the two are
+     combined as a resultant moment.</p>
+  <h2>Axle path</h2>
+  <div id="out-path"></div>
+  <h2>Spring</h2>
+  <div id="out-spring"></div>
+  <h2>Pivot loads at sag</h2>
+  <div id="out-force"></div>
+  <p class="note">Static, in plane, from the rear wheel load alone. No braking or cornering case yet.</p>
+</div>
+</div>
+
+<script>
+// ==ENGINE-START==  no DOM below this line until ENGINE-END
+const P = 12.7; // chain pitch, mm
+
+const sub=(a,b)=>({x:a.x-b.x,y:a.y-b.y});
+const add=(a,b)=>({x:a.x+b.x,y:a.y+b.y});
+const mul=(a,s)=>({x:a.x*s,y:a.y*s});
+const len=a=>Math.hypot(a.x,a.y);
+const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+const unit=a=>{const l=len(a)||1;return{x:a.x/l,y:a.y/l}};
+const cross=(a,b)=>a.x*b.y-a.y*b.x;
+const rot=(p,c,t)=>{const d=sub(p,c),C=Math.cos(t),S=Math.sin(t);
+  return{x:c.x+d.x*C-d.y*S, y:c.y+d.x*S+d.y*C}};
+
+// The two intersection points of circles (c1,r1) and (c2,r2); null if they miss.
+function circles(c1,r1,c2,r2){
+  const d=dist(c1,c2);
+  if(d>r1+r2 || d<Math.abs(r1-r2) || d===0) return null;
+  const a=(r1*r1-r2*r2+d*d)/(2*d);
+  const h2=r1*r1-a*a; if(h2<0) return null;
+  const h=Math.sqrt(h2);
+  const m=add(c1,mul(sub(c2,c1),a/d));
+  const n={x:-(c2.y-c1.y)/d, y:(c2.x-c1.x)/d};
+  return [add(m,mul(n,h)), sub(m,mul(n,h))];
+}
+
+// Rigid-body map taking the pair (a0,b0) onto (a1,b1), applied to p.
+function place(a0,b0,a1,b1,p){
+  const u=sub(b0,a0), w=sub(b1,a1);
+  const t=Math.atan2(w.y,w.x)-Math.atan2(u.y,u.x);
+  return add(a1, rot(sub(p,a0),{x:0,y:0},t));
+}
+
+/* Topology
+   body A  main pivot, rear axle, flex pivot        rotates about MP
+   body B  flex pivot, link pivot, shock eye        pinned to A at FP
+   link    link pivot to second pivot               pinned to ground at SP
+   shock   shock eye to shock ground
+   One degree of freedom: a four-bar MP-FP-LP-SP.                                    */
+function solve(g, phi, prevLP){
+  const FP=rot(g.FP,g.MP,phi), AX=rot(g.AX,g.MP,phi);
+  const hit=circles(FP, dist(g.FP,g.LP), g.SP, dist(g.SP,g.LP));
+  if(!hit) return null;
+  const ref=prevLP||g.LP;
+  const LP = dist(hit[0],ref)<=dist(hit[1],ref) ? hit[0] : hit[1];
+  const SE = place(g.FP,g.LP,FP,LP,g.SE);
+  return {phi,FP,AX,LP,SE,
+    shock: dist(SE,g.SG),
+    rise: AX.y-g.AX.y,
+    stayAngle: Math.atan2(LP.y-FP.y,LP.x-FP.x)-phi}; // body B angle in body A's frame
+}
+
+// Rotate body A until the shock has been compressed by `comp`.
+function atCompression(g, comp, guess){
+  const L0=dist(g.SE,g.SG), target=L0-comp;
+  let lo=0, hi=-0.85, prev=null;          // negative phi drives the axle upward
+  const f=p=>{const s=solve(g,p,prev); if(!s) return null; prev=s.LP; return s.shock-target};
+  /* Rotating by zero still round-trips through the rigid-body transform, so the
+     residual at zero compression is floating point noise of either sign rather
+     than a clean zero. Treating that as a real sign meant the bracket search
+     could find nothing and report a jam on the first frame. */
+  const TOL=1e-6;
+  let fa=f(lo);
+  if(fa===null) return null;
+  if(Math.abs(fa)<=TOL) return solve(g,lo,guess);
+  let a=lo, b=null;
+  const N=140;
+  for(let i=1;i<=N;i++){
+    const p=lo+(hi-lo)*i/N, v=f(p);
+    if(v===null) break;
+    if(Math.abs(v)<=TOL) return solve(g,p,guess);
+    if(fa*v<0){b=p;break}
+    a=p;fa=v;
+  }
+  if(b===null) return null;
+  for(let i=0;i<60;i++){
+    const m=(a+b)/2, v=f(m);
+    if(v===null) break;
+    if(fa*v<=0){b=m} else {a=m;fa=v}
+  }
+  return solve(g,(a+b)/2,guess);
+}
+
+// Upper chain run: the tangent that runs over the top of both circles.
+function chainRun(BB,rc,AXp,rg){
+  const d=sub(AXp,BB), L=len(d);
+  const dr=rc-rg;
+  if(L<=Math.abs(dr)) return null;
+  const base=Math.atan2(d.y,d.x), a=Math.acos(dr/L);
+  const cand=[{x:Math.cos(base+a),y:Math.sin(base+a)},{x:Math.cos(base-a),y:Math.sin(base-a)}];
+  const n=cand[0].y>=cand[1].y?cand[0]:cand[1];       // the run over the top
+  const p1=add(BB,mul(n,rc)), p2=add(AXp,mul(n,rg));
+  return {p1,p2,length:dist(p1,p2)};
+}
+
+function lineHit(p1,p2,p3,p4){
+  const d=cross(sub(p2,p1),sub(p4,p3));
+  if(Math.abs(d)<1e-9) return null;
+  const t=cross(sub(p3,p1),sub(p4,p3))/d;
+  return add(p1,mul(sub(p2,p1),t));
+}
+const heightAt=(a,b,x)=>{
+  if(Math.abs(b.x-a.x)<1e-9) return null;
+  return a.y+(b.y-a.y)*(x-a.x)/(b.x-a.x);
+};
+
+/* Rear mech geometry, fixed relative to the dropout so it swings with the chainstay. */
+const GDX=-4, GDY=-74, RJ=22;          // guide pulley offset from the axle, jockey radius
+/* The wrap model above is simplified, so its absolute chain length is out by a
+   few millimetres. This constant calibrates it so a nominal chain count lands in
+   the middle of a real cage's range. It does not affect how far the cage swings
+   through the travel, which is what the drawing depends on. */
+const CHAINCAL=9.8;
+
+/* The chain is a closed loop of fixed length. As the axle moves away from the
+   bottom bracket the drivetrain consumes more of it, and the cage must rotate
+   forward to give that length back. Straight runs are taken centre to centre and
+   the wraps as half circumferences, which is close enough to drive the drawing
+   but is not a chain-length calculator. */
+function chainPath(theta, BB, rc, AXp, rg, guide, cage){
+  const tension={x:guide.x-Math.sin(theta)*cage, y:guide.y-Math.cos(theta)*cage};
+  const up=chainRun(BB,rc,AXp,rg);
+  const straight=(up?up.length:dist(BB,AXp)) + dist(AXp,guide) + cage + dist(tension,BB);
+  return {len: straight + Math.PI*(rc+rg+2*RJ) + CHAINCAL, tension};
+}
+function solveCage(BB, rc, AXp, rg, guide, cage, total){
+  const lo=-0.35, hi=1.31;             // cage travel limits, about -20 to 75 degrees
+  const f=t=>chainPath(t,BB,rc,AXp,rg,guide,cage).len-total;
+  const flo=f(lo), fhi=f(hi);
+  if(flo>0) return {theta:lo, clamped:'chain too short'};
+  if(fhi<0) return {theta:hi, clamped:'chain too long'};
+  let a=lo,b=hi;
+  for(let i=0;i<48;i++){ const m=(a+b)/2; if(f(m)<0) a=m; else b=m; }
+  return {theta:(a+b)/2, clamped:null};
+}
+
+function sweep(g,cfg,n=61){
+  const rc=cfg.ring*P/(2*Math.PI), rg=cfg.cog*P/(2*Math.PI);
+  const Rr=cfg.rw/2 + cfg.tyre;   // rim bead diameter plus tyre height
+  const base=chainRun({x:0,y:0},rc,g.AX,rg);
+  const out=[]; let prev=null;
+  for(let i=0;i<=n;i++){
+    const s=atCompression(g, cfg.stroke*i/n, prev);
+    if(!s) return {frames:out, error:'The linkage jams before the shock reaches full stroke. '+
+        'Usually the shock link is too short to reach, or the second pivot is too far from the main pivot.'};
+    prev=s.LP;
+    const CP={x:s.AX.x, y:s.AX.y-Rr};
+    const IC=g.MP;                                   // wheel carrier is pinned to the frame
+    const guide=rot({x:g.AX.x+GDX, y:g.AX.y+GDY}, g.MP, s.phi);
+    const cg=solveCage({x:0,y:0},rc,s.AX,rg,guide,cfg.cage,cfg.links*P);
+    const cr=chainRun({x:0,y:0},rc,s.AX,rg);
+    let as=null;
+    if(cr){
+      const ifc=lineHit(cr.p1,cr.p2,s.AX,IC);
+      if(ifc){const h=heightAt(CP,ifc,cfg.fax); if(h!==null) as=(h-CP.y)/cfg.cogh*100}
+    }
+    const hb=heightAt(CP,IC,cfg.fax);
+    out.push({...s, stroke:cfg.stroke*i/n, CP, guide,
+      tension:chainPath(cg.theta,{x:0,y:0},rc,s.AX,rg,guide,cfg.cage).tension,
+      cageDeg:cg.theta*180/Math.PI, cageClamp:cg.clamped,
+      as, ar: hb===null?null:(hb-CP.y)/cfg.cogh*100,
+      kick: cr&&base ? (cr.length-base.length)/rc*180/Math.PI : null,
+      flex:0});
+  }
+  const a0=out[0].stayAngle;
+  out.forEach(f=>f.flex=(f.stayAngle-a0)*180/Math.PI);
+  // leverage by central difference on wheel rise against shock stroke
+  out.forEach((f,i)=>{
+    const p=out[Math.max(0,i-1)], q=out[Math.min(out.length-1,i+1)];
+    const ds=q.stroke-p.stroke;
+    f.lr = ds>1e-9 ? (q.rise-p.rise)/ds : null;
+  });
+  return {frames:out, error:null};
+}
+
+// Static equilibrium. Unknowns: shock force, link force, flex-pivot force, main-pivot force.
+function pivotForces(g,f,Fw){
+  const uS=unit(sub(f.SE,g.SG)), uL=unit(sub(f.LP,g.SP));
+  const A=[],b=[];
+  const row=(c,r)=>{A.push(c);b.push(r)};
+  // body B: shock at SE, link at LP, reaction from A at FP
+  row([uS.x,uL.x,1,0,0,0],0);
+  row([uS.y,uL.y,0,1,0,0],0);
+  row([cross(sub(f.SE,f.FP),uS), cross(sub(f.LP,f.FP),uL),0,0,0,0],0);
+  // body A: wheel load at contact patch, -FP reaction, main pivot reaction
+  row([0,0,-1,0,1,0],0);
+  row([0,0,0,-1,0,1],Fw);
+  row([0,0,-cross(sub(f.FP,g.MP),{x:1,y:0}),-cross(sub(f.FP,g.MP),{x:0,y:1}),0,0],
+      -cross(sub(f.CP,g.MP),{x:0,y:-Fw}));
+  // Gaussian elimination
+  const M=A.map((r,i)=>[...r,b[i]]), n=6;
+  for(let c=0;c<n;c++){
+    let p=c; for(let r=c+1;r<n;r++) if(Math.abs(M[r][c])>Math.abs(M[p][c])) p=r;
+    if(Math.abs(M[p][c])<1e-12) return null;
+    [M[c],M[p]]=[M[p],M[c]];
+    for(let r=0;r<n;r++){ if(r===c) continue;
+      const k=M[r][c]/M[c][c]; for(let j=c;j<=n;j++) M[r][j]-=k*M[c][j]; }
+  }
+  const x=M.map((r,i)=>r[n]/M[i][i]);
+  return {shock:Math.abs(x[0]), link:Math.abs(x[1]),
+    flexPivot:Math.hypot(x[2],x[3]), mainPivot:Math.hypot(x[4],x[5]),
+    fp:{x:x[2], y:x[3]}};        // signed, so it can be resolved along the stay
+}
+
+/* The stay is built in at the dropout and effectively pinned at the shock-link end,
+   so it is a propped cantilever taking an imposed end rotation. Moment varies
+   linearly from the built-in end to zero at the pin, which makes the peak curvature
+   exactly twice the mean. The mean is what a perfectly tapered stay would see;
+   the peak is what a constant section actually gets. */
+/* Seat stay bending. Two effects act on the same tube:
+
+   1. The imposed end rotation from the suspension. Modelled as a propped
+      cantilever, so peak curvature is twice the mean over the developed length.
+   2. The axial load, which acts through the offset of the bend and so produces
+      a moment whether the suspension is moving or not. It is amplified by the
+      usual P-delta factor as the load approaches the Euler value.
+
+   Whether these add or cancel depends on the sign of the flex rotation against
+   the direction of the bend: if the suspension unwinds the bend they oppose.
+   The two stays share the axial load.                                        */
+function stayLoads(deg, path, od, wall, axial, bendA, dropZ, yokeZ, leanEnd, leanA){
+  const E=210000, c=od/2;
+  const I=Math.PI/64*(Math.pow(od,4)-Math.pow(Math.max(0,od-2*wall),4));
+  const L=path.total||1;
+  const kappa=2*Math.abs(deg)*Math.PI/180/L;              // peak curvature
+  const sFlex=E*c*kappa;
+  const Pcr=Math.PI*Math.PI*E*I/Math.pow(path.chord||1,2);
+  const P=Math.max(0,axial);
+  const amp=P<Pcr ? 1/(1-P/Pcr) : Infinity;
+  const M=Number.isFinite(amp) ? P*Math.abs(path.emax)*amp : Infinity;
+  const sAx=Number.isFinite(M) ? M*c/I : Infinity;
+  const oppose = deg*bendA > 0;                           // suspension unwinds the bend
+  /* Out of plane: the stay runs at the dropout spacing until the lean bend, then
+     angles in to the yoke. Its worst offset from the straight line between the
+     ends is at the bend. Nothing cancels this one - the flex is in plane only. */
+  /* Plan view: the tube leans across its whole length, with a short bend near the
+     yoke that squares it to the mount. Solve the main lean angle that arrives at
+     the yoke spacing, then measure how far the tube stands off the straight line
+     between its two ends. A tube that leaned uniformly would sit on that line and
+     carry no out of plane moment at all; only the end bend takes it off. */
+  const pull=Math.max(0,(dropZ||0)-(yokeZ||0));
+  const tail=Math.min(Math.max(0,leanEnd||0), L*0.5), main=L-tail;
+  const la=(leanA||0)*Math.PI/180;
+  const reach=b=>main*Math.sin(b)+tail*Math.sin(b+la);
+  let blo=-0.5, bhi=0.5;
+  for(let i=0;i<60;i++){ const bm=(blo+bhi)/2; if(reach(bm)<pull) blo=bm; else bhi=bm; }
+  const bMain=(blo+bhi)/2;
+  const eOop=Math.abs((pull*main/L) - main*Math.sin(bMain));
+  const leanNeeded=bMain*180/Math.PI;
+  const M2=Number.isFinite(amp)? P*eOop*amp : Infinity;
+  const sOop=Number.isFinite(M2)? M2*c/I : Infinity;
+  const inPlane = oppose ? sAx-sFlex : sAx+sFlex;
+  return {I, Pcr, amp, sFlex, sAx, sOop, axial:P, oppose, eOop, leanNeeded,
+          moment:M/1000, eccentricity:Math.abs(path.emax),
+          inPlane:Math.abs(inPlane),
+          combined: Math.hypot(inPlane, sOop)};
+}
+// ==ENGINE-END==
+
+/* ---------- state ---------- */
+const DEF={
+  geom:{ MP:{x:-2.5,y:66.4}, SP:{x:52.8,y:112.5}, FP:{x:-452.5,y:29.4},
+         LP:{x:6.9,y:271.8}, SE:{x:1.6,y:293.9}, SG:{x:229.8,y:322.1},
+         AX:{x:-452.5,y:29.4} },
+  cfg:{ eye:230, stroke:65, zone:531, bendR:115, bendA:42, bendStart:50, leanEnd:55, leanA:8, dropZ:72.5, yokeZ:16.5, peakG:3, od:16, wall:0.9, ring:32, cog:21,
+        mass:85, bias:58, cogh:1057, sag:30, fsag:20, fax:828.9,
+        rw:622, fw:622, tyre:58.4, reach:475.2, stack:617.3, ha:63.3, htl:120,
+        sa:76, st:430, ttDrop:90, drop:29.4, a2c:571, offset:44, forkTravel:160,
+        stemL:45, stemH:30, links:124, cage:62 }
+};
+let G=structuredClone(DEF.geom), C=structuredClone(DEF.cfg);
+let result=null, posT=0, playing=false, holdSag=false;
+
+const PTS=[
+  ['MP','Main pivot','var(--rear)'], ['SP','Second pivot','var(--link)'],
+  ['LP','Link to stay','var(--link)'],
+  ['SE','Shock eye','var(--shock)'], ['SG','Shock, frame','var(--shock)'],
+  ['AX','Rear axle','var(--rear)']
+];
+
+/* ---------- derived frame points ---------- */
+function frame(comp){
+  const ha=C.ha*Math.PI/180;
+  const htTop={x:C.reach, y:C.stack};
+  const axis={x:Math.cos(ha), y:-Math.sin(ha)};        // down the steerer: forward and down
+  const htBot=add(htTop, mul(axis,C.htl));
+  const perp={x:-axis.y, y:axis.x};                    // perpendicular, forward and up
+  const a2c=Math.max(60, C.a2c-(comp||0));             // fork shortens as it compresses
+  const along=Math.sqrt(Math.max(0,a2c*a2c-C.offset*C.offset));
+  const FA=add(add(htBot, mul(axis,along)), mul(perp, C.offset));
+  const crown=add(htBot, mul(axis,46));
+  const steerTop=add(htTop, mul(axis,-C.stemH));
+  const bar=add(steerTop, mul(perp, C.stemL));
+  return {htTop, htBot, FA, axis, perp, crown, steerTop, bar,
+    Rf:C.fw/2+C.tyre, Rr:C.rw/2+C.tyre,
+    ST:{x:-Math.cos(C.sa*Math.PI/180)*C.st, y:Math.sin(C.sa*Math.PI/180)*C.st}};
+}
+
+// Arc length of the drawn seat stay, dropout to shock eye.
+function stayLength(){ return stayPath(G.FP,G.SE).total; }
+function recompute(quick){
+  const m=document.getElementById('msg');
+  try{
+    C.fax=frame(0).FA.x;   // anti-squat referenced to the fork at full extension
+    G.FP={...G.AX};                      // flex pivot is always the rear axle
+    C.zone=Math.round(stayLength());     // bending always spans the whole seat stay
+    result=sweep(G,C,quick?15:61);        // coarse sweep while a point is moving
+  }catch(err){
+    result={frames:[],error:'Internal error: '+err.message};
+  }
+  const clamp=result.frames&&result.frames.find(k=>k.cageClamp);
+  if(result.error){m.textContent=result.error;m.className='on'}
+  else if(clamp){m.textContent='Mech cage runs out of range: '+clamp.cageClamp+
+    '. Adjust the chain links.'; m.className='on'}
+  else {m.className=''}
+  // each stage is isolated so a failure in one panel cannot blank the canvas
+  for(const [stage,fn] of [['draw',draw],['readouts',readouts],
+                           ['charts',quick?()=>{}:charts]]){
+    try{ fn(); }
+    catch(err){
+      m.textContent=(result.error?result.error+'  ':'')+stage+' failed: '+err.message;
+      m.className='on'; console.error(stage,err);
+    }
+  }
+}
+
+/* ---------- drawing ---------- */
+const FORKART={
+  w:200, h:987, axle:[154.40,895.80], top:[74.50,171.50],
+  mmPerPx:0.49013,
+  src:'img/fork-lowers.png'
+};
+const SHOCKART={
+  h:399, yBand:153, cut1:151, cut2:502, w:798,
+  eyeL:[65.77,226.35], mmPerPx:0.345452,
+  tail:{x:0,y:0,w:151,h:399,src:'img/shock-tail.png'},
+  resv:{x:151,y:0,w:351,h:153,src:'img/shock-reservoir.png'},
+  spring:{x:151,y:153,w:351,h:246,src:'img/shock-spring.png'},
+  body:{x:502,y:0,w:296,h:399,src:'img/shock-body.png'},
+};
+
+const MIRROR_FORK=false;   // arch sweeps rearward, decals read correctly
+const SVG='http://www.w3.org/2000/svg';
+
+/* Seat stay centreline as the frame is actually bent: a straight run out of the
+   dropout, a fixed radius bend, then a straight run to the yoke. The launch angle
+   is solved so the two ends stay on their pivots whatever the bend settings are. */
+function stayPath(a,b){
+  const D=sub(b,a), th=Math.atan2(D.y,D.x);
+  const R=C.bendR, dl=C.bendA*Math.PI/180, want=C.bendStart;
+  const U=t=>({x:Math.cos(t),y:Math.sin(t)});
+  const legs=t=>{
+    const u1=U(t), u2=U(t-dl), m=mul(U(t-dl/2), 2*R*Math.sin(dl/2));
+    const det=u1.x*u2.y-u1.y*u2.x;
+    if(Math.abs(det)<1e-9) return null;
+    const rx=D.x-m.x, ry=D.y-m.y;
+    return {l1:(rx*u2.y-ry*u2.x)/det, l2:(u1.x*ry-u1.y*rx)/det};
+  };
+  const straight={pts:[a,b], total:dist(a,b), l1:0, l2:dist(a,b), chord:dist(a,b), emax:0};
+  let lo=th+1e-4, hi=th+1.3;
+  const fl=t=>{const v=legs(t); return v?v.l1-want:null};
+  const flo=fl(lo), fhi=fl(hi);
+  if(flo===null||fhi===null||flo*fhi>0) return straight;
+  for(let i=0;i<60;i++){
+    const m2=(lo+hi)/2, v=fl(m2);
+    if(v===null) break;
+    if(flo*v<=0) hi=m2; else lo=m2;
+  }
+  const t1=(lo+hi)/2, v=legs(t1);
+  if(!v||v.l1<0||v.l2<0) return straight;
+  const pts=[a];
+  for(let i=1;i<=6;i++) pts.push(add(a, mul(U(t1), v.l1*i/6)));
+  const c=add(pts[pts.length-1], mul(U(t1-Math.PI/2), R));      // arc centre
+  const N=24;
+  for(let i=1;i<=N;i++) pts.push(add(c, mul(U(t1+Math.PI/2-dl*i/N), R)));
+  const q=pts[pts.length-1];
+  for(let i=1;i<=6;i++) pts.push(add(q, mul(U(t1-dl), v.l2*i/6)));
+  let total=0;
+  for(let i=1;i<pts.length;i++) total+=dist(pts[i],pts[i-1]);
+  // how far the centreline stands off the straight line between the ends
+  const n={x:-Math.sin(th), y:Math.cos(th)};
+  let emax=0;
+  for(const p of pts){
+    const e=(p.x-a.x)*n.x+(p.y-a.y)*n.y;
+    if(Math.abs(e)>Math.abs(emax)) emax=e;
+  }
+  return {pts, total, l1:v.l1, l2:v.l2, chord:dist(a,b), emax,
+          leanEnd:C.leanEnd};
+}
+// the first `want` millimetres of a polyline, for the flex zone marker
+function polyHead(pts, want){
+  const out=[pts[0]]; let acc=0;
+  for(let i=1;i<pts.length;i++){
+    const d=dist(pts[i],pts[i-1]);
+    if(acc+d>=want){
+      out.push(add(pts[i-1], mul(sub(pts[i],pts[i-1]), (want-acc)/d)));
+      return out;
+    }
+    acc+=d; out.push(pts[i]);
+  }
+  return out;
+}
+function el(tag,attrs,parent){
+  const n=document.createElementNS(SVG,tag);
+  for(const k in attrs) n.setAttribute(k,attrs[k]);
+  if(parent) parent.appendChild(n);
+  return n;
+}
+const VIEW={x0:-880,y0:-395,w:2130,h:1120};
+function toMM(evt,svg){
+  const p=svg.createSVGPoint(); p.x=evt.clientX; p.y=evt.clientY;
+  const q=p.matrixTransform(svg.getScreenCTM().inverse());
+  return {x:q.x, y:-q.y};
+}
+
+// The geometry exactly as drawn, used when the linkage will not solve so the
+// canvas still shows what you are dragging instead of going blank.
+function topFrame(){
+  return {phi:0, FP:G.FP, AX:G.AX, LP:G.LP, SE:G.SE, stroke:0, rise:0,
+          shock:dist(G.SE,G.SG), CP:{x:G.AX.x, y:G.AX.y-(C.rw/2+C.tyre)},
+          as:null, ar:null, kick:null, flex:0, lr:null};
+}
+function currentFrame(){
+  if(!result||!result.frames.length) return topFrame();
+  const f=result.frames;
+  let t=posT;
+  if(holdSag) t=C.sag/100;
+  const i=Math.min(f.length-1, Math.max(0, Math.round(t*(f.length-1))));
+  return f[i];
+}
+
+function draw(){
+  const svg=document.getElementById('draw');
+  svg.setAttribute('viewBox',`${VIEW.x0} ${-(VIEW.y0+VIEW.h)} ${VIEW.w} ${VIEW.h}`);
+  svg.innerHTML='';
+  const g=el('g',{transform:'scale(1,-1)'},svg);   // y up, millimetres
+  const f=currentFrame();
+  // front and rear cycle together; on the sag button each sits at its own sag
+  const n=result.frames.length;
+  const tRear = holdSag ? C.sag/100
+              : (n>1 ? result.frames.indexOf(f)/(n-1) : 0);
+  const tFront = holdSag ? C.fsag/100 : (tRear<0?0:tRear);
+  const F=frame(C.forkTravel*Math.max(0,Math.min(1,tFront)));
+  const ground=G.AX.y-(C.rw/2+C.tyre);           // fixed: both wheels rise from it
+
+  const grid=el('g',{},g);
+  for(let x=-1000;x<=1300;x+=100)
+    el('line',{x1:x,y1:VIEW.y0,x2:x,y2:VIEW.y0+VIEW.h,stroke:'var(--grid)','stroke-width':1},grid);
+  for(let y=-400;y<=900;y+=100)
+    el('line',{x1:VIEW.x0,y1:y,x2:VIEW.x0+VIEW.w,y2:y,stroke:'var(--grid)','stroke-width':1},grid);
+
+
+  const BB={x:0,y:0};
+  const line=(a,b,col,w,dash)=>el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:col,
+      'stroke-width':w,'stroke-linecap':'round',fill:'none',
+      ...(dash?{'stroke-dasharray':dash}:{})},g);
+  const ring=(c,r,col,w)=>el('circle',{cx:c.x,cy:c.y,r:r,fill:'none',stroke:col,
+      'stroke-width':w},g);
+  const bez=(q,col,w)=>el('path',{d:`M${q[0].x} ${q[0].y} C${q[1].x} ${q[1].y} `+
+      `${q[2].x} ${q[2].y} ${q[3].x} ${q[3].y}`,
+      fill:'none',stroke:col,'stroke-width':w,'stroke-linecap':'round'},g);
+  // a tube is an outline stroke with a lighter fill stroke laid over it
+  const tubes=(segs,fill,edge)=>{
+    segs.forEach(([a,b,w])=>line(a,b,edge,w+7));
+    segs.forEach(([a,b,w])=>line(a,b,fill,w));
+  };
+
+  /* ---- ground ---- */
+  el('rect',{x:VIEW.x0,y:VIEW.y0,width:VIEW.w,height:Math.abs(VIEW.y0-ground),
+    fill:'#e2e7ea'},g);
+  line({x:VIEW.x0,y:ground},{x:VIEW.x0+VIEW.w,y:ground},'#aab6bd',3);
+
+  /* ---- wheels ---- */
+  const wheel=(c,R)=>{
+    ring(c,R-24,'#39424a',48);                     // tyre
+    ring(c,R-56,'#9aa3ab',12);                     // rim
+    for(let i=0;i<16;i++){
+      const t=i*Math.PI/8;
+      line({x:c.x+Math.cos(t)*22,y:c.y+Math.sin(t)*22},
+           {x:c.x+Math.cos(t)*(R-58),y:c.y+Math.sin(t)*(R-58)},'#b6bec5',2.5);
+    }
+    ring(c,16,'#6c757d',9);
+  };
+  wheel(f.AX,F.Rr); wheel(F.FA,F.Rf);
+
+  /* ---- drivetrain ---- */
+  const rc=C.ring*P/(2*Math.PI), rg=C.cog*P/(2*Math.PI);
+  ring(BB,rc,'#5c6b78',7); ring(f.AX,rg,'#5c6b78',7);
+  el('circle',{cx:0,cy:0,r:13,fill:'#5c6b78'},g);           // bottom bracket
+  const guide=f.guide||rot({x:G.AX.x+GDX,y:G.AX.y+GDY},G.MP,f.phi);
+  const tension=f.tension||{x:guide.x,y:guide.y-C.cage};
+  const up=chainRun(BB,rc,f.AX,rg);
+  if(up){
+    line(up.p1,up.p2,'#39424a',7);
+    el('polyline',{points:[{x:f.AX.x-rg*0.5,y:f.AX.y-rg*0.87},guide,tension,
+        {x:BB.x,y:BB.y-rc}].map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' '),
+      fill:'none',stroke:'#39424a','stroke-width':5},g);
+  }
+
+
+  /* ---- fork and cockpit ---- */
+  /* Fork lowers are artwork and never stretch: they slide up the stanchion, which
+     is drawn between the crown and the top of the casting and shortens on its own. */
+  const K=FORKART, ks=K.mmPerPx, mir=MIRROR_FORK?-1:1;
+  const fu=F.axis, fp=F.perp;                        // image +y is down the leg, +x forward
+  const fm=[ks*mir*fp.x, ks*mir*fp.y, ks*fu.x, ks*fu.y,
+            F.FA.x-ks*(mir*K.axle[0]*fp.x + K.axle[1]*fu.x),
+            F.FA.y-ks*(mir*K.axle[0]*fp.y + K.axle[1]*fu.y)];
+  const topW=add(add(F.FA, mul(fp, ks*mir*(K.top[0]-K.axle[0]))),
+                          mul(fu, ks*(K.top[1]-K.axle[1])));
+  tubes([[F.crown,add(topW,mul(fu,26)),27]],'#cfd5da','#7b848c');   // exposed stanchion
+  const fg=el('g',{transform:`matrix(${fm.map(v=>v.toFixed(6)).join(' ')})`},g);
+  el('image',{href:K.src,x:0,y:0,width:K.w,height:K.h},fg);
+  // cockpit
+  tubes([[F.htTop,F.steerTop,22],[F.steerTop,F.bar,18]],'#b9c0c6','#7b848c');
+  line(add(F.bar,{x:-58,y:10}),add(F.bar,{x:34,y:26}),'#39424a',20);
+
+  /* ---- front triangle ---- */
+  const seatTop=F.ST, post=add(seatTop,mul(unit(sub(seatTop,BB)),150));
+  const dtU=unit(sub(F.htBot,BB)), stU=unit(sub(seatTop,BB));
+  const foot=mul(dtU, Math.max(60,(G.SG.x*dtU.x+G.SG.y*dtU.y)));   // shock mount brace
+  const ttJoin=sub(seatTop, mul(stU, Math.min(C.ttDrop, dist(BB,seatTop)-120)));
+  const boss=mul(dtU, Math.max(50,(G.SP.x*dtU.x+G.SP.y*dtU.y)));   // second pivot boss
+  const inset=0.10*C.htl;
+  const dtEnd=sub(F.htBot, mul(F.axis,inset));      // down tube meets below the crown race
+  const ttEnd=add(F.htTop, mul(F.axis,inset));      // top tube meets below the top cup
+  tubes([[BB,dtEnd,40],[ttJoin,ttEnd,32],[BB,seatTop,38],
+         [foot,G.SG,26],[boss,G.SP,30],
+         [F.htBot,F.htTop,52]],'#ded4bd','#8a8069');
+  el('circle',{cx:G.SP.x,cy:G.SP.y,r:34,fill:'#ded4bd',stroke:'#8a8069',
+    'stroke-width':7},g);
+  tubes([[seatTop,post,26]],'#b9c0c6','#7b848c');
+  line(add(post,{x:-95,y:16}),add(post,{x:75,y:22}),'#5c6b78',24);
+
+  /* ---- rear assembly ---- */
+  const path=stayPath(f.FP,f.SE);
+  const poly=(pts,col,w)=>el('polyline',{
+      points:pts.map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' '),
+      fill:'none',stroke:col,'stroke-width':w,'stroke-linecap':'round',
+      'stroke-linejoin':'round'},g);
+  const yokeBack=path.pts[Math.round((path.pts.length-1)*0.86)];
+  // outline pass
+  line(G.MP,f.AX,'#134463',40);
+  poly(path.pts,'#134463',30);
+  line(f.SE,f.LP,'#134463',30); line(f.LP,yokeBack,'#134463',30);
+  // fill pass
+  line(G.MP,f.AX,'#8fb6cf',33);
+  poly(path.pts,'#8fb6cf',23);
+  line(f.SE,f.LP,'#8fb6cf',23); line(f.LP,yokeBack,'#8fb6cf',23);
+
+  // flex zone, measured along the stay from the dropout
+  poly(polyHead(path.pts, Math.min(C.zone, path.total)),'var(--flex)',9);
+
+  /* ---- shock link and shock ---- */
+  tubes([[G.SP,f.LP,22]],'#4bb3a6','#0b5a53');
+
+  /* Shock artwork. The body and the eyelet ends keep their proportions; only the
+     spring section is stretched, so compressing the shock closes the coils up
+     rather than squashing the damper. */
+  const sU=unit(sub(G.SG,f.SE)), sL=dist(f.SE,G.SG);
+  const A=SHOCKART, sc=A.mmPerPx;
+  const dpx=(sL-230)/sc;                       // spring section grows or shrinks
+  const mtx=[sc*sU.x, sc*sU.y, sc*sU.y, -sc*sU.x,
+             f.SE.x-sc*(A.eyeL[0]*sU.x+A.eyeL[1]*sU.y),
+             f.SE.y-sc*(A.eyeL[0]*sU.y-A.eyeL[1]*sU.x)];
+  const sg=el('g',{transform:`matrix(${mtx.map(v=>v.toFixed(6)).join(' ')})`},g);
+  const put=(p,x,y,w,h,stretch)=>el('image',{href:p.src,x:x,y:y,width:w,height:h,
+      ...(stretch?{preserveAspectRatio:'none'}:{})},sg);
+  const springW=Math.max(24,A.spring.w+dpx);
+  put(A.tail,   A.tail.x, 0, A.tail.w, A.h);
+  put(A.spring, A.spring.x, A.yBand, springW, A.spring.h, true);
+  put(A.resv,   A.resv.x+dpx, 0, A.resv.w, A.resv.h);   // rides with the body
+  put(A.body,   A.body.x+dpx, 0, A.body.w, A.h);
+
+  /* ---- rear derailleur, carried on the dropout ---- */
+  tubes([[f.AX,guide,15]],'#6b747c','#39424a');        // b-knuckle and body
+  tubes([[guide,tension,30]],'#4a5158','#2a3138');     // cage
+  ring(guide,RJ,'#b6bec5',7); ring(tension,RJ,'#b6bec5',7);
+  el('circle',{cx:guide.x,cy:guide.y,r:4,fill:'#2a3138'},g);
+  el('circle',{cx:tension.x,cy:tension.y,r:4,fill:'#2a3138'},g);
+
+  /* ---- axle path ---- */
+  if(result.frames.length>1)
+    el('polyline',{points:result.frames.map(k=>`${k.AX.x},${k.AX.y}`).join(' '),
+      fill:'none',stroke:'#134463','stroke-width':3,'stroke-dasharray':'8 7',opacity:.85},g);
+
+  /* ---- pivots ---- */
+  const mark=(p,col,key)=>{
+    el('circle',{cx:p.x,cy:p.y,r:14,fill:'#fff',stroke:col,'stroke-width':5},g);
+    const c=el('circle',{cx:p.x,cy:p.y,r:5,fill:col},g);
+    if(key){c.setAttribute('r',18);c.setAttribute('fill','transparent');
+            c.setAttribute('class','drag');c.dataset.key=key;
+            el('circle',{cx:p.x,cy:p.y,r:5,fill:col},g)}
+    return c;
+  };
+  const top = !result.frames.length || f===result.frames[0];
+  mark(G.MP,'var(--rear)','MP'); mark(G.SP,'var(--link)','SP');
+  mark(G.SG,'var(--shock)','SG');
+  mark(f.LP,'var(--link)', top?'LP':null);
+  mark(f.SE,'var(--shock)', top?'SE':null);
+  mark(f.AX,'var(--rear)', top?'AX':null);
+  if(!top){
+    [['LP','var(--link)'],['SE','var(--shock)'],['AX','var(--rear)']]
+      .forEach(([k,col])=>{
+        const c=el('circle',{cx:G[k].x,cy:G[k].y,r:14,fill:'none',stroke:col,
+          'stroke-width':3,'stroke-dasharray':'6 5',opacity:.8,class:'drag'},g);
+        c.dataset.key=k;
+      });
+  }
+}
+
+// Drag state lives outside draw(): redrawing mid-drag would otherwise orphan the handlers.
+let dragKey=null, lockLen=false;
+function initDrag(){
+  const svg=document.getElementById('draw');
+  svg.addEventListener('pointerdown',e=>{
+    const k=e.target.dataset&&e.target.dataset.key;
+    if(!k) return;
+    dragKey=k; svg.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  let dragRaf=null;
+  svg.addEventListener('pointermove',e=>{
+    if(!dragKey) return;
+    const p=toMM(e,svg);
+    G[dragKey]={x:Math.round(p.x*10)/10, y:Math.round(p.y*10)/10};
+    // with the lock on, the far eye follows so the shock keeps its eye to eye
+    if(lockLen && (dragKey==='SE'||dragKey==='SG')){
+      const far = dragKey==='SE' ? 'SG' : 'SE';
+      const d=sub(G[far],G[dragKey]);
+      if(len(d)>1e-6){
+        const q=add(G[dragKey], mul(unit(d), C.eye));
+        G[far]={x:Math.round(q.x*10)/10, y:Math.round(q.y*10)/10};
+      }
+    }
+    if(dragRaf) return;                    // at most one solve per frame
+    dragRaf=requestAnimationFrame(()=>{
+      dragRaf=null; fillPoints(); recompute(true); syncPos();
+    });
+  });
+  const stop=()=>{
+    if(!dragKey) return;
+    dragKey=null;
+    if(dragRaf){cancelAnimationFrame(dragRaf);dragRaf=null}
+    fillPoints(); recompute(false); syncPos();   // full resolution on release
+  };
+  svg.addEventListener('pointerup',stop);
+  svg.addEventListener('pointercancel',stop);
+}
+
+/* ---------- readouts ---------- */
+const row=(k,v,cls='')=>`<div class="readout ${cls}"><span>${k}</span><b>${v}</b></div>`;
+function readouts(){
+  const R=id=>document.getElementById(id);
+  const f=result&&result.frames?result.frames:[];
+  const lrs=f.map(k=>k.lr).filter(v=>v!==null&&v!==undefined&&Number.isFinite(v));
+  if(f.length<3 || lrs.length<2){          // jammed or partial: no numbers to report
+    ['out-rate','out-flex','out-path','out-spring','out-force'].forEach(id=>
+      R(id).innerHTML=row('no solution','—'));
+    return;
+  }
+  const last=f[f.length-1], first=f[0];
+  const travel=last.rise;
+  const lrTop=lrs[0], lrBot=lrs[lrs.length-1];
+  const prog=(lrTop-lrBot)/lrBot*100;
+  const eyeNow=dist(G.SE,G.SG);
+  R('out-rate').innerHTML=
+    row('Wheel travel', travel.toFixed(1)+' mm')+
+    row('Leverage, top out', lrTop.toFixed(2))+
+    row('Leverage, bottom out', lrBot.toFixed(2))+
+    row('Progression', prog.toFixed(1)+' %', prog>8?'good':'warn')+
+    row('Shock eye to eye, drawn', eyeNow.toFixed(1)+' mm',
+        Math.abs(eyeNow-C.eye)>2?'warn':'')+
+    row('Swingarm rotation', (Math.abs(last.phi)*180/Math.PI).toFixed(1)+'°')+
+    row('Rear centre', Math.abs(first.AX.x).toFixed(0)+' mm')+
+    row('Bottom bracket height', ((C.rw/2+C.tyre)-G.AX.y).toFixed(0)+' mm')+
+    row('Wheelbase', (frame(0).FA.x-first.AX.x).toFixed(0)+' mm');
+
+  const fl=f.map(k=>k.flex);
+  const peak=fl.reduce((a,b)=>Math.abs(b)>Math.abs(a)?b:a,0);
+  const stayGeo=stayPath(G.FP,G.SE);
+  const Wsag=C.mass*9.81*C.bias/100;
+  const sagFrame=at(f,C.sag/100);
+  const stayU=unit(sub(G.SE,G.AX));
+  const axialAt=mult=>{
+    const P=pivotForces(G,sagFrame,Wsag*mult);
+    if(!P) return 0;
+    return -(P.fp.x*stayU.x+P.fp.y*stayU.y)/2;      // per stay, compression positive
+  };
+  const st=stayLoads(peak,stayGeo,C.od,C.wall,axialAt(1),C.bendA,C.dropZ,C.yokeZ,C.leanEnd,C.leanA);
+  const pk=stayLoads(peak,stayGeo,C.od,C.wall,axialAt(C.peakG),C.bendA,C.dropZ,C.yokeZ,C.leanEnd,C.leanA);
+  R('out-flex').innerHTML=
+    row('Flex pivot rotation', peak.toFixed(2)+'°')+
+    row('Developed length', stayGeo.total.toFixed(0)+' mm')+
+    row('Offset from chord, in plane', st.eccentricity.toFixed(1)+' mm')+
+    row('Offset from chord, out of plane', st.eOop.toFixed(1)+' mm')+
+    row('Lean of the main run', st.leanNeeded.toFixed(1)+'°')+
+    row('Second moment of area', st.I.toFixed(0)+' mm⁴')+
+    row('Euler load, per stay', (st.Pcr/1000).toFixed(1)+' kN')+
+    row('Stress from imposed rotation', st.sFlex.toFixed(0)+' MPa')+
+    row('Axial force per stay, sag', st.axial.toFixed(0)+' N')+
+    row('P-delta amplification, sag', st.amp.toFixed(2))+
+    row('Axial stress, in plane', st.sAx.toFixed(0)+' MPa')+
+    row('Axial stress, out of plane', st.sOop.toFixed(0)+' MPa')+
+    row('Resultant at sag', st.combined.toFixed(0)+' MPa', st.combined>250?'warn':'good')+
+    row('Axial force per stay, '+C.peakG+' g', pk.axial.toFixed(0)+' N')+
+    row('Resultant at '+C.peakG+' g', pk.combined.toFixed(0)+' MPa',
+        pk.combined>350?'warn':'good')+
+    row('Bend and flex', st.oppose?'oppose':'add', st.oppose?'good':'warn');
+
+  const xs=f.map(k=>k.AX.x);
+  R('out-path').innerHTML=
+    row('Rearward at full travel', (first.AX.x-last.AX.x).toFixed(1)+' mm')+
+    row('Peak rearward', (first.AX.x-Math.min(...xs)).toFixed(1)+' mm')+
+    row('Chain shortening', (last.kick??0).toFixed(1)+'°')+
+    row('Mech cage, top out', first.cageDeg.toFixed(1)+'°')+
+    row('Mech cage swing', (first.cageDeg-last.cageDeg).toFixed(1)+'°',
+        f.some(k=>k.cageClamp)?'warn':'')+
+    row('Anti-squat at sag', pick(f,'as').toFixed(0)+' %')+
+    row('Anti-rise at sag', pick(f,'ar').toFixed(0)+' %');
+
+  const sagF=at(f,C.sag/100);
+  const W=C.mass*9.81*C.bias/100;
+  const lrSag=sagF.lr||lrTop;
+  const Fs=W*lrSag;
+  const rate=Fs/sagF.stroke;                    // N/mm, linear coil, no preload
+  R('out-spring').innerHTML=
+    row('Sprung load on rear', W.toFixed(0)+' N')+
+    row('Leverage at sag', lrSag.toFixed(2))+
+    row('Shock force at sag', Fs.toFixed(0)+' N')+
+    row('Coil rate needed', rate.toFixed(1)+' N/mm')+
+    row('', (rate*5.7101).toFixed(0)+' lb/in');
+
+  const P2=pivotForces(G,sagF,W);
+  R('out-force').innerHTML = P2 ?
+    row('Main pivot', (P2.mainPivot/1000).toFixed(2)+' kN')+
+    row('Flex pivot', (P2.flexPivot/1000).toFixed(2)+' kN')+
+    row('Shock link', (P2.link/1000).toFixed(2)+' kN')+
+    row('Shock', (P2.shock/1000).toFixed(2)+' kN')
+    : row('Solver','no solution','warn');
+}
+function at(f,t){return f[Math.min(f.length-1,Math.max(0,Math.round(t*(f.length-1))))]}
+function pick(f,k){const v=at(f,C.sag/100)[k];return v===null||v===undefined?0:v}
+
+/* ---------- charts ---------- */
+function chart(id,key,fmt){
+  const svg=document.getElementById(id);
+  svg.innerHTML='';
+  if(!result||!result.frames.length) return;
+  const f=result.frames.filter(k=>Number.isFinite(k[key]));
+  if(f.length<2) return;
+  const W=300,H=250,L=48,B=28,T=30,Rp=10;
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const xs=f.map(k=>k.rise), ys=f.map(k=>k[key]);
+  const x0=Math.min(...xs), x1=Math.max(...xs);
+  let y0=Math.min(...ys), y1=Math.max(...ys);
+  if(y1-y0<1e-6){y0-=1;y1+=1}
+  const pad=(y1-y0)*0.12; y0-=pad; y1+=pad;
+  const X=v=>L+(v-x0)/(x1-x0||1)*(W-L-Rp);
+  const Y=v=>H-B-(v-y0)/(y1-y0)*(H-B-T);
+  const gg=el('g',{},svg);
+  [0,.5,1].forEach(t=>{
+    const yv=y0+(y1-y0)*t;
+    el('line',{x1:L,y1:Y(yv),x2:W-Rp,y2:Y(yv),stroke:'var(--grid2)','stroke-width':.7},gg);
+    const tx=el('text',{x:L-5,y:Y(yv)+3.5,'text-anchor':'end','font-size':12,fill:'var(--ink-soft)'},gg);
+    tx.textContent=fmt(yv);
+  });
+  el('polyline',{points:f.map(k=>`${X(k.rise)},${Y(k[key])}`).join(' '),
+    fill:'none',stroke:'var(--rear)','stroke-width':2},gg);
+  const s=at(result.frames,C.sag/100);
+  if(s[key]!==null&&s[key]!==undefined)
+    el('circle',{cx:X(s.rise),cy:Y(s[key]),r:3.5,fill:'var(--flex)'},gg);
+  const cur=currentFrame();
+  if(cur&&cur[key]!==null&&cur[key]!==undefined)
+    el('line',{x1:X(cur.rise),y1:T-6,x2:X(cur.rise),y2:H-B,stroke:'var(--ink-soft)',
+      'stroke-width':1,'stroke-dasharray':'3 3'},gg);
+  const t2=el('text',{x:W-Rp,y:H-9,'text-anchor':'end','font-size':12,fill:'var(--ink-soft)'},gg);
+  t2.textContent=x1.toFixed(0)+' mm';
+}
+function charts(){
+  chart('c-lr','lr',v=>v.toFixed(2));
+  chart('c-as','as',v=>v.toFixed(0));
+  chart('c-ar','ar',v=>v.toFixed(0));
+  chart('c-ck','kick',v=>v.toFixed(1));
+}
+
+/* ---------- inputs ---------- */
+function datumOffset(){
+  const d=document.getElementById('datum').value;
+  if(d==='AX') return G.AX;
+  if(d==='FA') return frame().FA;
+  return {x:0,y:0};
+}
+function fillPoints(){
+  const host=document.getElementById('points');
+  const o=datumOffset();
+  if(host.dataset.built){
+    PTS.forEach(([k])=>{
+      host.querySelector(`[data-f="${k}-x"]`).value=(G[k].x-o.x).toFixed(1);
+      host.querySelector(`[data-f="${k}-y"]`).value=(G[k].y-o.y).toFixed(1);
+    });
+    return;
+  }
+  host.innerHTML=PTS.map(([k,label,col])=>
+    `<div class="pt"><span><i class="sw" style="background:${col}"></i>${label}</span>
+     <input type="number" step="1" data-f="${k}-x"><input type="number" step="1" data-f="${k}-y"></div>`
+  ).join('');
+  host.dataset.built='1';
+  host.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input',()=>{
+      const [k,ax]=inp.dataset.f.split('-');
+      const off=datumOffset();
+      const v=parseFloat(inp.value); if(isNaN(v)) return;
+      G[k][ax]=v+off[ax];
+      recompute();
+    });
+  });
+  fillPoints();
+}
+function fillCfg(){
+  Object.keys(C).forEach(k=>{
+    const inp=document.getElementById(k);
+    if(!inp) return;
+    inp.value=C[k];
+    inp.onchange=inp.oninput=()=>{
+      const v=parseFloat(inp.value); if(isNaN(v)) return;
+      C[k]=v;
+      if(k==='drop'){                       // bottom bracket drop moves the rear axle
+        const wasConcentric=Math.abs(G.FP.y-G.AX.y)<1e-9 && Math.abs(G.FP.x-G.AX.x)<1e-9;
+        G.AX.y=v; if(wasConcentric) G.FP.y=v;
+        fillPoints();
+      }
+      recompute(false);
+    };
+  });
+}
+// A wheel over a focused number input silently edits it in most browsers,
+// which is an easy way to wreck the geometry without noticing.
+document.addEventListener('wheel',e=>{
+  if(e.target&&e.target.type==='number'&&e.target===document.activeElement)
+    e.target.blur();
+},{passive:true});
+function syncPos(){
+  const s=document.getElementById('pos');
+  s.value=Math.round(posT*1000);
+  const f=currentFrame();
+  document.getElementById('poslabel').textContent =
+    f? `${f.rise.toFixed(0)} mm wheel · ${f.stroke.toFixed(1)} mm shock` : '';
+}
+
+document.getElementById('pos').oninput=e=>{
+  posT=e.target.value/1000; holdSag=false;
+  document.getElementById('showsag').setAttribute('aria-pressed','false');
+  draw(); syncPos(); charts();
+};
+document.getElementById('locklen').onclick=e=>{
+  lockLen=!lockLen; e.target.setAttribute('aria-pressed',lockLen);
+};
+document.getElementById('showsag').onclick=e=>{
+  holdSag=!holdSag; e.target.setAttribute('aria-pressed',holdSag);
+  draw(); syncPos(); charts();
+};
+document.getElementById('datum').onchange=fillPoints;
+document.getElementById('reset').onclick=()=>{
+  G=structuredClone(DEF.geom); C=structuredClone(DEF.cfg);
+  fillPoints(); fillCfg(); posT=0; holdSag=false; syncPos(); recompute();
+};
+let raf=null, dir=1;
+document.getElementById('play').onclick=e=>{
+  playing=!playing;
+  e.target.textContent = playing?'Stop':'Cycle suspension';
+  if(playing){
+    holdSag=false; document.getElementById('showsag').setAttribute('aria-pressed','false');
+    const step=()=>{
+      posT+=dir*0.02; if(posT>1){posT=1;dir=-1} if(posT<0){posT=0;dir=1}
+      draw(); syncPos(); charts();
+      if(playing) raf=requestAnimationFrame(step);
+    };
+    step();
+  } else cancelAnimationFrame(raf);
+};
+window.addEventListener('resize',draw);
+
+try{
+  fillPoints(); fillCfg(); initDrag(); recompute(false); syncPos();
+}catch(err){
+  const m=document.getElementById('msg');
+  m.textContent='Start-up failed: '+err.message; m.className='on';
+  console.error(err);
+}
+// If the shipped defaults do not solve, that is a code fault, not a user one.
+(function(){
+  const probe=sweep(structuredClone(DEF.geom),{...DEF.cfg},41);
+  const m=document.getElementById('msg');
+  if(probe.error){
+    m.textContent='Default geometry itself fails: '+probe.error; m.className='on';
+  } else if(result&&result.error){
+    m.textContent=result.error+'  The defaults do solve, so press Reset geometry.';
+  }
+})();
+</script>
+</body>
+</html>
