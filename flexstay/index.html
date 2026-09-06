@@ -709,13 +709,13 @@ function draw(){
   tubes([[F.htTop,F.steerTop,22]],'#b9c0c6','#7b848c');   // headset/steerer stack
   /* Source art is a plan-view stem icon (bore on the right, faceplate bolts on
      the left) repurposed for this side elevation: pixel-x is the reach length
-     (bore anchor -> bar), mirrored because the bolts sit at lower pixel-x but
-     the bar sits in the +perp direction; pixel-y just carries the icon's other
-     dimension along the steerer axis so it sits at the right scale. */
+     (bore anchor -> bar), and the whole thing is rotated 180 about the bore
+     anchor (both columns negated) so the body swings out the correct side of
+     the steerer instead of back over the head tube. */
   const SA=STEMART, ss=SA.mmPerPx;
-  const sm=[-ss*fp.x, -ss*fp.y, ss*fu.x, ss*fu.y,
-            F.steerTop.x-(-ss*SA.bore[0]*fp.x + ss*SA.bore[1]*fu.x),
-            F.steerTop.y-(-ss*SA.bore[0]*fp.y + ss*SA.bore[1]*fu.y)];
+  const sm=[ss*fp.x, ss*fp.y, -ss*fu.x, -ss*fu.y,
+            F.steerTop.x-(ss*SA.bore[0]*fp.x - ss*SA.bore[1]*fu.x),
+            F.steerTop.y-(ss*SA.bore[0]*fp.y - ss*SA.bore[1]*fu.y)];
   const sg2=el('g',{transform:`matrix(${sm.map(v=>v.toFixed(6)).join(' ')})`},g);
   el('image',{href:SA.src,x:0,y:0,width:SA.w,height:SA.h},sg2);
 
