@@ -41,6 +41,13 @@ their pivots.
 Coordinates are millimetres, origin at the bottom bracket, x forward, y up. The
 drawing group applies `scale(1,-1)` so the SVG is y-down inside a y-up model.
 
+Inside that flipped group the ground and grid live in `root`, and the bike lives
+in a nested group rotated by `groundTilt()` about the rear axle. Head and seat
+angles are still absolute against a level datum, so the pitch is presentational:
+it puts both wheels on the ground line without moving any of the numbers. Anti-
+squat and bottom bracket height are still measured in the untilted frame — with
+mixed wheel sizes they are the as-built figures, not the as-ridden ones.
+
 ## Validated against Linkage X3
 
 The defaults reproduce James's own model. These are regression tests — if a
@@ -86,6 +93,24 @@ not solve. A failure in one panel must not take the drawing with it.
 
 **Number inputs and scroll wheels.** A wheel over a focused number input silently
 edits it in most browsers. They blur on wheel.
+
+**The canvas SVG is absolutely positioned.** With `height:100%` in normal flow it
+resolves its height from its own viewBox aspect ratio instead of from the flex
+row, which pushed the page 38px past the viewport. `position:absolute` inside the
+relative `#canvas` breaks that loop.
+
+**Both panels fit themselves to their own pixel box**, so the first paint can land
+before the flex layout settles. A `ResizeObserver` on `#canvas` and `#charts`
+refits; the window resize listener alone is not enough.
+
+**Pivot hit targets are sized in screen pixels**, `HIT_PX * mmPerPx`, so they stay
+grabbable at any zoom. The decorative ring and dot carry `pointer-events:none` and
+the handler uses `closest('.drag')` — before that, a click on the exact centre of a
+pivot hit the decorative dot, which has no `dataset.key`, and silently did nothing.
+
+**Drags run through the pitch.** `toMM` returns root-frame millimetres, so the
+pointer is rotated back by `-curTilt` about the rear axle before it is written to
+`G`. Without it a mullet setup puts the point a few millimetres off the cursor.
 
 ## Stay structure
 
