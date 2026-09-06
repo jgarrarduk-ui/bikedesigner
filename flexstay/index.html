@@ -535,6 +535,11 @@ const WHEELART={
   w:1390, h:1372, hub:[695,686], nativeR:690,
   src:'img/wheel.png'
 };
+const SADDLEART={
+  w:904, h:278, mount:[550,245],   // where the rails meet the seatpost clamp
+  mmPerPx:0.3097,                  // calibrated assuming ~280mm nose-to-tail
+  src:'img/saddle.png'
+};
 
 const MIRROR_FORK=false;   // arch sweeps rearward, decals read correctly
 const SVG='http://www.w3.org/2000/svg';
@@ -724,7 +729,6 @@ function draw(){
   el('circle',{cx:G.SP.x,cy:G.SP.y,r:34,fill:'#ded4bd',stroke:'#8a8069',
     'stroke-width':7},g);
   tubes([[seatTop,post,26]],'#b9c0c6','#7b848c');
-  line(add(post,{x:-95,y:16}),add(post,{x:75,y:22}),'#5c6b78',24);
 
   /* Stem artwork drawn after the front triangle so it sits on top of the
      frame tubes rather than being painted over by them. Source art is a
@@ -791,6 +795,18 @@ function draw(){
   if(result.frames.length>1)
     el('polyline',{points:result.frames.map(k=>`${k.AX.x},${k.AX.y}`).join(' '),
       fill:'none',stroke:'#134463','stroke-width':3,'stroke-dasharray':'8 7',opacity:.85},g);
+
+  /* Saddle is set level regardless of seat-tube angle, like a real one --
+     fixed orientation, just anchored at the top of the exposed seatpost.
+     Drawn last (bar the pivot markers) so it sits on top of everything.
+     Source art has the nose at low pixel-x and the rail below the shell at
+     high pixel-y, so both axes are negated: nose points +x (forward, since
+     the front wheel is drawn at +x) and the rail sits below the anchor
+     (-y) rather than the pixel-down direction reading as model-up. */
+  const SD=SADDLEART, sds=SD.mmPerPx;
+  const sdm=[-sds,0,0,-sds, post.x+sds*SD.mount[0], post.y+sds*SD.mount[1]];
+  const sdg=el('g',{transform:`matrix(${sdm.map(v=>v.toFixed(6)).join(' ')})`},g);
+  el('image',{href:SD.src,x:0,y:0,width:SD.w,height:SD.h},sdg);
 
   /* ---- pivots ---- */
   const mark=(p,col,key)=>{
