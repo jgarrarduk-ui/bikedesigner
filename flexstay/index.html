@@ -799,12 +799,12 @@ function draw(){
   /* Saddle is set level regardless of seat-tube angle, like a real one --
      fixed orientation, just anchored at the top of the exposed seatpost.
      Drawn last (bar the pivot markers) so it sits on top of everything.
-     Source art has the nose at low pixel-x and the rail below the shell at
-     high pixel-y, so both axes are negated: nose points +x (forward, since
-     the front wheel is drawn at +x) and the rail sits below the anchor
-     (-y) rather than the pixel-down direction reading as model-up. */
+     Source art has the rail below the shell at high pixel-y, so the y axis
+     is negated (rail sits below the anchor rather than pixel-down reading
+     as model-up). The x axis is left unmirrored so the nose points -x
+     (toward the rear). */
   const SD=SADDLEART, sds=SD.mmPerPx;
-  const sdm=[-sds,0,0,-sds, post.x+sds*SD.mount[0], post.y+sds*SD.mount[1]];
+  const sdm=[sds,0,0,-sds, post.x-sds*SD.mount[0], post.y+sds*SD.mount[1]];
   const sdg=el('g',{transform:`matrix(${sdm.map(v=>v.toFixed(6)).join(' ')})`},g);
   el('image',{href:SD.src,x:0,y:0,width:SD.w,height:SD.h},sdg);
 
