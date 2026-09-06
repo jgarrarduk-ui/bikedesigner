@@ -708,17 +708,6 @@ function draw(){
   el('image',{href:K.src,x:0,y:0,width:K.w,height:K.h},fg);
   // cockpit
   tubes([[F.htTop,F.steerTop,22]],'#b9c0c6','#7b848c');   // headset/steerer stack
-  /* Source art is a plan-view stem icon: the round bore is the bar clamp, seen
-     end-on down the bar's axis, and the steerer clamps at the slotted end near
-     the two bolts. Anchored there (steererPt) instead of the bore, oriented
-     from F.axis/F.perp and rotated 180 about that anchor so the body swings
-     out the correct side of the steerer. */
-  const SA=STEMART, ss=SA.mmPerPx;
-  const sm=[ss*fp.x, ss*fp.y, -ss*fu.x, -ss*fu.y,
-            F.steerTop.x-(ss*SA.steererPt[0]*fp.x - ss*SA.steererPt[1]*fu.x),
-            F.steerTop.y-(ss*SA.steererPt[0]*fp.y - ss*SA.steererPt[1]*fu.y)];
-  const sg2=el('g',{transform:`matrix(${sm.map(v=>v.toFixed(6)).join(' ')})`},g);
-  el('image',{href:SA.src,x:0,y:0,width:SA.w,height:SA.h},sg2);
 
   /* ---- front triangle ---- */
   const seatTop=F.ST, post=add(seatTop,mul(unit(sub(seatTop,BB)),150));
@@ -736,6 +725,20 @@ function draw(){
     'stroke-width':7},g);
   tubes([[seatTop,post,26]],'#b9c0c6','#7b848c');
   line(add(post,{x:-95,y:16}),add(post,{x:75,y:22}),'#5c6b78',24);
+
+  /* Stem artwork drawn after the front triangle so it sits on top of the
+     frame tubes rather than being painted over by them. Source art is a
+     plan-view stem icon: the round bore is the bar clamp, seen end-on down
+     the bar's axis, and the steerer clamps at the slotted end near the two
+     bolts. Anchored there (steererPt) instead of the bore, oriented from
+     F.axis/F.perp and rotated 180 about that anchor so the body swings out
+     the correct side of the steerer. */
+  const SA=STEMART, ss=SA.mmPerPx;
+  const sm=[ss*fp.x, ss*fp.y, -ss*fu.x, -ss*fu.y,
+            F.steerTop.x-(ss*SA.steererPt[0]*fp.x - ss*SA.steererPt[1]*fu.x),
+            F.steerTop.y-(ss*SA.steererPt[0]*fp.y - ss*SA.steererPt[1]*fu.y)];
+  const sg2=el('g',{transform:`matrix(${sm.map(v=>v.toFixed(6)).join(' ')})`},g);
+  el('image',{href:SA.src,x:0,y:0,width:SA.w,height:SA.h},sg2);
 
   /* ---- rear assembly ---- */
   const path=stayPath(f.FP,f.SE);
