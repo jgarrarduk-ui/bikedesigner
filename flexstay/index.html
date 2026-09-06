@@ -20,7 +20,14 @@ body{margin:0;background:var(--paper);color:var(--ink);font:13px/1.45 var(--sans
 .rail.left{border-right:1px solid var(--rule)}
 .rail.right{border-left:1px solid var(--rule)}
 #stage{display:flex;flex-direction:column;min-width:0}
-#draw{flex:1;min-height:260px;display:block;background:var(--paper)}
+#canvas{flex:1;min-height:260px;position:relative;min-width:0}
+/* absolute so the SVG's own aspect ratio cannot drive the canvas height */
+#draw{position:absolute;inset:0;width:100%;height:100%;display:block;
+  background:var(--paper);touch-action:none;user-select:none}
+#draw.panning{cursor:grabbing}
+#zoomctl{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:4px}
+#zoomctl button{width:26px;height:26px;padding:0;font-size:14px;line-height:1;
+  background:#fffc;backdrop-filter:blur(2px)}
 h1{font-size:14px;margin:0 0 2px;font-weight:650;letter-spacing:.2px}
 .sub{color:var(--ink-soft);font-size:11px;margin:0 0 14px}
 h2{font-size:11px;font-weight:650;color:var(--ink-soft);margin:18px 0 7px;
@@ -50,11 +57,18 @@ button{font:12px var(--sans);padding:4px 11px;border:1px solid var(--rule);borde
 button:hover{background:#e9eef1}
 button[aria-pressed=true]{background:var(--rear);border-color:var(--rear);color:#fff}
 input[type=range]{width:190px;accent-color:var(--rear)}
-#charts{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule);
-  border-top:1px solid var(--rule);height:250px;flex:none}
-.chart{background:var(--panel);position:relative}
-.chart figcaption{position:absolute;top:6px;left:10px;font-size:12px;font-weight:600;color:var(--ink-soft)}
+/* Two charts at a time so each gets half the width; arrows page between pairs. */
+#charts{display:grid;grid-template-columns:26px 1fr 1fr 26px;gap:1px;background:var(--rule);
+  border-top:1px solid var(--rule);height:270px;flex:none;position:relative}
+.chart{background:var(--panel);position:relative;min-width:0;margin:0}
+.chart figcaption{position:absolute;top:6px;left:12px;font-size:12px;font-weight:600;color:var(--ink-soft)}
 .chart svg{width:100%;height:100%;display:block}
+.pager{background:var(--panel);border:none;border-radius:0;font-size:17px;color:var(--ink-soft);
+  padding:0;cursor:pointer}
+.pager:hover{background:#e9eef1;color:var(--ink)}
+#cdots{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:5px}
+#cdots i{width:6px;height:6px;border-radius:50%;background:var(--rule);display:block}
+#cdots i.on{background:var(--ink-soft)}
 svg text{font-family:var(--mono)}
 .drag{cursor:grab}
 .drag:active{cursor:grabbing}
@@ -67,8 +81,8 @@ svg text{font-family:var(--mono)}
   .rail{overflow-y:visible;max-height:none}
   .rail.left{border-right:none;border-top:1px solid var(--rule)}
   .rail.right{border-left:none;border-top:1px solid var(--rule)}
-  #draw{height:44vh;min-height:260px}
-  #charts{grid-template-columns:1fr 1fr;height:320px}
+  #canvas{height:44vh;min-height:260px;flex:none}
+  #charts{grid-template-columns:24px 1fr 1fr 24px;height:260px}
   input[type=range]{width:140px}
   .pt{grid-template-columns:1fr 72px 72px}
 }
@@ -147,7 +161,14 @@ svg text{font-family:var(--mono)}
 </div>
 
 <div id="stage">
-  <svg id="draw" preserveAspectRatio="xMidYMid meet"></svg>
+  <div id="canvas">
+    <svg id="draw" preserveAspectRatio="xMidYMid meet"></svg>
+    <div id="zoomctl">
+      <button id="zin"  title="Zoom in"       aria-label="Zoom in">+</button>
+      <button id="zout" title="Zoom out"      aria-label="Zoom out">&minus;</button>
+      <button id="zfit" title="Fit to window" aria-label="Fit to window">&#9974;</button>
+    </div>
+  </div>
   <div id="msg"></div>
   <div id="bar">
     <button id="play">Cycle suspension</button>
@@ -155,13 +176,15 @@ svg text{font-family:var(--mono)}
     <span id="poslabel" style="font:12px var(--mono);color:var(--ink-soft)"></span>
     <button id="showsag" aria-pressed="false">Hold at sag</button>
     <button id="locklen" aria-pressed="false">Lock shock length</button>
+    <button id="forces" aria-pressed="false">Force vectors</button>
     <button id="reset">Reset geometry</button>
   </div>
   <div id="charts">
-    <figure class="chart"><figcaption>Leverage ratio</figcaption><svg id="c-lr"></svg></figure>
-    <figure class="chart"><figcaption>Anti-squat, %</figcaption><svg id="c-as"></svg></figure>
-    <figure class="chart"><figcaption>Anti-rise, %</figcaption><svg id="c-ar"></svg></figure>
-    <figure class="chart"><figcaption>Chain shortening, deg</figcaption><svg id="c-ck"></svg></figure>
+    <button class="pager" id="cprev" aria-label="Previous pair">&lsaquo;</button>
+    <figure class="chart"><figcaption id="cap-a"></figcaption><svg id="c-a"></svg></figure>
+    <figure class="chart"><figcaption id="cap-b"></figcaption><svg id="c-b"></svg></figure>
+    <button class="pager" id="cnext" aria-label="Next pair">&rsaquo;</button>
+    <div id="cdots"><i></i><i></i></div>
   </div>
 </div>
 
@@ -382,9 +405,28 @@ function pivotForces(g,f,Fw){
       const k=M[r][c]/M[c][c]; for(let j=c;j<=n;j++) M[r][j]-=k*M[c][j]; }
   }
   const x=M.map((r,i)=>r[n]/M[i][i]);
+  // The wheel load above is applied downward, which is the negative of the real
+  // ground reaction, so the arrow vectors are flipped once here to point the way
+  // the force actually acts. Magnitudes and fp keep their original convention.
+  const V=(vx,vy)=>({x:-vx,y:-vy});
   return {shock:Math.abs(x[0]), link:Math.abs(x[1]),
     flexPivot:Math.hypot(x[2],x[3]), mainPivot:Math.hypot(x[4],x[5]),
-    fp:{x:x[2], y:x[3]}};        // signed, so it can be resolved along the stay
+    fp:{x:x[2], y:x[3]},         // signed, so it can be resolved along the stay
+    vec:{shock:V(x[0]*uS.x,x[0]*uS.y), link:V(x[1]*uL.x,x[1]*uL.y),
+         flex:V(x[2],x[3]), main:V(x[4],x[5])}};
+}
+
+/* With mixed wheel sizes the two contact points sit at different heights, so the
+   bike is pitched on the ground. This is the rotation about the rear axle that
+   puts both wheels on one ground line. It is exactly zero when the axle heights
+   and radii already agree, which is what keeps the validated numbers still. */
+function groundTilt(rearAxle,frontAxle,Rr,Rf){
+  const dx=frontAxle.x-rearAxle.x, dy=frontAxle.y-rearAxle.y;
+  const L=Math.hypot(dx,dy);
+  if(L<1e-9) return 0;
+  const s=(Rf-Rr)/L;
+  if(Math.abs(s)>1) return 0;                  // wheels too big to both touch
+  return Math.asin(s)-Math.atan2(dy,dx);
 }
 
 /* The stay is built in at the dropout and effectively pinned at the shock-link end,
@@ -608,7 +650,34 @@ function el(tag,attrs,parent){
   if(parent) parent.appendChild(n);
   return n;
 }
-const VIEW={x0:-880,y0:-395,w:2130,h:1120};
+/* The view is refitted to the bike on every draw, then nudged by the user's zoom
+   and pan. At zoom 1 the bike fills the canvas height, which crops the wheels a
+   little; the crop is capped so a tall narrow canvas does not slice the frame. */
+let VIEW={x0:-880,y0:-395,w:2130,h:1120};   // last fit, read by the grid, ground and hit radius
+let zoomK=1, panX=0, panY=0, lastBox=null, mmPerPx=1;
+let curTilt=0, showForces=false;             // pitch as drawn; force arrows are off by default
+const MAXCROP=0.18;                          // never lose more than this fraction of the width
+function fitView(svg,box){
+  const r=svg.getBoundingClientRect();
+  const aspect=(r.width>4&&r.height>4)?r.width/r.height:1.9;
+  const hCover=Math.min(box.h, box.w/aspect);          // fill the canvas, crop the sides
+  const hCap  =box.w*(1-MAXCROP)/aspect;               // but keep most of the width
+  const h=Math.max(hCover,hCap)*1.07/zoomK;            // margin so the ground line clears the edge
+  const w=h*aspect;
+  mmPerPx=r.width>4 ? w/r.width : 1;
+  return {x0:box.cx+panX-w/2, y0:box.cy+panY-h/2, w, h};
+}
+function zoomBy(factor,at){
+  const k=Math.min(6,Math.max(0.35,zoomK*factor));
+  if(k===zoomK) return;
+  if(at&&lastBox){                        // keep the model point under the cursor still
+    const u=(at.x-VIEW.x0)/VIEW.w, v=(at.y-VIEW.y0)/VIEW.h;
+    const w2=VIEW.w*zoomK/k, h2=VIEW.h*zoomK/k;
+    panX=(at.x-u*w2+w2/2)-lastBox.cx;
+    panY=(at.y-v*h2+h2/2)-lastBox.cy;
+  }
+  zoomK=k; draw();
+}
 function toMM(evt,svg){
   const p=svg.createSVGPoint(); p.x=evt.clientX; p.y=evt.clientY;
   const q=p.matrixTransform(svg.getScreenCTM().inverse());
@@ -633,9 +702,6 @@ function currentFrame(){
 
 function draw(){
   const svg=document.getElementById('draw');
-  svg.setAttribute('viewBox',`${VIEW.x0} ${-(VIEW.y0+VIEW.h)} ${VIEW.w} ${VIEW.h}`);
-  svg.innerHTML='';
-  const g=el('g',{transform:'scale(1,-1)'},svg);   // y up, millimetres
   const f=currentFrame();
   // front and rear cycle together; on the sag button each sits at its own sag
   const n=result.frames.length;
@@ -644,15 +710,39 @@ function draw(){
   const tFront = holdSag ? C.fsag/100 : (tRear<0?0:tRear);
   const F=frame(C.forkTravel*Math.max(0,Math.min(1,tFront)));
   const ground=G.AX.y-(C.rw/2+C.tyre);           // fixed: both wheels rise from it
-
-  const grid=el('g',{},g);
-  for(let x=-1000;x<=1300;x+=100)
-    el('line',{x1:x,y1:VIEW.y0,x2:x,y2:VIEW.y0+VIEW.h,stroke:'var(--grid)','stroke-width':1},grid);
-  for(let y=-400;y<=900;y+=100)
-    el('line',{x1:VIEW.x0,y1:y,x2:VIEW.x0+VIEW.w,y2:y,stroke:'var(--grid)','stroke-width':1},grid);
-
-
   const BB={x:0,y:0};
+  const seatTop=F.ST, post=add(seatTop,mul(unit(sub(seatTop,BB)),150));
+  // pitch is taken at top out so the bike does not rock as the suspension cycles
+  const tilt=groundTilt(G.AX,frame(0).FA,F.Rr,F.Rf);
+  curTilt=tilt;                                  // the drag handler undoes it
+  const tiltPt=p=>rot(p,G.AX,tilt);
+
+  // Fit the view to the bike itself, wheels and cockpit included.
+  const fa=tiltPt(F.FA), rx=tiltPt(f.AX);
+  const xs=[rx.x-F.Rr, rx.x+F.Rr, fa.x-F.Rf, fa.x+F.Rf];
+  const ys=[ground, tiltPt(F.steerTop).y+70, tiltPt(post).y+90];
+  const bx0=Math.min(...xs), bx1=Math.max(...xs);
+  const by0=Math.min(...ys), by1=Math.max(...ys);
+  lastBox={cx:(bx0+bx1)/2, cy:(by0+by1)/2, w:bx1-bx0, h:by1-by0};
+  VIEW=fitView(svg,lastBox);
+  svg.setAttribute('viewBox',`${VIEW.x0} ${-(VIEW.y0+VIEW.h)} ${VIEW.w} ${VIEW.h}`);
+  svg.innerHTML='';
+  const root=el('g',{transform:'scale(1,-1)'},svg);   // y up, millimetres
+  // The bike itself is pitched about the rear axle so both wheels reach the
+  // ground line; the ground and grid stay level inside root.
+  const tiltDeg=tilt*180/Math.PI;
+  const g=el('g',Math.abs(tiltDeg)>1e-9
+      ? {transform:`rotate(${tiltDeg.toFixed(5)} ${G.AX.x} ${G.AX.y})`} : {},root);
+
+  // Grid and ground follow the view, with a margin so panning never runs them out.
+  const gx0=Math.floor((VIEW.x0-VIEW.w)/100)*100, gx1=Math.ceil((VIEW.x0+2*VIEW.w)/100)*100;
+  const gy0=Math.floor((VIEW.y0-VIEW.h)/100)*100, gy1=Math.ceil((VIEW.y0+2*VIEW.h)/100)*100;
+  const grid=el('g',{},root);
+  for(let x=gx0;x<=gx1;x+=100)
+    el('line',{x1:x,y1:gy0,x2:x,y2:gy1,stroke:'var(--grid)','stroke-width':mmPerPx},grid);
+  for(let y=gy0;y<=gy1;y+=100)
+    el('line',{x1:gx0,y1:y,x2:gx1,y2:y,stroke:'var(--grid)','stroke-width':mmPerPx},grid);
+
   const line=(a,b,col,w,dash)=>el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:col,
       'stroke-width':w,'stroke-linecap':'round',fill:'none',
       ...(dash?{'stroke-dasharray':dash}:{})},g);
@@ -667,10 +757,10 @@ function draw(){
     segs.forEach(([a,b,w])=>line(a,b,fill,w));
   };
 
-  /* ---- ground ---- */
-  el('rect',{x:VIEW.x0,y:VIEW.y0,width:VIEW.w,height:Math.abs(VIEW.y0-ground),
-    fill:'#e2e7ea'},g);
-  line({x:VIEW.x0,y:ground},{x:VIEW.x0+VIEW.w,y:ground},'#aab6bd',3);
+  /* ---- ground ---- (level, in root: the bike is what pitches, not the ground) */
+  el('rect',{x:gx0,y:gy0,width:gx1-gx0,height:Math.max(0,ground-gy0),
+    fill:'#e2e7ea'},root);
+  el('line',{x1:gx0,y1:ground,x2:gx1,y2:ground,stroke:'#aab6bd','stroke-width':3},root);
 
   /* ---- wheels ---- */
   /* Artwork is isotropic (round), so it just scales to whatever radius the
@@ -715,7 +805,6 @@ function draw(){
   tubes([[F.htTop,F.steerTop,22]],'#b9c0c6','#7b848c');   // headset/steerer stack
 
   /* ---- front triangle ---- */
-  const seatTop=F.ST, post=add(seatTop,mul(unit(sub(seatTop,BB)),150));
   const dtU=unit(sub(F.htBot,BB)), stU=unit(sub(seatTop,BB));
   const foot=mul(dtU, Math.max(60,(G.SG.x*dtU.x+G.SG.y*dtU.y)));   // shock mount brace
   const ttJoin=sub(seatTop, mul(stU, Math.min(C.ttDrop, dist(BB,seatTop)-120)));
@@ -804,18 +893,27 @@ function draw(){
      as model-up). The x axis is left unmirrored so the nose points -x
      (toward the rear). */
   const SD=SADDLEART, sds=SD.mmPerPx;
-  const sdm=[sds,0,0,-sds, post.x-sds*SD.mount[0], post.y+sds*SD.mount[1]];
+  const sdNudge=0.15*SD.w*sds;          // sits 15% of its own width forward of the post
+  const sdm=[sds,0,0,-sds, post.x-sds*SD.mount[0]+sdNudge, post.y+sds*SD.mount[1]];
   const sdg=el('g',{transform:`matrix(${sdm.map(v=>v.toFixed(6)).join(' ')})`},g);
   el('image',{href:SD.src,x:0,y:0,width:SD.w,height:SD.h},sdg);
 
-  /* ---- pivots ---- */
+  /* ---- pivots ----
+     The visible ring stays the same size on screen whatever the zoom, and the
+     invisible hit target is a fat HIT_PX circle drawn last so nothing decorative
+     sits on top of it and swallows the pointer. */
+  const HIT_PX=18;                            // radius in screen pixels, zoom independent
+  const hitR=Math.max(10,HIT_PX*mmPerPx);
+  const rr=Math.max(6,12*mmPerPx), rd=Math.max(2.5,4.5*mmPerPx);
+  const grab=(p,key,parent)=>{
+    const c=el('circle',{cx:p.x,cy:p.y,r:hitR,fill:'transparent',class:'drag'},parent||g);
+    c.dataset.key=key; return c;
+  };
   const mark=(p,col,key)=>{
-    el('circle',{cx:p.x,cy:p.y,r:14,fill:'#fff',stroke:col,'stroke-width':5},g);
-    const c=el('circle',{cx:p.x,cy:p.y,r:5,fill:col},g);
-    if(key){c.setAttribute('r',18);c.setAttribute('fill','transparent');
-            c.setAttribute('class','drag');c.dataset.key=key;
-            el('circle',{cx:p.x,cy:p.y,r:5,fill:col},g)}
-    return c;
+    el('circle',{cx:p.x,cy:p.y,r:rr,fill:'#fff',stroke:col,'stroke-width':rr*0.36,
+      'pointer-events':'none'},g);
+    el('circle',{cx:p.x,cy:p.y,r:rd,fill:col,'pointer-events':'none'},g);
+    if(key) grab(p,key);
   };
   const top = !result.frames.length || f===result.frames[0];
   mark(G.MP,'var(--rear)','MP'); mark(G.SP,'var(--link)','SP');
@@ -824,29 +922,76 @@ function draw(){
   mark(f.SE,'var(--shock)', top?'SE':null);
   mark(f.AX,'var(--rear)', top?'AX':null);
   if(!top){
+    // off top-out the live points are driven by the solver, so the ghost at the
+    // un-compressed position is what you grab to move them
     [['LP','var(--link)'],['SE','var(--shock)'],['AX','var(--rear)']]
       .forEach(([k,col])=>{
-        const c=el('circle',{cx:G[k].x,cy:G[k].y,r:14,fill:'none',stroke:col,
-          'stroke-width':3,'stroke-dasharray':'6 5',opacity:.8,class:'drag'},g);
-        c.dataset.key=k;
+        el('circle',{cx:G[k].x,cy:G[k].y,r:rr,fill:'none',stroke:col,
+          'stroke-width':rr*0.22,'stroke-dasharray':`${rr*0.45} ${rr*0.38}`,opacity:.8,
+          'pointer-events':'none'},g);
+        grab(G[k],k);
       });
+  }
+
+  /* ---- force vectors ----
+     Resolved for the frame being drawn, so they grow, shrink and swing round as
+     the suspension cycles. Fixed scale in mm per newton, so the lengths stay
+     comparable between positions instead of being renormalised each frame. */
+  if(showForces){
+    const Fw=C.mass*9.81*C.bias/100;
+    const P=pivotForces(G,f,Fw);
+    if(P){
+      const FSCALE=0.22;                       // 1 kN reads as 220 mm on the drawing
+      const arrow=(p,v,col)=>{
+        const m=Math.hypot(v.x,v.y);
+        if(!(m>1)) return;
+        const L=m*FSCALE;
+        const u={x:v.x/m,y:v.y/m}, nrm={x:-u.y,y:u.x};
+        const head=Math.min(L*0.42, Math.max(16,11*mmPerPx));
+        const tip=add(p,mul(u,L)), base=sub(tip,mul(u,head));
+        el('line',{x1:p.x,y1:p.y,x2:base.x,y2:base.y,stroke:col,
+          'stroke-width':Math.max(2.5,3.2*mmPerPx),'stroke-linecap':'round',
+          'pointer-events':'none'},g);
+        el('polygon',{points:[tip,add(base,mul(nrm,head*0.44)),sub(base,mul(nrm,head*0.44))]
+            .map(q=>`${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' '),
+          fill:col,'pointer-events':'none'},g);
+      };
+      arrow(f.CP,{x:0,y:Fw},'#2f6f3e');          // ground reaction under the tyre
+      arrow(G.MP,P.vec.main, 'var(--rear)');
+      arrow(f.FP,P.vec.flex, 'var(--flex)');
+      arrow(f.SE,P.vec.shock,'var(--shock)');
+      arrow(f.LP,P.vec.link, 'var(--link)');
+    }
   }
 }
 
 // Drag state lives outside draw(): redrawing mid-drag would otherwise orphan the handlers.
 let dragKey=null, lockLen=false;
+let panFrom=null;
 function initDrag(){
   const svg=document.getElementById('draw');
   svg.addEventListener('pointerdown',e=>{
-    const k=e.target.dataset&&e.target.dataset.key;
-    if(!k) return;
+    // closest() so the hit target still works if a decoration ends up on top
+    const hit=e.target.closest&&e.target.closest('.drag');
+    const k=hit&&hit.dataset.key;
+    if(!k){                                  // empty canvas: drag to pan
+      panFrom=toMM(e,svg); svg.setPointerCapture(e.pointerId);
+      svg.classList.add('panning'); e.preventDefault(); return;
+    }
     dragKey=k; svg.setPointerCapture(e.pointerId);
     e.preventDefault();
   });
   let dragRaf=null;
   svg.addEventListener('pointermove',e=>{
+    if(panFrom){
+      const p=toMM(e,svg);
+      panX-=p.x-panFrom.x; panY-=p.y-panFrom.y;
+      draw();
+      return;
+    }
     if(!dragKey) return;
-    const p=toMM(e,svg);
+    // the bike is drawn pitched, so undo that to get back to model coordinates
+    const p=rot(toMM(e,svg),G.AX,-curTilt);
     G[dragKey]={x:Math.round(p.x*10)/10, y:Math.round(p.y*10)/10};
     // with the lock on, the far eye follows so the shock keeps its eye to eye
     if(lockLen && (dragKey==='SE'||dragKey==='SG')){
@@ -863,6 +1008,7 @@ function initDrag(){
     });
   });
   const stop=()=>{
+    if(panFrom){ panFrom=null; svg.classList.remove('panning'); return; }
     if(!dragKey) return;
     dragKey=null;
     if(dragRaf){cancelAnimationFrame(dragRaf);dragRaf=null}
@@ -870,6 +1016,16 @@ function initDrag(){
   };
   svg.addEventListener('pointerup',stop);
   svg.addEventListener('pointercancel',stop);
+  // Non-passive so it can beat the page scroll; the document-level wheel guard
+  // further down is passive and cannot preventDefault.
+  svg.addEventListener('wheel',e=>{
+    e.preventDefault();
+    zoomBy(e.deltaY<0?1.12:1/1.12, toMM(e,svg));
+  },{passive:false});
+  const btn=(id,fn)=>{const b=document.getElementById(id); if(b) b.onclick=fn;};
+  btn('zin', ()=>zoomBy(1.25));
+  btn('zout',()=>zoomBy(1/1.25));
+  btn('zfit',()=>{zoomK=1; panX=0; panY=0; draw();});
 }
 
 /* ---------- readouts ---------- */
@@ -966,15 +1122,29 @@ function readouts(){
 function at(f,t){return f[Math.min(f.length-1,Math.max(0,Math.round(t*(f.length-1))))]}
 function pick(f,k){const v=at(f,C.sag/100)[k];return v===null||v===undefined?0:v}
 
-/* ---------- charts ---------- */
-function chart(id,key,fmt){
+/* ---------- charts ----------
+   Two at a time so each one is half the strip wide. The viewBox is rebuilt from
+   the element's own pixel box every render, so one user unit is one pixel: text
+   stays 12px whatever the chart size, and nothing is letterboxed. */
+const CHART_PAIRS=[
+  [{key:'lr',   title:'Leverage ratio',        fmt:v=>v.toFixed(2)},
+   {key:'kick', title:'Chain shortening, deg', fmt:v=>v.toFixed(1)}],
+  [{key:'as',   title:'Anti-squat, %',         fmt:v=>v.toFixed(0)},
+   {key:'ar',   title:'Anti-rise, %',          fmt:v=>v.toFixed(0)}]
+];
+let chartPage=0;
+
+function chart(id,spec){
   const svg=document.getElementById(id);
   svg.innerHTML='';
+  const r=svg.getBoundingClientRect();
+  const W=Math.max(180,Math.round(r.width)), H=Math.max(120,Math.round(r.height));
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
   if(!result||!result.frames.length) return;
+  const key=spec.key, fmt=spec.fmt;
   const f=result.frames.filter(k=>Number.isFinite(k[key]));
   if(f.length<2) return;
-  const W=300,H=250,L=48,B=28,T=30,Rp=10;
-  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  const L=54,B=34,T=28,Rp=16;
   const xs=f.map(k=>k.rise), ys=f.map(k=>k[key]);
   const x0=Math.min(...xs), x1=Math.max(...xs);
   let y0=Math.min(...ys), y1=Math.max(...ys);
@@ -983,29 +1153,42 @@ function chart(id,key,fmt){
   const X=v=>L+(v-x0)/(x1-x0||1)*(W-L-Rp);
   const Y=v=>H-B-(v-y0)/(y1-y0)*(H-B-T);
   const gg=el('g',{},svg);
-  [0,.5,1].forEach(t=>{
+  [0,.25,.5,.75,1].forEach(t=>{
     const yv=y0+(y1-y0)*t;
-    el('line',{x1:L,y1:Y(yv),x2:W-Rp,y2:Y(yv),stroke:'var(--grid2)','stroke-width':.7},gg);
-    const tx=el('text',{x:L-5,y:Y(yv)+3.5,'text-anchor':'end','font-size':12,fill:'var(--ink-soft)'},gg);
+    el('line',{x1:L,y1:Y(yv),x2:W-Rp,y2:Y(yv),stroke:'var(--grid2)','stroke-width':.8},gg);
+    const tx=el('text',{x:L-7,y:Y(yv)+4,'text-anchor':'end','font-size':12,
+      fill:'var(--ink-soft)'},gg);
     tx.textContent=fmt(yv);
   });
+  (W>340?[0,.5,1]:[0,1]).forEach(t=>{                   // travel ticks along the bottom
+    const xv=x0+(x1-x0)*t;
+    el('line',{x1:X(xv),y1:H-B,x2:X(xv),y2:H-B+4,stroke:'var(--grid2)','stroke-width':.8},gg);
+    const tx=el('text',{x:X(xv),y:H-B+18,'text-anchor':t===1?'end':(t===0?'start':'middle'),
+      'font-size':12,fill:'var(--ink-soft)'},gg);
+    tx.textContent=xv.toFixed(0)+(t===1?' mm':'');
+  });
   el('polyline',{points:f.map(k=>`${X(k.rise)},${Y(k[key])}`).join(' '),
-    fill:'none',stroke:'var(--rear)','stroke-width':2},gg);
+    fill:'none',stroke:'var(--rear)','stroke-width':2.4,'stroke-linejoin':'round'},gg);
   const s=at(result.frames,C.sag/100);
   if(s[key]!==null&&s[key]!==undefined)
-    el('circle',{cx:X(s.rise),cy:Y(s[key]),r:3.5,fill:'var(--flex)'},gg);
+    el('circle',{cx:X(s.rise),cy:Y(s[key]),r:4.5,fill:'var(--flex)'},gg);
   const cur=currentFrame();
   if(cur&&cur[key]!==null&&cur[key]!==undefined)
-    el('line',{x1:X(cur.rise),y1:T-6,x2:X(cur.rise),y2:H-B,stroke:'var(--ink-soft)',
-      'stroke-width':1,'stroke-dasharray':'3 3'},gg);
-  const t2=el('text',{x:W-Rp,y:H-9,'text-anchor':'end','font-size':12,fill:'var(--ink-soft)'},gg);
-  t2.textContent=x1.toFixed(0)+' mm';
+    el('line',{x1:X(cur.rise),y1:T-8,x2:X(cur.rise),y2:H-B,stroke:'var(--ink-soft)',
+      'stroke-width':1.2,'stroke-dasharray':'3 3'},gg);
 }
 function charts(){
-  chart('c-lr','lr',v=>v.toFixed(2));
-  chart('c-as','as',v=>v.toFixed(0));
-  chart('c-ar','ar',v=>v.toFixed(0));
-  chart('c-ck','kick',v=>v.toFixed(1));
+  const pair=CHART_PAIRS[chartPage];
+  document.getElementById('cap-a').textContent=pair[0].title;
+  document.getElementById('cap-b').textContent=pair[1].title;
+  chart('c-a',pair[0]);
+  chart('c-b',pair[1]);
+  document.querySelectorAll('#cdots i').forEach((d,i)=>
+    d.classList.toggle('on',i===chartPage));
+}
+function pageCharts(d){
+  chartPage=(chartPage+d+CHART_PAIRS.length)%CHART_PAIRS.length;
+  charts();
 }
 
 /* ---------- inputs ---------- */
@@ -1103,7 +1286,20 @@ document.getElementById('play').onclick=e=>{
     step();
   } else cancelAnimationFrame(raf);
 };
-window.addEventListener('resize',draw);
+document.getElementById('cprev').onclick=()=>pageCharts(-1);
+document.getElementById('cnext').onclick=()=>pageCharts(1);
+document.getElementById('forces').onclick=e=>{
+  showForces=!showForces; e.target.setAttribute('aria-pressed',showForces); draw();
+};
+/* Both panels fit themselves to their own pixel box, and the first paint can run
+   before the flex layout has settled, so watch the boxes rather than the window. */
+window.addEventListener('resize',()=>{draw(); charts();});
+if(window.ResizeObserver){
+  let ro=null;
+  const refit=()=>{ if(ro) return; ro=requestAnimationFrame(()=>{ro=null; draw(); charts();}); };
+  new ResizeObserver(refit).observe(document.getElementById('canvas'));
+  new ResizeObserver(refit).observe(document.getElementById('charts'));
+}
 
 try{
   fillPoints(); fillCfg(); initDrag(); recompute(false); syncPos();
