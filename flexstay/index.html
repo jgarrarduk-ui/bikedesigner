@@ -523,6 +523,17 @@ const SHOCKART={
   spring:{x:151,y:153,w:351,h:246,src:'img/shock-spring.png'},
   body:{x:502,y:0,w:296,h:399,src:'img/shock-body.png'},
 };
+/* Rigid, single-anchor artwork like the fork lowers: one pixel anchor onto a
+   model point, oriented from the frame's own axis/perp vectors, never stretched. */
+const STEMART={
+  w:922, h:676, bore:[651,331],
+  mmPerPx:0.0819,          // calibrated against a 28.6mm (1-1/8") steerer clamp bore
+  src:'img/stem.png'
+};
+const WHEELART={
+  w:1390, h:1372, hub:[695,686], nativeR:690,
+  src:'img/wheel.png'
+};
 
 const MIRROR_FORK=false;   // arch sweeps rearward, decals read correctly
 const SVG='http://www.w3.org/2000/svg';
@@ -656,17 +667,15 @@ function draw(){
   line({x:VIEW.x0,y:ground},{x:VIEW.x0+VIEW.w,y:ground},'#aab6bd',3);
 
   /* ---- wheels ---- */
-  const wheel=(c,R)=>{
-    ring(c,R-24,'#39424a',48);                     // tyre
-    ring(c,R-56,'#9aa3ab',12);                     // rim
-    for(let i=0;i<16;i++){
-      const t=i*Math.PI/8;
-      line({x:c.x+Math.cos(t)*22,y:c.y+Math.sin(t)*22},
-           {x:c.x+Math.cos(t)*(R-58),y:c.y+Math.sin(t)*(R-58)},'#b6bec5',2.5);
-    }
-    ring(c,16,'#6c757d',9);
+  /* Artwork is isotropic (round), so it just scales to whatever radius the
+     current rim+tyre combination gives — no rotation needed. */
+  const wheelArt=(c,R)=>{
+    const s=R/WHEELART.nativeR;
+    const wm=[s,0,0,s, c.x-s*WHEELART.hub[0], c.y-s*WHEELART.hub[1]];
+    const wg=el('g',{transform:`matrix(${wm.map(v=>v.toFixed(6)).join(' ')})`},g);
+    el('image',{href:WHEELART.src,x:0,y:0,width:WHEELART.w,height:WHEELART.h},wg);
   };
-  wheel(f.AX,F.Rr); wheel(F.FA,F.Rf);
+  wheelArt(f.AX,F.Rr); wheelArt(F.FA,F.Rf);
 
   /* ---- drivetrain ---- */
   const rc=C.ring*P/(2*Math.PI), rg=C.cog*P/(2*Math.PI);
@@ -697,8 +706,18 @@ function draw(){
   const fg=el('g',{transform:`matrix(${fm.map(v=>v.toFixed(6)).join(' ')})`},g);
   el('image',{href:K.src,x:0,y:0,width:K.w,height:K.h},fg);
   // cockpit
-  tubes([[F.htTop,F.steerTop,22],[F.steerTop,F.bar,18]],'#b9c0c6','#7b848c');
-  line(add(F.bar,{x:-58,y:10}),add(F.bar,{x:34,y:26}),'#39424a',20);
+  tubes([[F.htTop,F.steerTop,22]],'#b9c0c6','#7b848c');   // headset/steerer stack
+  /* Source art is a plan-view stem icon (bore on the right, faceplate bolts on
+     the left) repurposed for this side elevation: pixel-x is the reach length
+     (bore anchor -> bar), mirrored because the bolts sit at lower pixel-x but
+     the bar sits in the +perp direction; pixel-y just carries the icon's other
+     dimension along the steerer axis so it sits at the right scale. */
+  const SA=STEMART, ss=SA.mmPerPx;
+  const sm=[-ss*fp.x, -ss*fp.y, ss*fu.x, ss*fu.y,
+            F.steerTop.x-(-ss*SA.bore[0]*fp.x + ss*SA.bore[1]*fu.x),
+            F.steerTop.y-(-ss*SA.bore[0]*fp.y + ss*SA.bore[1]*fu.y)];
+  const sg2=el('g',{transform:`matrix(${sm.map(v=>v.toFixed(6)).join(' ')})`},g);
+  el('image',{href:SA.src,x:0,y:0,width:SA.w,height:SA.h},sg2);
 
   /* ---- front triangle ---- */
   const seatTop=F.ST, post=add(seatTop,mul(unit(sub(seatTop,BB)),150));
