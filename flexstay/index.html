@@ -728,8 +728,11 @@ function draw(){
   svg.setAttribute('viewBox',`${VIEW.x0} ${-(VIEW.y0+VIEW.h)} ${VIEW.w} ${VIEW.h}`);
   svg.innerHTML='';
   const root=el('g',{transform:'scale(1,-1)'},svg);   // y up, millimetres
-  // The bike itself is pitched about the rear axle so both wheels reach the
-  // ground line; the ground and grid stay level inside root.
+  /* Paint order matters: grid, then ground, then the bike on top of both. The
+     bike is pitched about the rear axle so both wheels reach the ground line;
+     the grid and ground stay level in root. */
+  const grid=el('g',{},root);
+  const groundG=el('g',{},root);
   const tiltDeg=tilt*180/Math.PI;
   const g=el('g',Math.abs(tiltDeg)>1e-9
       ? {transform:`rotate(${tiltDeg.toFixed(5)} ${G.AX.x} ${G.AX.y})`} : {},root);
@@ -737,7 +740,6 @@ function draw(){
   // Grid and ground follow the view, with a margin so panning never runs them out.
   const gx0=Math.floor((VIEW.x0-VIEW.w)/100)*100, gx1=Math.ceil((VIEW.x0+2*VIEW.w)/100)*100;
   const gy0=Math.floor((VIEW.y0-VIEW.h)/100)*100, gy1=Math.ceil((VIEW.y0+2*VIEW.h)/100)*100;
-  const grid=el('g',{},root);
   for(let x=gx0;x<=gx1;x+=100)
     el('line',{x1:x,y1:gy0,x2:x,y2:gy1,stroke:'var(--grid)','stroke-width':mmPerPx},grid);
   for(let y=gy0;y<=gy1;y+=100)
@@ -759,8 +761,8 @@ function draw(){
 
   /* ---- ground ---- (level, in root: the bike is what pitches, not the ground) */
   el('rect',{x:gx0,y:gy0,width:gx1-gx0,height:Math.max(0,ground-gy0),
-    fill:'#e2e7ea'},root);
-  el('line',{x1:gx0,y1:ground,x2:gx1,y2:ground,stroke:'#aab6bd','stroke-width':3},root);
+    fill:'#e2e7ea'},groundG);
+  el('line',{x1:gx0,y1:ground,x2:gx1,y2:ground,stroke:'#aab6bd','stroke-width':3},groundG);
 
   /* ---- wheels ---- */
   /* Artwork is isotropic (round), so it just scales to whatever radius the
@@ -899,39 +901,45 @@ function draw(){
   el('image',{href:SD.src,x:0,y:0,width:SD.w,height:SD.h},sdg);
 
   /* ---- pivots ----
-     The visible ring stays the same size on screen whatever the zoom, and the
-     invisible hit target is a fat HIT_PX circle drawn last so nothing decorative
-     sits on top of it and swallows the pointer. */
-  const HIT_PX=18;                            // radius in screen pixels, zoom independent
-  const hitR=Math.max(10,HIT_PX*mmPerPx);
-  const rr=Math.max(6,12*mmPerPx), rd=Math.max(2.5,4.5*mmPerPx);
-  const grab=(p,key,parent)=>{
-    const c=el('circle',{cx:p.x,cy:p.y,r:hitR,fill:'transparent',class:'drag'},parent||g);
+     The marker keeps its drawn size. Only the invisible grab target scales, up
+     to a comfortable HIT_PX radius on screen — but never so far that it covers
+     the pivot next door, or zoomed out you would grab the wrong one. */
+  const HIT_PX=18;
+  const top = !result.frames.length || f===result.frames[0];
+  const marks=[[G.MP,'var(--rear)','MP'],[G.SP,'var(--link)','SP'],[G.SG,'var(--shock)','SG'],
+               [f.LP,'var(--link)',top?'LP':null],[f.SE,'var(--shock)',top?'SE':null],
+               [f.AX,'var(--rear)',top?'AX':null]];
+  const ghosts = top?[] : [['LP','var(--link)'],['SE','var(--shock)'],['AX','var(--rear)']];
+  const grabPts=[...marks.filter(m=>m[2]).map(m=>m[0]), ...ghosts.map(([k])=>G[k])];
+  // Each target is capped at half the gap to its own nearest neighbour, so a
+  // crowded pair like the shock eye and the link stays tight while everything
+  // else gets the full fat target. Centres are never covered either way.
+  const hitFor=p=>{
+    let nearest=Infinity;
+    for(const q of grabPts){
+      const d=dist(p,q);
+      if(d>1e-6 && d<nearest) nearest=d;      // coincident points cannot be told apart anyway
+    }
+    return Math.max(14, Math.min(HIT_PX*mmPerPx, nearest*0.5));
+  };
+  const grab=(p,key)=>{
+    const c=el('circle',{cx:p.x,cy:p.y,r:hitFor(p),fill:'transparent',class:'drag'},g);
     c.dataset.key=key; return c;
   };
-  const mark=(p,col,key)=>{
-    el('circle',{cx:p.x,cy:p.y,r:rr,fill:'#fff',stroke:col,'stroke-width':rr*0.36,
+  marks.forEach(([p,col,key])=>{
+    el('circle',{cx:p.x,cy:p.y,r:14,fill:'#fff',stroke:col,'stroke-width':5,
       'pointer-events':'none'},g);
-    el('circle',{cx:p.x,cy:p.y,r:rd,fill:col,'pointer-events':'none'},g);
+    el('circle',{cx:p.x,cy:p.y,r:5,fill:col,'pointer-events':'none'},g);
     if(key) grab(p,key);
-  };
-  const top = !result.frames.length || f===result.frames[0];
-  mark(G.MP,'var(--rear)','MP'); mark(G.SP,'var(--link)','SP');
-  mark(G.SG,'var(--shock)','SG');
-  mark(f.LP,'var(--link)', top?'LP':null);
-  mark(f.SE,'var(--shock)', top?'SE':null);
-  mark(f.AX,'var(--rear)', top?'AX':null);
-  if(!top){
-    // off top-out the live points are driven by the solver, so the ghost at the
-    // un-compressed position is what you grab to move them
-    [['LP','var(--link)'],['SE','var(--shock)'],['AX','var(--rear)']]
-      .forEach(([k,col])=>{
-        el('circle',{cx:G[k].x,cy:G[k].y,r:rr,fill:'none',stroke:col,
-          'stroke-width':rr*0.22,'stroke-dasharray':`${rr*0.45} ${rr*0.38}`,opacity:.8,
-          'pointer-events':'none'},g);
-        grab(G[k],k);
-      });
-  }
+  });
+  // off top-out the live points are driven by the solver, so the ghost at the
+  // un-compressed position is what you grab to move them
+  ghosts.forEach(([k,col])=>{
+    el('circle',{cx:G[k].x,cy:G[k].y,r:14,fill:'none',stroke:col,
+      'stroke-width':3,'stroke-dasharray':'6 5',opacity:.8,
+      'pointer-events':'none'},g);
+    grab(G[k],k);
+  });
 
   /* ---- force vectors ----
      Resolved for the frame being drawn, so they grow, shrink and swing round as
