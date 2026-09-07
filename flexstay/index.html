@@ -140,6 +140,7 @@ svg text{font-family:var(--mono)}
   <label><span>Seat angle</span><input type="number" id="sa" step="0.5"></label>
   <label><span>Seat tube length</span><input type="number" id="st" step="5"></label>
   <label><span>Top tube drop at seat tube</span><input type="number" id="ttDrop" step="5"></label>
+  <label><span>Bottom bracket height</span><input type="number" id="bbh" step="1"></label>
   <label><span>Bottom bracket drop</span><input type="number" id="drop" step="1"></label>
 
   <h2>Cockpit</h2>
@@ -149,7 +150,8 @@ svg text{font-family:var(--mono)}
   <h2>Wheels</h2>
   <label><span>Rear wheel</span><select id="rw"><option value="559">26 in</option><option value="584">27.5 in</option><option value="622">29 in</option><option value="686">32 in</option></select></label>
   <label><span>Front wheel</span><select id="fw"><option value="559">26 in</option><option value="584">27.5 in</option><option value="622">29 in</option><option value="686">32 in</option></select></label>
-  <label><span>Tyre height</span><input type="number" id="tyre" step="1"></label>
+  <label><span>Rear tyre height</span><input type="number" id="tyreR" step="1"></label>
+  <label><span>Front tyre height</span><input type="number" id="tyreF" step="1"></label>
 
   <h2>Transmission</h2>
   <label><span>Chainring teeth</span><input type="number" id="ring" step="1"></label>
@@ -348,7 +350,7 @@ function solveCage(BB, rc, AXp, rg, guide, cage, total){
 
 function sweep(g,cfg,n=61){
   const rc=cfg.ring*P/(2*Math.PI), rg=cfg.cog*P/(2*Math.PI);
-  const Rr=cfg.rw/2 + cfg.tyre;   // rim bead diameter plus tyre height
+  const Rr=cfg.rw/2 + cfg.tyreR;  // rim bead diameter plus tyre height
   const base=chainRun({x:0,y:0},rc,g.AX,rg);
   const out=[]; let prev=null;
   for(let i=0;i<=n;i++){
@@ -420,18 +422,6 @@ function pivotForces(g,f,Fw){
          flex:V(x[2],x[3]), main:V(x[4],x[5])}};
 }
 
-/* With mixed wheel sizes the two contact points sit at different heights, so the
-   bike is pitched on the ground. This is the rotation about the rear axle that
-   puts both wheels on one ground line. It is exactly zero when the axle heights
-   and radii already agree, which is what keeps the validated numbers still. */
-function groundTilt(rearAxle,frontAxle,Rr,Rf){
-  const dx=frontAxle.x-rearAxle.x, dy=frontAxle.y-rearAxle.y;
-  const L=Math.hypot(dx,dy);
-  if(L<1e-9) return 0;
-  const s=(Rf-Rr)/L;
-  if(Math.abs(s)>1) return 0;                  // wheels too big to both touch
-  return Math.asin(s)-Math.atan2(dy,dx);
-}
 
 /* The stay is built in at the dropout and effectively pinned at the shock-link end,
    so it is a propped cantilever taking an imposed end rotation. Moment varies
@@ -495,8 +485,8 @@ const DEF={
          AX:{x:-452.5,y:29.4} },
   cfg:{ eye:230, stroke:65, zone:531, bendR:115, bendA:42, bendStart:50, leanEnd:55, leanA:8, dropZ:72.5, yokeZ:16.5, peakG:3, od:16, wall:0.9, ring:32, cog:21,
         mass:85, bias:58, cogh:1057, sag:30, fsag:20, fax:828.9,
-        rw:622, fw:622, tyre:58.4, reach:475.2, stack:617.3, ha:63.3, htl:120,
-        sa:76, st:430, ttDrop:90, drop:29.4, a2c:571, hsLower:0, offset:44, forkTravel:160,
+        rw:622, fw:622, tyreR:58.4, tyreF:58.4, reach:475.2, stack:625.4, ha:63.3, htl:120,
+        sa:76, st:430, ttDrop:90, bbh:340, drop:29.4, a2c:571, hsLower:0, offset:44, forkTravel:160,
         stemL:45, stemH:30, links:124, cage:62 }
 };
 let G=structuredClone(DEF.geom), C=structuredClone(DEF.cfg);
@@ -508,6 +498,33 @@ const PTS=[
   ['SE','Shock eye','var(--shock)'], ['SG','Shock, frame','var(--shock)'],
   ['AX','Rear axle','var(--rear)']
 ];
+
+/* ---------- the geometry chain ----------
+   Built from the ground up. The ground plane is the datum and both wheels sit on
+   it, so each axle height is just its own radius above the ground. The bottom
+   bracket is the x datum, at bbh above the ground. The head tube position then
+   follows from head angle, fork offset, axle to crown, lower headset stack and
+   reach — which makes stack an output, not an input.
+
+   Two pairs are written both ways, so you can type either side and the other
+   solves back: bottom bracket height against drop, and stack against head tube
+   length. `driver` names the box that was just typed. */
+function syncGeom(driver){
+  const ha=C.ha*Math.PI/180, s=Math.sin(ha), cs=Math.cos(ha);
+  const Rf=C.fw/2+C.tyreF, Rr=C.rw/2+C.tyreR;
+  if(driver==='drop') C.bbh=Rr-C.drop;
+  C.drop=Rr-C.bbh;                                   // drop is a consequence of the rear wheel
+  const along=Math.sqrt(Math.max(0,C.a2c*C.a2c-C.offset*C.offset));
+  const faY=Rf-C.bbh;                                // front wheel on the ground
+  if(driver==='stack')
+    C.htl=Math.max(40,(C.stack-faY+cs*C.offset)/s-C.hsLower-along);
+  C.stack=faY+s*(C.htl+C.hsLower+along)-cs*C.offset;
+  // the rear wheel sits on the same ground plane; the flex pivot rides with it
+  // when the two are concentric, which is the usual flex-stay layout
+  const axY=Rr-C.bbh;
+  const concentric=Math.abs(G.FP.y-G.AX.y)<1e-9 && Math.abs(G.FP.x-G.AX.x)<1e-9;
+  G.AX.y=axY; if(concentric) G.FP.y=axY;
+}
 
 /* ---------- derived frame points ---------- */
 function frame(comp){
@@ -527,7 +544,7 @@ function frame(comp){
   const steerTop=add(htTop, mul(axis,-C.stemH));
   const bar=add(steerTop, mul(perp, C.stemL));
   return {htTop, htBot, FA, axis, perp, crown, steerTop, bar,
-    Rf:C.fw/2+C.tyre, Rr:C.rw/2+C.tyre,
+    Rf:C.fw/2+C.tyreF, Rr:C.rw/2+C.tyreR,
     ST:{x:-Math.cos(C.sa*Math.PI/180)*C.st, y:Math.sin(C.sa*Math.PI/180)*C.st}};
 }
 
@@ -663,7 +680,7 @@ function el(tag,attrs,parent){
    little; the crop is capped so a tall narrow canvas does not slice the frame. */
 let VIEW={x0:-880,y0:-395,w:2130,h:1120};   // last fit, read by the grid, ground and hit radius
 let zoomK=1, panX=0, panY=0, lastBox=null, mmPerPx=1;
-let curTilt=0, showForces=false;             // pitch as drawn; force arrows are off by default
+let showForces=false;                        // force arrows are off by default
 const MAXCROP=0.18;                          // never lose more than this fraction of the width
 function fitView(svg,box){
   const r=svg.getBoundingClientRect();
@@ -696,7 +713,7 @@ function toMM(evt,svg){
 // canvas still shows what you are dragging instead of going blank.
 function topFrame(){
   return {phi:0, FP:G.FP, AX:G.AX, LP:G.LP, SE:G.SE, stroke:0, rise:0,
-          shock:dist(G.SE,G.SG), CP:{x:G.AX.x, y:G.AX.y-(C.rw/2+C.tyre)},
+          shock:dist(G.SE,G.SG), CP:{x:G.AX.x, y:G.AX.y-(C.rw/2+C.tyreR)},
           as:null, ar:null, kick:null, flex:0, lr:null};
 }
 function currentFrame(){
@@ -717,18 +734,12 @@ function draw(){
               : (n>1 ? result.frames.indexOf(f)/(n-1) : 0);
   const tFront = holdSag ? C.fsag/100 : (tRear<0?0:tRear);
   const F=frame(C.forkTravel*Math.max(0,Math.min(1,tFront)));
-  const ground=G.AX.y-(C.rw/2+C.tyre);           // fixed: both wheels rise from it
+  const ground=-C.bbh;                           // the datum: both wheels sit on it
   const BB={x:0,y:0};
   const seatTop=F.ST, post=add(seatTop,mul(unit(sub(seatTop,BB)),150));
-  // pitch is taken at top out so the bike does not rock as the suspension cycles
-  const tilt=groundTilt(G.AX,frame(0).FA,F.Rr,F.Rf);
-  curTilt=tilt;                                  // the drag handler undoes it
-  const tiltPt=p=>rot(p,G.AX,tilt);
-
   // Fit the view to the bike itself, wheels and cockpit included.
-  const fa=tiltPt(F.FA), rx=tiltPt(f.AX);
-  const xs=[rx.x-F.Rr, rx.x+F.Rr, fa.x-F.Rf, fa.x+F.Rf];
-  const ys=[ground, tiltPt(F.steerTop).y+70, tiltPt(post).y+90];
+  const xs=[f.AX.x-F.Rr, f.AX.x+F.Rr, F.FA.x-F.Rf, F.FA.x+F.Rf];
+  const ys=[ground, F.steerTop.y+70, post.y+90];
   const bx0=Math.min(...xs), bx1=Math.max(...xs);
   const by0=Math.min(...ys), by1=Math.max(...ys);
   lastBox={cx:(bx0+bx1)/2, cy:(by0+by1)/2, w:bx1-bx0, h:by1-by0};
@@ -736,14 +747,10 @@ function draw(){
   svg.setAttribute('viewBox',`${VIEW.x0} ${-(VIEW.y0+VIEW.h)} ${VIEW.w} ${VIEW.h}`);
   svg.innerHTML='';
   const root=el('g',{transform:'scale(1,-1)'},svg);   // y up, millimetres
-  /* Paint order matters: grid, then ground, then the bike on top of both. The
-     bike is pitched about the rear axle so both wheels reach the ground line;
-     the grid and ground stay level in root. */
+  // Paint order matters: grid, then ground, then the bike on top of both.
   const grid=el('g',{},root);
   const groundG=el('g',{},root);
-  const tiltDeg=tilt*180/Math.PI;
-  const g=el('g',Math.abs(tiltDeg)>1e-9
-      ? {transform:`rotate(${tiltDeg.toFixed(5)} ${G.AX.x} ${G.AX.y})`} : {},root);
+  const g=el('g',{},root);
 
   // Grid and ground follow the view, with a margin so panning never runs them out.
   const gx0=Math.floor((VIEW.x0-VIEW.w)/100)*100, gx1=Math.ceil((VIEW.x0+2*VIEW.w)/100)*100;
@@ -1006,8 +1013,7 @@ function initDrag(){
       return;
     }
     if(!dragKey) return;
-    // the bike is drawn pitched, so undo that to get back to model coordinates
-    const p=rot(toMM(e,svg),G.AX,-curTilt);
+    const p=toMM(e,svg);
     G[dragKey]={x:Math.round(p.x*10)/10, y:Math.round(p.y*10)/10};
     // with the lock on, the far eye follows so the shock keeps its eye to eye
     if(lockLen && (dragKey==='SE'||dragKey==='SG')){
@@ -1069,9 +1075,10 @@ function readouts(){
         Math.abs(eyeNow-C.eye)>2?'warn':'')+
     row('Swingarm rotation', (Math.abs(last.phi)*180/Math.PI).toFixed(1)+'°')+
     row('Rear centre', Math.abs(first.AX.x).toFixed(0)+' mm')+
-    row('Bottom bracket height', ((C.rw/2+C.tyre)-G.AX.y).toFixed(0)+' mm')+
+    row('Bottom bracket height', C.bbh.toFixed(0)+' mm')+
     row('Wheelbase', (frame(0).FA.x-first.AX.x).toFixed(0)+' mm')+
-    frontGapRows();
+    row('Stack, derived', C.stack.toFixed(1)+' mm')+
+    row('Bottom bracket drop', C.drop.toFixed(1)+' mm');
 
   const fl=f.map(k=>k.flex);
   const peak=fl.reduce((a,b)=>Math.abs(b)>Math.abs(a)?b:a,0);
@@ -1135,26 +1142,6 @@ function readouts(){
     row('Shock link', (P2.link/1000).toFixed(2)+' kN')+
     row('Shock', (P2.shock/1000).toFixed(2)+' kN')
     : row('Solver','no solution','warn');
-}
-/* Two independent chains of inputs each imply a ground line: the rear via bottom
-   bracket drop plus the rear radius, the front via stack, head angle, head tube,
-   lower headset stack, axle to crown and offset. Nothing forces them to agree, so
-   report the disagreement and the axle to crown that would close it. */
-function frontGapRows(){
-  const F=frame(0);
-  const gap=(F.FA.y-F.Rf)-(G.AX.y-F.Rr);          // + front wheel high, - buried
-  const level=Math.abs(gap)<0.05;
-  const txt=level?'level':(gap<0?Math.abs(gap).toFixed(1)+' mm low'
-                                :gap.toFixed(1)+' mm high');
-  let out=row('Front wheel vs ground', txt, level?'good':'warn');
-  if(!level){
-    const ha=C.ha*Math.PI/180, s=Math.sin(ha), cs=Math.cos(ha);
-    const want=G.AX.y-F.Rr+F.Rf;                  // height that lands it on the ground
-    const along=(C.stack-s*(C.htl+C.hsLower)+cs*C.offset-want)/s;
-    if(along>0)
-      out+=row('Axle to crown to level', Math.hypot(along,C.offset).toFixed(0)+' mm');
-  }
-  return out;
 }
 function at(f,t){return f[Math.min(f.length-1,Math.max(0,Math.round(t*(f.length-1))))]}
 function pick(f,k){const v=at(f,C.sag/100)[k];return v===null||v===undefined?0:v}
@@ -1261,6 +1248,15 @@ function fillPoints(){
   });
   fillPoints();
 }
+/* Write the solved-back side of each two-way pair into its box, but never the box
+   being typed in — that would fight the cursor. */
+function refreshDerived(skip){
+  ['stack','htl','bbh','drop'].forEach(id=>{
+    if(id===skip) return;
+    const e=document.getElementById(id);
+    if(e) e.value=Math.round(C[id]*10)/10;
+  });
+}
 function fillCfg(){
   Object.keys(C).forEach(k=>{
     const inp=document.getElementById(k);
@@ -1269,11 +1265,8 @@ function fillCfg(){
     inp.onchange=inp.oninput=()=>{
       const v=parseFloat(inp.value); if(isNaN(v)) return;
       C[k]=v;
-      if(k==='drop'){                       // bottom bracket drop moves the rear axle
-        const wasConcentric=Math.abs(G.FP.y-G.AX.y)<1e-9 && Math.abs(G.FP.x-G.AX.x)<1e-9;
-        G.AX.y=v; if(wasConcentric) G.FP.y=v;
-        fillPoints();
-      }
+      syncGeom(k);                          // k names the box that was just typed
+      refreshDerived(k); fillPoints();
       recompute(false);
     };
   });
@@ -1307,7 +1300,7 @@ document.getElementById('showsag').onclick=e=>{
 document.getElementById('datum').onchange=fillPoints;
 document.getElementById('reset').onclick=()=>{
   G=structuredClone(DEF.geom); C=structuredClone(DEF.cfg);
-  fillPoints(); fillCfg(); posT=0; holdSag=false; syncPos(); recompute();
+  syncGeom(); fillPoints(); fillCfg(); posT=0; holdSag=false; syncPos(); recompute();
 };
 let raf=null, dir=1;
 document.getElementById('play').onclick=e=>{
@@ -1339,7 +1332,7 @@ if(window.ResizeObserver){
 }
 
 try{
-  fillPoints(); fillCfg(); initDrag(); recompute(false); syncPos();
+  syncGeom(); fillPoints(); fillCfg(); initDrag(); recompute(false); syncPos();
 }catch(err){
   const m=document.getElementById('msg');
   m.textContent='Start-up failed: '+err.message; m.className='on';

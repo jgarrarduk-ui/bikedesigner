@@ -41,12 +41,36 @@ their pivots.
 Coordinates are millimetres, origin at the bottom bracket, x forward, y up. The
 drawing group applies `scale(1,-1)` so the SVG is y-down inside a y-up model.
 
-Inside that flipped group the ground and grid live in `root`, and the bike lives
-in a nested group rotated by `groundTilt()` about the rear axle. Head and seat
-angles are still absolute against a level datum, so the pitch is presentational:
-it puts both wheels on the ground line without moving any of the numbers. Anti-
-squat and bottom bracket height are still measured in the untilted frame — with
-mixed wheel sizes they are the as-built figures, not the as-ridden ones.
+## The geometry chain
+
+Built from the ground up, in `syncGeom()`. The ground plane is the datum and both
+wheels sit on it, so each axle height is just its own radius above the ground —
+the bike is level by construction and never pitches. The bottom bracket is the x
+datum at `bbh` above the ground. The head tube position follows from head angle,
+fork offset, axle to crown, lower headset stack and reach, which makes **stack an
+output**.
+
+Two pairs are written both ways, and `syncGeom(driver)` takes the name of the box
+just typed so it knows which way to solve:
+
+| type this | and this solves back |
+|---|---|
+| bottom bracket height | drop (`Rr − bbh`) |
+| drop | bottom bracket height |
+| head tube length | stack |
+| stack | head tube length |
+
+Consequences worth knowing. Head and seat angles are absolute against the ground
+and stay exactly as typed whatever the wheels do — swapping the rear wheel moves
+**drop**, not the angles. Anti-squat turns out to be almost completely insensitive
+to rear wheel diameter at fixed bottom bracket height (112.8 → 113.0 → 112.3 across
+26in to 32in), because the contact patch, chainring and main pivot all stay put and
+only the small cog moves. That is not the same comparison as a real mullet
+conversion, where the frame is fixed and the bottom bracket drops instead.
+
+Axle to crown is measured to the crown race seat, so `hsLower` sits between it and
+the bottom of the head tube: external cup 12-13mm, zero stack a few mm for the
+crown race alone.
 
 ## Validated against Linkage X3
 
@@ -108,9 +132,15 @@ grabbable at any zoom. The decorative ring and dot carry `pointer-events:none` a
 the handler uses `closest('.drag')` — before that, a click on the exact centre of a
 pivot hit the decorative dot, which has no `dataset.key`, and silently did nothing.
 
-**Drags run through the pitch.** `toMM` returns root-frame millimetres, so the
-pointer is rotated back by `-curTilt` about the rear axle before it is written to
-`G`. Without it a mullet setup puts the point a few millimetres off the cursor.
+**The rear axle height is derived, not dragged.** `syncGeom()` sets `G.AX.y` from
+`Rr − bbh` on every input change, and carries `G.FP` with it while the two are
+concentric. Dragging the rear axle vertically is therefore overwritten on the next
+config change — change bottom bracket height or drop instead.
+
+**Anti-squat reads `cfg.fax`, which `recompute()` overwrites** with `frame(0).FA.x`.
+The test suite calls `sweep()` on `DEF.cfg` directly and never calls `recompute()`,
+so `DEF.cfg.fax` has to be kept in step with the default geometry or the tests and
+the app validate different numbers.
 
 ## Stay structure
 
