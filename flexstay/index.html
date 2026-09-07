@@ -125,8 +125,12 @@ svg text{font-family:var(--mono)}
   <h2>Fork</h2>
   <label><span>Travel</span><input type="number" id="forkTravel" step="5"></label>
   <label><span>Axle to crown, extended</span><input type="number" id="a2c" step="5"></label>
+  <label><span>Lower headset stack</span><input type="number" id="hsLower" step="0.5"></label>
   <label><span>Offset</span><input type="number" id="offset" step="1"></label>
   <label><span>Front sag, % of travel</span><input type="number" id="fsag" step="1"></label>
+  <p class="note">Axle to crown is measured to the crown race seat, so the lower
+  headset stack sits between it and the head tube. External cup 12&ndash;13mm, zero
+  stack a few mm for the crown race alone.</p>
 
   <h2>Frame</h2>
   <label><span>Reach</span><input type="number" id="reach" step="5"></label>
@@ -492,7 +496,7 @@ const DEF={
   cfg:{ eye:230, stroke:65, zone:531, bendR:115, bendA:42, bendStart:50, leanEnd:55, leanA:8, dropZ:72.5, yokeZ:16.5, peakG:3, od:16, wall:0.9, ring:32, cog:21,
         mass:85, bias:58, cogh:1057, sag:30, fsag:20, fax:828.9,
         rw:622, fw:622, tyre:58.4, reach:475.2, stack:617.3, ha:63.3, htl:120,
-        sa:76, st:430, ttDrop:90, drop:29.4, a2c:571, offset:44, forkTravel:160,
+        sa:76, st:430, ttDrop:90, drop:29.4, a2c:571, hsLower:0, offset:44, forkTravel:160,
         stemL:45, stemH:30, links:124, cage:62 }
 };
 let G=structuredClone(DEF.geom), C=structuredClone(DEF.cfg);
@@ -514,8 +518,12 @@ function frame(comp){
   const perp={x:-axis.y, y:axis.x};                    // perpendicular, forward and up
   const a2c=Math.max(60, C.a2c-(comp||0));             // fork shortens as it compresses
   const along=Math.sqrt(Math.max(0,a2c*a2c-C.offset*C.offset));
-  const FA=add(add(htBot, mul(axis,along)), mul(perp, C.offset));
-  const crown=add(htBot, mul(axis,46));
+  /* Axle to crown is measured to the crown race seat, which does not sit at the
+     bottom of the head tube: the lower headset stack is in between. External cup
+     is 12-13mm, zero stack still a few mm for the crown race itself. */
+  const raceSeat=add(htBot, mul(axis,C.hsLower));
+  const FA=add(add(raceSeat, mul(axis,along)), mul(perp, C.offset));
+  const crown=add(raceSeat, mul(axis,46));
   const steerTop=add(htTop, mul(axis,-C.stemH));
   const bar=add(steerTop, mul(perp, C.stemL));
   return {htTop, htBot, FA, axis, perp, crown, steerTop, bar,
@@ -1062,7 +1070,8 @@ function readouts(){
     row('Swingarm rotation', (Math.abs(last.phi)*180/Math.PI).toFixed(1)+'°')+
     row('Rear centre', Math.abs(first.AX.x).toFixed(0)+' mm')+
     row('Bottom bracket height', ((C.rw/2+C.tyre)-G.AX.y).toFixed(0)+' mm')+
-    row('Wheelbase', (frame(0).FA.x-first.AX.x).toFixed(0)+' mm');
+    row('Wheelbase', (frame(0).FA.x-first.AX.x).toFixed(0)+' mm')+
+    frontGapRows();
 
   const fl=f.map(k=>k.flex);
   const peak=fl.reduce((a,b)=>Math.abs(b)>Math.abs(a)?b:a,0);
@@ -1126,6 +1135,26 @@ function readouts(){
     row('Shock link', (P2.link/1000).toFixed(2)+' kN')+
     row('Shock', (P2.shock/1000).toFixed(2)+' kN')
     : row('Solver','no solution','warn');
+}
+/* Two independent chains of inputs each imply a ground line: the rear via bottom
+   bracket drop plus the rear radius, the front via stack, head angle, head tube,
+   lower headset stack, axle to crown and offset. Nothing forces them to agree, so
+   report the disagreement and the axle to crown that would close it. */
+function frontGapRows(){
+  const F=frame(0);
+  const gap=(F.FA.y-F.Rf)-(G.AX.y-F.Rr);          // + front wheel high, - buried
+  const level=Math.abs(gap)<0.05;
+  const txt=level?'level':(gap<0?Math.abs(gap).toFixed(1)+' mm low'
+                                :gap.toFixed(1)+' mm high');
+  let out=row('Front wheel vs ground', txt, level?'good':'warn');
+  if(!level){
+    const ha=C.ha*Math.PI/180, s=Math.sin(ha), cs=Math.cos(ha);
+    const want=G.AX.y-F.Rr+F.Rf;                  // height that lands it on the ground
+    const along=(C.stack-s*(C.htl+C.hsLower)+cs*C.offset-want)/s;
+    if(along>0)
+      out+=row('Axle to crown to level', Math.hypot(along,C.offset).toFixed(0)+' mm');
+  }
+  return out;
 }
 function at(f,t){return f[Math.min(f.length-1,Math.max(0,Math.round(t*(f.length-1))))]}
 function pick(f,k){const v=at(f,C.sag/100)[k];return v===null||v===undefined?0:v}
