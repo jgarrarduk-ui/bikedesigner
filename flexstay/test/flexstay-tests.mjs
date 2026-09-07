@@ -4,7 +4,21 @@ const eng=src.split('// ==ENGINE-START==')[1].replace(/^[^\n]*/,'').split('// ==
 const m=new Function(eng+'\nreturn {solve,sweep,pivotForces,stayLoads,dist,circles,chainRun};')();
 const defs=src.split('const DEF=')[1].split('};')[0]+'}';
 const DEF=new Function('return '+defs)();
-const G=structuredClone(DEF.geom), C=structuredClone(DEF.cfg);
+
+/* The Linkage X3 validation belongs to the solver, not to whatever the app
+   currently ships as its defaults. This is the geometry those four numbers were
+   measured against, frozen here so the defaults can change without quietly
+   invalidating them. Do not edit it to make a test pass. */
+const REF={
+  geom:{ MP:{x:-2.5,y:66.4}, SP:{x:52.8,y:112.5}, FP:{x:-452.5,y:29.4},
+         LP:{x:6.9,y:271.8}, SE:{x:1.6,y:293.9}, SG:{x:229.8,y:322.1},
+         AX:{x:-452.5,y:29.4} },
+  cfg:{ eye:230, stroke:65, zone:531, bendR:115, bendA:42, bendStart:50,
+        leanEnd:55, leanA:8, dropZ:72.5, yokeZ:16.5, peakG:3, od:16, wall:0.9,
+        ring:32, cog:21, mass:85, bias:58, cogh:1057, sag:30, fsag:20, fax:828.9,
+        rw:622, fw:622, tyreR:58.4, tyreF:58.4, links:124, cage:62 }
+};
+const G=structuredClone(REF.geom), C=structuredClone(REF.cfg);
 let fails=0;
 const ok=(name,cond,info='')=>{console.log((cond?'  pass  ':'  FAIL  ')+name+(info?'   '+info:''));if(!cond)fails++};
 
@@ -112,3 +126,13 @@ ok('cage motion is monotonic through the stroke', cageMono);
 
 console.log(fails? '\n'+fails+' FAILURES' : '\nall checks pass');
 process.exit(fails?1:0);
+
+/* The frozen reference above is what the Linkage numbers are checked against, so
+   the shipped defaults need their own check that they still solve at all. */
+const shipped=m.sweep(structuredClone(DEF.geom),structuredClone(DEF.cfg));
+ok('shipped defaults sweep without jamming', !shipped.error, shipped.error||'');
+ok('shipped defaults give sane travel',
+   shipped.frames.length>2 && shipped.frames[shipped.frames.length-1].rise>50
+   && shipped.frames[shipped.frames.length-1].rise<250,
+   shipped.frames.length>2?shipped.frames[shipped.frames.length-1].rise.toFixed(1)+' mm':'no frames');
+
