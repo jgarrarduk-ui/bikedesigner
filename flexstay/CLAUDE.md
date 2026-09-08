@@ -70,7 +70,12 @@ conversion, where the frame is fixed and the bottom bracket drops instead.
 
 Axle to crown is measured to the crown race seat, so `hsLower` sits between it and
 the bottom of the head tube: external cup 12-13mm, zero stack a few mm for the
-crown race alone.
+crown race alone. With `a2cAuto` ticked, axle to crown tracks fork travel a
+millimetre for a millimetre off the 160mm/571mm reference and its box is disabled;
+untick it to enter a length no catalogue fork has.
+
+The seat stay spacings are entered as full widths — rear dropout spacing and shock
+mount width — and halved at the call, because `stayLoads` works in half widths.
 
 ## Validated against Linkage X3
 
@@ -182,11 +187,11 @@ Both stays share the axial load.
 
 ## Overlays
 
-Two toggles in the bar, both off by default. Force vectors resolve `pivotForces`
-for the frame on screen. Anti-squat lines draw the construction: the chain run and
-the axle-to-instant-centre line meeting at the force centre, the ray from the
-contact patch through it read at the front axle, the plain contact-patch-to-instant
--centre ray for anti-rise, and the 100% of centre-of-mass-height mark.
+Four toggles in the bar. Axle path is on by default, the rest off. Force vectors resolve `pivotForces`
+for the frame on screen. Anti-squat and anti-rise are separate toggles that share
+one construction block: the front axle vertical and the 100% of centre-of-mass
+-height mark are drawn for either, the chain run and axle-to-instant-centre lines
+only for anti-squat since braking does not involve the chain.
 
 The rays run well above the bars, so `fitView` switches from its cropping fit to a
 containing one while they are showing, and the content box gains room on the right
