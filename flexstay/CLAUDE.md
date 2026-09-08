@@ -193,10 +193,17 @@ one construction block: the front axle vertical and the 100% of centre-of-mass
 -height mark are drawn for either, the chain run and axle-to-instant-centre lines
 only for anti-squat since braking does not involve the chain.
 
-The rays run well above the bars, so `fitView` switches from its cropping fit to a
-containing one while they are showing, and the content box gains room on the right
-for the labels. Labels inside the drawing need their own `scale(1,-1)` because the
-group they sit in is y-flipped.
+**The framing is fixed.** `fitView` takes its content box from the static geometry
+— `frame(0)` and the top-out axle — so cycling the suspension, holding at sag or
+turning an overlay on cannot make the view breathe. Only the geometry inputs, the
+canvas size and the zoom control move it. That means the anti-squat rays can leave
+the top of the view; their labels are clamped back inside and stacked rather than
+zooming out to chase them. Labels inside the drawing need their own `scale(1,-1)`
+because the group they sit in is y-flipped.
+
+**The axle path needs a casing.** It runs up out of the flex pivot along the seat
+stay and over the spokes, so as a thin `#134463` line it was invisible against a
+30mm-wide stay of exactly that colour. It is a pale halo under a contrasting dash.
 
 ## Artwork
 
