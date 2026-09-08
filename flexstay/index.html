@@ -52,6 +52,11 @@ select{width:auto}
 #bar{display:flex;align-items:center;gap:14px;padding:8px 14px;border-top:1px solid var(--rule);
   background:var(--panel);flex-wrap:wrap}
 #bar label{margin:0;gap:6px}
+/* the view overlays read as one cluster rather than four loose buttons */
+.bargroup{display:flex;gap:6px;align-items:center;padding-left:12px;
+  margin-left:2px;border-left:1px solid var(--rule);flex-wrap:wrap}
+#bar input[type=checkbox]{accent-color:var(--rear)}
+input[type=number]:disabled{background:#eef1f3;color:var(--ink-soft)}
 button{font:12px var(--sans);padding:4px 11px;border:1px solid var(--rule);border-radius:3px;
   background:#fff;color:var(--ink);cursor:pointer}
 button:hover{background:#e9eef1}
@@ -116,14 +121,15 @@ svg text{font-family:var(--mono)}
   <label><span>Bend radius</span><input type="number" id="bendR" step="10"></label>
   <label><span>Bend angle</span><input type="number" id="bendA" step="1"></label>
   <label><span>Straight before bend</span><input type="number" id="bendStart" step="5"></label>
-  <label><span>Lean bend from yoke</span><input type="number" id="leanEnd" step="5"></label>
+  <label><span>Lean bend from shock mount</span><input type="number" id="leanEnd" step="5"></label>
   <label><span>Lean bend angle</span><input type="number" id="leanA" step="1"></label>
-  <label><span>Half spacing, dropout</span><input type="number" id="dropZ" step="0.5"></label>
-  <label><span>Half spacing, yoke</span><input type="number" id="yokeZ" step="0.5"></label>
+  <label><span>Rear dropout spacing</span><input type="number" id="dropW" step="1"></label>
+  <label><span>Shock mount width</span><input type="number" id="shockW" step="1"></label>
   <label><span>Wall thickness</span><input type="number" id="wall" step="0.05"></label>
 
   <h2>Fork</h2>
-  <label><span>Travel</span><input type="number" id="forkTravel" step="5"></label>
+  <label><span>Travel</span><input type="number" id="forkTravel" step="10"></label>
+  <label><span>Standard axle to crown</span><input type="checkbox" id="a2cAuto"></label>
   <label><span>Axle to crown, extended</span><input type="number" id="a2c" step="5"></label>
   <label><span>Lower headset stack</span><input type="number" id="hsLower" step="0.5"></label>
   <label><span>Offset</span><input type="number" id="offset" step="1"></label>
@@ -135,9 +141,9 @@ svg text{font-family:var(--mono)}
   <h2>Frame</h2>
   <label><span>Reach</span><input type="number" id="reach" step="5"></label>
   <label><span>Stack</span><input type="number" id="stack" step="5"></label>
-  <label><span>Head angle</span><input type="number" id="ha" step="0.5"></label>
+  <label><span>Head tube angle</span><input type="number" id="ha" step="0.5"></label>
   <label><span>Head tube length</span><input type="number" id="htl" step="5"></label>
-  <label><span>Seat angle</span><input type="number" id="sa" step="0.5"></label>
+  <label><span>Seat tube angle</span><input type="number" id="sa" step="0.5"></label>
   <label><span>Seat tube length</span><input type="number" id="st" step="5"></label>
   <label><span>Top tube drop at seat tube</span><input type="number" id="ttDrop" step="5"></label>
   <label><span>Bottom bracket height</span><input type="number" id="bbh" step="1"></label>
@@ -184,9 +190,13 @@ svg text{font-family:var(--mono)}
     <span id="poslabel" style="font:12px var(--mono);color:var(--ink-soft)"></span>
     <button id="showsag" aria-pressed="false">Hold at sag</button>
     <button id="locklen" aria-pressed="false">Lock shock length</button>
-    <button id="forces" aria-pressed="false">Force vectors</button>
-    <button id="aslines" aria-pressed="false">Anti-squat lines</button>
     <button id="reset">Reset geometry</button>
+    <span class="bargroup">
+      <button id="asline" aria-pressed="false">Anti-squat</button>
+      <button id="arline" aria-pressed="false">Anti-rise</button>
+      <button id="axpath" aria-pressed="true">Axle path</button>
+      <button id="forces" aria-pressed="false">Force vectors</button>
+    </span>
   </div>
   <div id="charts">
     <button class="pager" id="cprev" aria-label="Previous pair">&lsaquo;</button>
@@ -491,11 +501,11 @@ const DEF={
   geom:{ MP:{x:-2.5,y:66.4}, SP:{x:52.8,y:112.5}, FP:{x:-452.5,y:29.4},
          LP:{x:6.9,y:271.8}, SE:{x:1.6,y:293.9}, SG:{x:229.8,y:322.1},
          AX:{x:-452.5,y:29.4} },
-  cfg:{ eye:230, stroke:65, zone:531, bendR:115, bendA:42, bendStart:50, leanEnd:55, leanA:8, dropZ:72.5, yokeZ:16.5, peakG:3, od:16, wall:0.9, ring:32, cog:21,
+  cfg:{ eye:230, stroke:65, zone:531, bendR:115, bendA:42, bendStart:50, leanEnd:55, leanA:8, dropW:148, shockW:33, peakG:3, od:16, wall:0.9, ring:32, cog:21,
         mass:85, bias:58, cogh:1057, sag:30, fsag:20, fax:844.4,
         rw:622, fw:622, tyreR:60.96, tyreF:60.96, reach:485, stack:654.5, ha:63.3, htl:130,
         sa:76, st:430, ttDrop:90, bbh:334, drop:38, rc:450, csl:451.6,
-        a2c:571, hsLower:13, offset:44, forkTravel:160,
+        a2c:571, a2cAuto:1, hsLower:13, offset:44, forkTravel:160,
         stemL:10, stemH:70, links:124, cage:62 }
 };
 let G=structuredClone(DEF.geom), C=structuredClone(DEF.cfg);
@@ -518,7 +528,11 @@ const PTS=[
    Two pairs are written both ways, so you can type either side and the other
    solves back: bottom bracket height against drop, and stack against head tube
    length. `driver` names the box that was just typed. */
+const A2C_REF={travel:160, a2c:571};           // a 160mm 29er fork, Fox 36 / Lyrik
 function syncGeom(driver){
+  // Standard forks gain a millimetre of axle to crown per millimetre of travel.
+  // Untick the box to enter a length the catalogue does not have.
+  if(C.a2cAuto) C.a2c=A2C_REF.a2c+(C.forkTravel-A2C_REF.travel);
   const ha=C.ha*Math.PI/180, s=Math.sin(ha), cs=Math.cos(ha);
   const Rf=C.fw/2+C.tyreF, Rr=C.rw/2+C.tyreR;
   if(driver==='drop') C.bbh=Rr-C.drop;
@@ -693,14 +707,15 @@ function el(tag,attrs,parent){
    little; the crop is capped so a tall narrow canvas does not slice the frame. */
 let VIEW={x0:-880,y0:-395,w:2130,h:1120};   // last fit, read by the grid, ground and hit radius
 let zoomK=1, panX=0, panY=0, lastBox=null, mmPerPx=1;
-let showForces=false, showLines=false;       // both overlays are off by default
+let showForces=false, showAS=false, showAR=false, showPath=true;
+const showLines=()=>showAS||showAR;          // the shared construction lines
 const MAXCROP=0.18;                          // never lose more than this fraction of the width
 function fitView(svg,box){
   const r=svg.getBoundingClientRect();
   const aspect=(r.width>4&&r.height>4)?r.width/r.height:1.9;
   // Normally fill the canvas and crop the wheels a little. With the anti-squat
   // rays showing there is nothing to spare, so fit the whole box instead.
-  const hCover=showLines ? Math.max(box.h, box.w/aspect)
+  const hCover=showLines() ? Math.max(box.h, box.w/aspect)
                          : Math.min(box.h, box.w/aspect);
   const hCap  =box.w*(1-MAXCROP)/aspect;               // never crop most of the width
   const h=Math.max(hCover,hCap)*1.07/zoomK;            // margin so the ground line clears the edge
@@ -757,10 +772,10 @@ function draw(){
   // rays run above the bars, so they have to be in the box when they are showing.
   const xs=[f.AX.x-F.Rr, f.AX.x+F.Rr, F.FA.x-F.Rf, F.FA.x+F.Rf];
   const ys=[ground, F.steerTop.y+70, post.y+90];
-  if(showLines){
+  if(showLines()){
     ys.push(ground+C.cogh+70);
-    if(f.asH!=null) ys.push(f.asH+70);
-    if(f.arH!=null) ys.push(f.arH+70);
+    if(showAS && f.asH!=null) ys.push(f.asH+70);
+    if(showAR && f.arH!=null) ys.push(f.arH+70);
     xs.push(C.fax+430);                    // room for the labels off the right
   }
   const bx0=Math.min(...xs), bx1=Math.max(...xs);
@@ -921,7 +936,7 @@ function draw(){
   el('circle',{cx:tension.x,cy:tension.y,r:4,fill:'#2a3138'},g);
 
   /* ---- axle path ---- */
-  if(result.frames.length>1)
+  if(showPath && result.frames.length>1)
     el('polyline',{points:result.frames.map(k=>`${k.AX.x},${k.AX.y}`).join(' '),
       fill:'none',stroke:'#134463','stroke-width':3,'stroke-dasharray':'8 7',opacity:.85},g);
 
@@ -944,22 +959,24 @@ function draw(){
      the front axle, is the anti-squat height. Anti-rise drops the chain out of it
      and runs straight from the contact patch to the instant centre. Both are
      percentages of the centre of mass height, so the 100% mark is drawn too. */
-  if(showLines && f.CP){
+  if(showLines() && f.CP){
     const lg=el('g',{'pointer-events':'none'},g);
     const ln=(a,b,col,w,dash)=>el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:col,
       'stroke-width':w,...(dash?{'stroke-dasharray':dash}:{})},lg);
     const fax=C.fax, cog=ground+C.cogh;
     const thin=Math.max(1.2,1.6*mmPerPx), thick=Math.max(2,2.6*mmPerPx);
+    const top=Math.max(cog, showAS&&f.asH!=null?f.asH:cog, showAR&&f.arH!=null?f.arH:cog);
     // the front axle vertical everything is read against, and the 100% mark
-    ln({x:fax,y:ground},{x:fax,y:Math.max(cog,f.asH??cog)+60},'#9aa5ad',thin,'10 8');
+    ln({x:fax,y:ground},{x:fax,y:top+60},'#9aa5ad',thin,'10 8');
     ln({x:fax-46,y:cog},{x:fax+46,y:cog},'#5c6b78',thick);
-    if(f.ifc){                       // the construction that produces the force centre
+    // the chain run and the swingarm line only matter to anti-squat
+    if(showAS && f.ifc){
       ln(f.CP,f.ifc,'#c9ccd1',thin,'6 6');
       ln(f.AX,f.ifc,'#c9ccd1',thin,'6 6');
       el('circle',{cx:f.ifc.x,cy:f.ifc.y,r:Math.max(4,5*mmPerPx),fill:'#8a939b'},lg);
     }
-    if(f.asH!=null) ln(f.CP,{x:fax,y:f.asH},'var(--rear)',thick);
-    if(f.arH!=null) ln(f.CP,{x:fax,y:f.arH},'var(--shock)',thick);
+    if(showAS && f.asH!=null) ln(f.CP,{x:fax,y:f.asH},'var(--rear)',thick);
+    if(showAR && f.arH!=null) ln(f.CP,{x:fax,y:f.arH},'var(--shock)',thick);
     el('circle',{cx:f.CP.x,cy:f.CP.y,r:Math.max(4,5*mmPerPx),fill:'#39424a'},lg);
     // the drawing group is y-flipped, so each label carries its own flip back
     const tag=(x,y,txt,col)=>{
@@ -968,8 +985,8 @@ function draw(){
       t.textContent=txt;
     };
     const pad=26*mmPerPx;
-    if(f.as!=null) tag(fax+pad, f.asH, 'anti-squat '+f.as.toFixed(0)+'%','var(--rear)');
-    if(f.ar!=null) tag(fax+pad, f.arH, 'anti-rise '+f.ar.toFixed(0)+'%','var(--shock)');
+    if(showAS && f.as!=null) tag(fax+pad, f.asH, 'anti-squat '+f.as.toFixed(0)+'%','var(--rear)');
+    if(showAR && f.ar!=null) tag(fax+pad, f.arH, 'anti-rise '+f.ar.toFixed(0)+'%','var(--shock)');
     tag(fax+pad, cog, '100% of CoG height','#5c6b78');
   }
 
@@ -1156,8 +1173,8 @@ function readouts(){
     if(!P) return 0;
     return -(P.fp.x*stayU.x+P.fp.y*stayU.y)/2;      // per stay, compression positive
   };
-  const st=stayLoads(peak,stayGeo,C.od,C.wall,axialAt(1),C.bendA,C.dropZ,C.yokeZ,C.leanEnd,C.leanA);
-  const pk=stayLoads(peak,stayGeo,C.od,C.wall,axialAt(C.peakG),C.bendA,C.dropZ,C.yokeZ,C.leanEnd,C.leanA);
+  const st=stayLoads(peak,stayGeo,C.od,C.wall,axialAt(1),C.bendA,C.dropW/2,C.shockW/2,C.leanEnd,C.leanA);
+  const pk=stayLoads(peak,stayGeo,C.od,C.wall,axialAt(C.peakG),C.bendA,C.dropW/2,C.shockW/2,C.leanEnd,C.leanA);
   R('out-flex').innerHTML=
     row('Flex pivot rotation', peak.toFixed(2)+'°')+
     row('Developed length', stayGeo.total.toFixed(0)+' mm')+
@@ -1316,16 +1333,26 @@ function fillPoints(){
 /* Write the solved-back side of each two-way pair into its box, but never the box
    being typed in — that would fight the cursor. */
 function refreshDerived(skip){
-  ['stack','htl','bbh','drop','rc','csl'].forEach(id=>{
+  ['stack','htl','bbh','drop','rc','csl','a2c'].forEach(id=>{
     if(id===skip) return;
     const e=document.getElementById(id);
     if(e) e.value=Math.round(C[id]*10)/10;
   });
+  const a=document.getElementById('a2c');
+  if(a) a.disabled=!!C.a2cAuto;               // derived while the box is ticked
 }
 function fillCfg(){
   Object.keys(C).forEach(k=>{
     const inp=document.getElementById(k);
     if(!inp) return;
+    if(inp.type==='checkbox'){              // stored 1/0 so it resets with the rest
+      inp.checked=!!C[k];
+      inp.onchange=()=>{
+        C[k]=inp.checked?1:0;
+        syncGeom(k); refreshDerived(); fillPoints(); recompute(false);
+      };
+      return;
+    }
     inp.value=C[k];
     inp.onchange=inp.oninput=()=>{
       const v=parseFloat(inp.value); if(isNaN(v)) return;
@@ -1335,6 +1362,7 @@ function fillCfg(){
       recompute(false);
     };
   });
+  refreshDerived();
 }
 // A wheel over a focused number input silently edits it in most browsers,
 // which is an easy way to wreck the geometry without noticing.
@@ -1383,12 +1411,14 @@ document.getElementById('play').onclick=e=>{
 };
 document.getElementById('cprev').onclick=()=>pageCharts(-1);
 document.getElementById('cnext').onclick=()=>pageCharts(1);
-document.getElementById('forces').onclick=e=>{
-  showForces=!showForces; e.target.setAttribute('aria-pressed',showForces); draw();
-};
-document.getElementById('aslines').onclick=e=>{
-  showLines=!showLines; e.target.setAttribute('aria-pressed',showLines); draw();
-};
+// the overlay toggles, each independent
+[['forces',()=>showForces=!showForces, ()=>showForces],
+ ['asline', ()=>showAS=!showAS,        ()=>showAS],
+ ['arline', ()=>showAR=!showAR,        ()=>showAR],
+ ['axpath', ()=>showPath=!showPath,    ()=>showPath]].forEach(([id,flip,read])=>{
+  const b=document.getElementById(id);
+  b.onclick=()=>{ flip(); b.setAttribute('aria-pressed',read()); draw(); };
+});
 /* Both panels fit themselves to their own pixel box, and the first paint can run
    before the flex layout has settled, so watch the boxes rather than the window. */
 window.addEventListener('resize',()=>{draw(); charts();});
