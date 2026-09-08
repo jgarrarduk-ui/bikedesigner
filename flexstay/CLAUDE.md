@@ -14,7 +14,7 @@ Open `index.html`, or serve the folder. It is deployed to GitHub Pages alongside
 cd test && node flexstay-tests.mjs
 ```
 
-23 checks, no install required. The engine sits between the `// ==ENGINE-START==`
+30 checks, no install required. The engine sits between the `// ==ENGINE-START==`
 and `// ==ENGINE-END==` markers and contains **no DOM references**, so the test
 file extracts that block with `new Function()` and runs it headlessly. Keep it
 that way — if DOM code leaks into the engine block the tests stop working.
@@ -74,8 +74,13 @@ crown race alone.
 
 ## Validated against Linkage X3
 
-The defaults reproduce James's own model. These are regression tests — if a
-change moves them, the change is wrong.
+The validation belongs to the **solver**, not to whatever the app ships as its
+defaults. `test/flexstay-tests.mjs` holds a frozen `REF` geometry — the one these
+numbers were measured on — and the Linkage assertions run against that, so the
+defaults can be changed without quietly invalidating them. Do not edit `REF` to
+make a test pass. The shipped defaults get their own check that they still solve.
+
+These are regression tests — if a change moves them, the change is wrong.
 
 | | Linkage | Tool |
 |---|---|---|
@@ -99,6 +104,15 @@ catches regressions: with the old code 176 of 400 jittered geometries jammed.
 **Anti-squat is read at the front axle vertical**, not the centre-of-mass
 vertical, and heights are measured from the ground, not from y=0. Getting either
 wrong makes a low main pivot look like it produces no anti-squat.
+
+**The contact patch stays on the ground through the travel.** It used to be
+`AX.y - Rr`, one radius below the *current* axle, so it climbed into the air as
+the suspension compressed and the anti-squat datum went with it. The wheel rolls
+on the ground and the frame moves down onto it, so `CP.y` is fixed at
+`g.AX.y - Rr`, the un-compressed contact height. Only `CP.x` tracks the axle.
+The two definitions agree at top out, which is why the Linkage numbers did not
+move when this was fixed — but at sag anti-squat went 100 to 112 and anti-rise
+98 to 109.
 
 **Wheel size is rim bead diameter plus tyre height.** Treating "29 inches" as an
 outer diameter and adding tyre on top gives a 427mm radius.
@@ -132,15 +146,17 @@ grabbable at any zoom. The decorative ring and dot carry `pointer-events:none` a
 the handler uses `closest('.drag')` — before that, a click on the exact centre of a
 pivot hit the decorative dot, which has no `dataset.key`, and silently did nothing.
 
-**The rear axle height is derived, not dragged.** `syncGeom()` sets `G.AX.y` from
-`Rr − bbh` on every input change, and carries `G.FP` with it while the two are
-concentric. Dragging the rear axle vertically is therefore overwritten on the next
-config change — change bottom bracket height or drop instead.
+**The rear axle is derived from rear centre and bottom bracket height.**
+`syncGeom()` rewrites `G.AX` from them on every input change and carries `G.FP`
+with it while the two are concentric, so a drag of that point has to write back
+into `C.rc` and `C.bbh` or the next sync silently undoes it. The drag handler
+does exactly that.
 
-**Anti-squat reads `cfg.fax`, which `recompute()` overwrites** with `frame(0).FA.x`.
-The test suite calls `sweep()` on `DEF.cfg` directly and never calls `recompute()`,
-so `DEF.cfg.fax` has to be kept in step with the default geometry or the tests and
-the app validate different numbers.
+**Anti-squat reads `cfg.fax`, which `recompute()` overwrites** with
+`frame(0).FA.x`. Anything calling `sweep()` directly — the tests do — supplies its
+own `fax` and never gets that overwrite, so a stale value there means the tests and
+the app measure at different places. `DEF.cfg.fax` is kept in step with the default
+geometry for the same reason.
 
 ## Stay structure
 
@@ -163,6 +179,19 @@ imposed, so the outer fibre travels the same distance whatever the wall. Wall
 changes the moment and the force, which are reported separately.
 
 Both stays share the axial load.
+
+## Overlays
+
+Two toggles in the bar, both off by default. Force vectors resolve `pivotForces`
+for the frame on screen. Anti-squat lines draw the construction: the chain run and
+the axle-to-instant-centre line meeting at the force centre, the ray from the
+contact patch through it read at the front axle, the plain contact-patch-to-instant
+-centre ray for anti-rise, and the 100% of centre-of-mass-height mark.
+
+The rays run well above the bars, so `fitView` switches from its cropping fit to a
+containing one while they are showing, and the content box gains room on the right
+for the labels. Labels inside the drawing need their own `scale(1,-1)` because the
+group they sit in is y-flipped.
 
 ## Artwork
 
