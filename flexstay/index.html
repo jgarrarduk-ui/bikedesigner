@@ -713,10 +713,9 @@ const MAXCROP=0.18;                          // never lose more than this fracti
 function fitView(svg,box){
   const r=svg.getBoundingClientRect();
   const aspect=(r.width>4&&r.height>4)?r.width/r.height:1.9;
-  // Normally fill the canvas and crop the wheels a little. With the anti-squat
-  // rays showing there is nothing to spare, so fit the whole box instead.
-  const hCover=showLines() ? Math.max(box.h, box.w/aspect)
-                         : Math.min(box.h, box.w/aspect);
+  // Fill the canvas, cropping the wheels a little. Always — the overlays do not
+  // get to change the framing.
+  const hCover=Math.min(box.h, box.w/aspect);
   const hCap  =box.w*(1-MAXCROP)/aspect;               // never crop most of the width
   const h=Math.max(hCover,hCap)*1.07/zoomK;            // margin so the ground line clears the edge
   const w=h*aspect;
@@ -768,16 +767,13 @@ function draw(){
   const ground=-C.bbh;                           // the datum: both wheels sit on it
   const BB={x:0,y:0};
   const seatTop=F.ST, post=add(seatTop,mul(unit(sub(seatTop,BB)),150));
-  // Fit the view to the bike itself, wheels and cockpit included. The anti-squat
-  // rays run above the bars, so they have to be in the box when they are showing.
-  const xs=[f.AX.x-F.Rr, f.AX.x+F.Rr, F.FA.x-F.Rf, F.FA.x+F.Rf];
-  const ys=[ground, F.steerTop.y+70, post.y+90];
-  if(showLines()){
-    ys.push(ground+C.cogh+70);
-    if(showAS && f.asH!=null) ys.push(f.asH+70);
-    if(showAR && f.arH!=null) ys.push(f.arH+70);
-    xs.push(C.fax+430);                    // room for the labels off the right
-  }
+  /* The framing is fixed. It comes from the static geometry — fork extended,
+     suspension at top out — so cycling the suspension, holding at sag or turning
+     an overlay on cannot make the view breathe in and out. Only the geometry
+     inputs, the canvas size and the zoom control move it. */
+  const F0=frame(0), ax0=n?result.frames[0].AX:G.AX;
+  const xs=[ax0.x-F0.Rr, ax0.x+F0.Rr, F0.FA.x-F0.Rf, F0.FA.x+F0.Rf];
+  const ys=[ground, F0.steerTop.y+70, post.y+90];
   const bx0=Math.min(...xs), bx1=Math.max(...xs);
   const by0=Math.min(...ys), by1=Math.max(...ys);
   lastBox={cx:(bx0+bx1)/2, cy:(by0+by1)/2, w:bx1-bx0, h:by1-by0};
@@ -935,10 +931,18 @@ function draw(){
   el('circle',{cx:guide.x,cy:guide.y,r:4,fill:'#2a3138'},g);
   el('circle',{cx:tension.x,cy:tension.y,r:4,fill:'#2a3138'},g);
 
-  /* ---- axle path ---- */
-  if(showPath && result.frames.length>1)
-    el('polyline',{points:result.frames.map(k=>`${k.AX.x},${k.AX.y}`).join(' '),
-      fill:'none',stroke:'#134463','stroke-width':3,'stroke-dasharray':'8 7',opacity:.85},g);
+  /* ---- axle path ----
+     It runs up out of the flex pivot, right along the seat stay and over the
+     spokes, so on its own it was a thin dark line lost against a fat one of the
+     same colour. A pale casing under a contrasting dash keeps it readable
+     whatever it crosses. */
+  if(showPath && result.frames.length>1){
+    const pts=result.frames.map(k=>`${k.AX.x.toFixed(1)},${k.AX.y.toFixed(1)}`).join(' ');
+    el('polyline',{points:pts,fill:'none',stroke:'#fff','stroke-width':9,
+      'stroke-linecap':'round',opacity:.85,'pointer-events':'none'},g);
+    el('polyline',{points:pts,fill:'none',stroke:'#c026a3','stroke-width':4,
+      'stroke-dasharray':'9 7','stroke-linecap':'round','pointer-events':'none'},g);
+  }
 
   /* Saddle is set level regardless of seat-tube angle, like a real one --
      fixed orientation, just anchored at the top of the exposed seatpost.
@@ -984,10 +988,23 @@ function draw(){
         'font-weight':600},el('g',{transform:`translate(${x} ${y}) scale(1,-1)`},lg));
       t.textContent=txt;
     };
-    const pad=26*mmPerPx;
-    if(showAS && f.as!=null) tag(fax+pad, f.asH, 'anti-squat '+f.as.toFixed(0)+'%','var(--rear)');
-    if(showAR && f.ar!=null) tag(fax+pad, f.arH, 'anti-rise '+f.ar.toFixed(0)+'%','var(--shock)');
-    tag(fax+pad, cog, '100% of CoG height','#5c6b78');
+    /* The framing is fixed, so a ray can leave the top of the view. Keep the
+       labels inside rather than zooming out to chase them, and stack them so two
+       clamped to the same ceiling do not land on top of each other. */
+    const pad=26*mmPerPx, lineH=19*mmPerPx;
+    const lo=VIEW.y0+30*mmPerPx, hi=VIEW.y0+VIEW.h-30*mmPerPx;
+    const labels=[];
+    if(showAS && f.as!=null)
+      labels.push([f.asH,'anti-squat '+f.as.toFixed(0)+'%','var(--rear)']);
+    if(showAR && f.ar!=null)
+      labels.push([f.arH,'anti-rise '+f.ar.toFixed(0)+'%','var(--shock)']);
+    labels.push([cog,'100% of CoG height','#5c6b78']);
+    labels.sort((a,b)=>b[0]-a[0]);                 // highest first, then downwards
+    let prev=Infinity;
+    labels.forEach(([y,txt,col])=>{
+      const at=Math.max(lo, Math.min(Math.min(hi,y), prev-lineH));
+      prev=at; tag(fax+pad, at, txt, col);
+    });
   }
 
   /* ---- pivots ----
