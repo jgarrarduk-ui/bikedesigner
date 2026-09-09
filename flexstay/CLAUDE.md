@@ -256,6 +256,28 @@ because the group they sit in is y-flipped.
 stay and over the spokes, so as a thin `#134463` line it was invisible against a
 30mm-wide stay of exactly that colour. It is a pale halo under a contrasting dash.
 
+## Parts toggles
+
+A second row of buttons — wheels, drivetrain, cockpit, saddle, shock, fork — hides
+one piece of artwork each, all on by default (`showWheels` etc.). The frame itself
+(front triangle, rear stay, shock link) is never one of them; only bolt-on product
+artwork is. This is where a future crank image replaces the chainring/cog rings
+under the drivetrain flag, without touching anything else.
+
+`drivetrain` covers the chainring and cog rings, the chain line, and the rear
+derailleur — `guide`/`tension`/`up` are still computed unconditionally because the
+derailleur draw call, further down in `draw()`, needs them whether or not the
+toggle is on. `cockpit` covers both the stem art and the headset/steerer stack
+tube, drawn in two separate places. The exposed seatpost and the shock link
+(the actual rocker, teal) are frame, not toggled by anything.
+
+## Lock shock
+
+`lockLen` defaults **on**. Eye to eye is a real product spec, not a free variable,
+so dragging one shock mount moves the frame around a fixed shock length by
+default rather than silently stretching it; the drag handler already had this
+logic (it moves the far eye to hold `C.eye`), it just used to start disarmed.
+
 ## Artwork
 
 Placed by an affine matrix built from two anchor points. The shock is sliced four

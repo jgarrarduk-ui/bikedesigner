@@ -73,9 +73,13 @@ select{width:auto}
   background:var(--panel);flex-wrap:wrap}
 #bar label{margin:0;gap:6px}
 #poslabel{font:12px var(--mono);color:var(--ink-soft);min-width:46px}
-/* the view overlays read as one cluster rather than four loose buttons */
+/* Each group of toggles reads as one cluster rather than loose buttons. Only
+   the first group needs to push right; a second auto margin would have no
+   space left to claim, but zero it explicitly so it can't do anything odd
+   if the bar ever reflows with just one group visible. */
 .bargroup{display:flex;gap:6px;align-items:center;padding-left:12px;
   margin-left:auto;border-left:1px solid var(--rule);flex-wrap:wrap}
+.bargroup+.bargroup{margin-left:0}
 .barlabel{font-size:11px;color:var(--ink-soft)}
 #bar input[type=checkbox]{accent-color:var(--rear)}
 input[type=number]:disabled{background:#eef1f3;color:var(--ink-soft)}
@@ -235,13 +239,22 @@ svg text{font-family:var(--mono)}
     <input type="range" id="pos" min="0" max="1000" value="0" aria-label="Suspension position">
     <span id="poslabel"></span>
     <button id="showsag" aria-pressed="false">Sag</button>
-    <button id="locklen" aria-pressed="false">Lock shock</button>
+    <button id="locklen" aria-pressed="true" title="Keep the shock eye to eye fixed while dragging its mounts">Lock shock</button>
     <span class="bargroup" role="group" aria-label="Overlays">
       <span class="barlabel">show</span>
       <button id="axpath" aria-pressed="true">axle path</button>
       <button id="asline" aria-pressed="false">anti-squat</button>
       <button id="arline" aria-pressed="false">anti-rise</button>
       <button id="forces" aria-pressed="false">forces</button>
+    </span>
+    <span class="bargroup" role="group" aria-label="Parts drawn">
+      <span class="barlabel">parts</span>
+      <button id="tglWheels"    aria-pressed="true">wheels</button>
+      <button id="tglDrive"     aria-pressed="true">drivetrain</button>
+      <button id="tglCockpit"   aria-pressed="true">cockpit</button>
+      <button id="tglSaddle"    aria-pressed="true">saddle</button>
+      <button id="tglShock"     aria-pressed="true">shock</button>
+      <button id="tglFork"      aria-pressed="true">fork</button>
     </span>
   </div>
   <div id="charts">
@@ -771,6 +784,11 @@ let VIEW={x0:-880,y0:-395,w:2130,h:1120};   // last fit, read by the grid, groun
 let zoomK=1, panX=0, panY=0, lastBox=null, mmPerPx=1;
 let showForces=false, showAS=false, showAR=false, showPath=true;
 const showLines=()=>showAS||showAR;          // the shared construction lines
+// What gets drawn, as opposed to what gets analysed. All on by default; each
+// hides one piece of artwork so a design in progress isn't obscured by parts
+// that aren't the point right now. The frame itself is never one of these.
+let showWheels=true, showDrivetrain=true, showCockpit=true,
+    showSaddle=true, showShock=true, showFork=true;
 const MAXCROP=0.18;                          // never lose more than this fraction of the width
 function fitView(svg,box){
   const r=svg.getBoundingClientRect();
@@ -887,20 +905,24 @@ function draw(){
     const wg=el('g',{transform:`matrix(${wm.map(v=>v.toFixed(6)).join(' ')})`},g);
     el('image',{href:WHEELART.src,x:0,y:0,width:WHEELART.w,height:WHEELART.h},wg);
   };
-  wheelArt(f.AX,F.Rr); wheelArt(F.FA,F.Rf);
+  if(showWheels){ wheelArt(f.AX,F.Rr); wheelArt(F.FA,F.Rf); }
 
-  /* ---- drivetrain ---- */
+  /* ---- drivetrain ----
+     guide/tension are computed regardless of the toggle: the rear derailleur
+     drawing further down needs them whether or not this pass renders anything. */
   const rc=C.ring*P/(2*Math.PI), rg=C.cog*P/(2*Math.PI);
-  ring(BB,rc,'#5c6b78',7); ring(f.AX,rg,'#5c6b78',7);
-  el('circle',{cx:0,cy:0,r:13,fill:'#5c6b78'},g);           // bottom bracket
   const guide=f.guide||rot({x:G.AX.x+GDX,y:G.AX.y+GDY},G.MP,f.phi);
   const tension=f.tension||{x:guide.x,y:guide.y-C.cage};
   const up=chainRun(BB,rc,f.AX,rg);
-  if(up){
-    line(up.p1,up.p2,'#39424a',7);
-    el('polyline',{points:[{x:f.AX.x-rg*0.5,y:f.AX.y-rg*0.87},guide,tension,
-        {x:BB.x,y:BB.y-rc}].map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' '),
-      fill:'none',stroke:'#39424a','stroke-width':5},g);
+  if(showDrivetrain){
+    ring(BB,rc,'#5c6b78',7); ring(f.AX,rg,'#5c6b78',7);
+    el('circle',{cx:0,cy:0,r:13,fill:'#5c6b78'},g);           // bottom bracket
+    if(up){
+      line(up.p1,up.p2,'#39424a',7);
+      el('polyline',{points:[{x:f.AX.x-rg*0.5,y:f.AX.y-rg*0.87},guide,tension,
+          {x:BB.x,y:BB.y-rc}].map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' '),
+        fill:'none',stroke:'#39424a','stroke-width':5},g);
+    }
   }
 
 
@@ -914,11 +936,13 @@ function draw(){
             F.FA.y-ks*(mir*K.axle[0]*fp.y + K.axle[1]*fu.y)];
   const topW=add(add(F.FA, mul(fp, ks*mir*(K.top[0]-K.axle[0]))),
                           mul(fu, ks*(K.top[1]-K.axle[1])));
-  tubes([[F.crown,add(topW,mul(fu,26)),27]],'#cfd5da','#7b848c');   // exposed stanchion
-  const fg=el('g',{transform:`matrix(${fm.map(v=>v.toFixed(6)).join(' ')})`},g);
-  el('image',{href:K.src,x:0,y:0,width:K.w,height:K.h},fg);
+  if(showFork){
+    tubes([[F.crown,add(topW,mul(fu,26)),27]],'#cfd5da','#7b848c');   // exposed stanchion
+    const fg=el('g',{transform:`matrix(${fm.map(v=>v.toFixed(6)).join(' ')})`},g);
+    el('image',{href:K.src,x:0,y:0,width:K.w,height:K.h},fg);
+  }
   // cockpit
-  tubes([[F.htTop,F.steerTop,22]],'#b9c0c6','#7b848c');   // headset/steerer stack
+  if(showCockpit) tubes([[F.htTop,F.steerTop,22]],'#b9c0c6','#7b848c');   // headset/steerer stack
 
   /* ---- front triangle ---- */
   const dtU=unit(sub(F.htBot,BB)), stU=unit(sub(seatTop,BB));
@@ -942,12 +966,14 @@ function draw(){
      bolts. Anchored there (steererPt) instead of the bore, oriented from
      F.axis/F.perp and rotated 180 about that anchor so the body swings out
      the correct side of the steerer. */
-  const SA=STEMART, ss=SA.mmPerPx;
-  const sm=[ss*fp.x, ss*fp.y, -ss*fu.x, -ss*fu.y,
-            F.steerTop.x-(ss*SA.steererPt[0]*fp.x - ss*SA.steererPt[1]*fu.x),
-            F.steerTop.y-(ss*SA.steererPt[0]*fp.y - ss*SA.steererPt[1]*fu.y)];
-  const sg2=el('g',{transform:`matrix(${sm.map(v=>v.toFixed(6)).join(' ')})`},g);
-  el('image',{href:SA.src,x:0,y:0,width:SA.w,height:SA.h},sg2);
+  if(showCockpit){
+    const SA=STEMART, ss=SA.mmPerPx;
+    const sm=[ss*fp.x, ss*fp.y, -ss*fu.x, -ss*fu.y,
+              F.steerTop.x-(ss*SA.steererPt[0]*fp.x - ss*SA.steererPt[1]*fu.x),
+              F.steerTop.y-(ss*SA.steererPt[0]*fp.y - ss*SA.steererPt[1]*fu.y)];
+    const sg2=el('g',{transform:`matrix(${sm.map(v=>v.toFixed(6)).join(' ')})`},g);
+    el('image',{href:SA.src,x:0,y:0,width:SA.w,height:SA.h},sg2);
+  }
 
   /* ---- rear assembly ---- */
   const path=stayPath(f.FP,f.SE);
@@ -974,27 +1000,31 @@ function draw(){
   /* Shock artwork. The body and the eyelet ends keep their proportions; only the
      spring section is stretched, so compressing the shock closes the coils up
      rather than squashing the damper. */
-  const sU=unit(sub(G.SG,f.SE)), sL=dist(f.SE,G.SG);
-  const A=SHOCKART, sc=A.mmPerPx;
-  const dpx=(sL-230)/sc;                       // spring section grows or shrinks
-  const mtx=[sc*sU.x, sc*sU.y, sc*sU.y, -sc*sU.x,
-             f.SE.x-sc*(A.eyeL[0]*sU.x+A.eyeL[1]*sU.y),
-             f.SE.y-sc*(A.eyeL[0]*sU.y-A.eyeL[1]*sU.x)];
-  const sg=el('g',{transform:`matrix(${mtx.map(v=>v.toFixed(6)).join(' ')})`},g);
-  const put=(p,x,y,w,h,stretch)=>el('image',{href:p.src,x:x,y:y,width:w,height:h,
-      ...(stretch?{preserveAspectRatio:'none'}:{})},sg);
-  const springW=Math.max(24,A.spring.w+dpx);
-  put(A.tail,   A.tail.x, 0, A.tail.w, A.h);
-  put(A.spring, A.spring.x, A.yBand, springW, A.spring.h, true);
-  put(A.resv,   A.resv.x+dpx, 0, A.resv.w, A.resv.h);   // rides with the body
-  put(A.body,   A.body.x+dpx, 0, A.body.w, A.h);
+  if(showShock){
+    const sU=unit(sub(G.SG,f.SE)), sL=dist(f.SE,G.SG);
+    const A=SHOCKART, sc=A.mmPerPx;
+    const dpx=(sL-230)/sc;                       // spring section grows or shrinks
+    const mtx=[sc*sU.x, sc*sU.y, sc*sU.y, -sc*sU.x,
+               f.SE.x-sc*(A.eyeL[0]*sU.x+A.eyeL[1]*sU.y),
+               f.SE.y-sc*(A.eyeL[0]*sU.y-A.eyeL[1]*sU.x)];
+    const sg=el('g',{transform:`matrix(${mtx.map(v=>v.toFixed(6)).join(' ')})`},g);
+    const put=(p,x,y,w,h,stretch)=>el('image',{href:p.src,x:x,y:y,width:w,height:h,
+        ...(stretch?{preserveAspectRatio:'none'}:{})},sg);
+    const springW=Math.max(24,A.spring.w+dpx);
+    put(A.tail,   A.tail.x, 0, A.tail.w, A.h);
+    put(A.spring, A.spring.x, A.yBand, springW, A.spring.h, true);
+    put(A.resv,   A.resv.x+dpx, 0, A.resv.w, A.resv.h);   // rides with the body
+    put(A.body,   A.body.x+dpx, 0, A.body.w, A.h);
+  }
 
   /* ---- rear derailleur, carried on the dropout ---- */
-  tubes([[f.AX,guide,15]],'#6b747c','#39424a');        // b-knuckle and body
-  tubes([[guide,tension,30]],'#4a5158','#2a3138');     // cage
-  ring(guide,RJ,'#b6bec5',7); ring(tension,RJ,'#b6bec5',7);
-  el('circle',{cx:guide.x,cy:guide.y,r:4,fill:'#2a3138'},g);
-  el('circle',{cx:tension.x,cy:tension.y,r:4,fill:'#2a3138'},g);
+  if(showDrivetrain){
+    tubes([[f.AX,guide,15]],'#6b747c','#39424a');        // b-knuckle and body
+    tubes([[guide,tension,30]],'#4a5158','#2a3138');     // cage
+    ring(guide,RJ,'#b6bec5',7); ring(tension,RJ,'#b6bec5',7);
+    el('circle',{cx:guide.x,cy:guide.y,r:4,fill:'#2a3138'},g);
+    el('circle',{cx:tension.x,cy:tension.y,r:4,fill:'#2a3138'},g);
+  }
 
   /* ---- axle path ----
      It runs up out of the flex pivot, right along the seat stay and over the
@@ -1016,11 +1046,13 @@ function draw(){
      is negated (rail sits below the anchor rather than pixel-down reading
      as model-up). The x axis is left unmirrored so the nose points -x
      (toward the rear). */
-  const SD=SADDLEART, sds=SD.mmPerPx;
-  const sdNudge=0.15*SD.w*sds;          // sits 15% of its own width forward of the post
-  const sdm=[sds,0,0,-sds, post.x-sds*SD.mount[0]+sdNudge, post.y+sds*SD.mount[1]];
-  const sdg=el('g',{transform:`matrix(${sdm.map(v=>v.toFixed(6)).join(' ')})`},g);
-  el('image',{href:SD.src,x:0,y:0,width:SD.w,height:SD.h},sdg);
+  if(showSaddle){
+    const SD=SADDLEART, sds=SD.mmPerPx;
+    const sdNudge=0.15*SD.w*sds;          // sits 15% of its own width forward of the post
+    const sdm=[sds,0,0,-sds, post.x-sds*SD.mount[0]+sdNudge, post.y+sds*SD.mount[1]];
+    const sdg=el('g',{transform:`matrix(${sdm.map(v=>v.toFixed(6)).join(' ')})`},g);
+    el('image',{href:SD.src,x:0,y:0,width:SD.w,height:SD.h},sdg);
+  }
 
   /* ---- anti-squat and anti-rise construction ----
      Anti-squat: the chain run and the line from the axle to the instant centre
@@ -1146,7 +1178,9 @@ function draw(){
 }
 
 // Drag state lives outside draw(): redrawing mid-drag would otherwise orphan the handlers.
-let dragKey=null, lockLen=false;
+// Locked by default: eye to eye is a real shock spec, and dragging a mount
+// point should move the frame around it rather than silently stretch it.
+let dragKey=null, lockLen=true;
 let panFrom=null;
 function initDrag(){
   const svg=document.getElementById('draw');
@@ -1582,11 +1616,17 @@ document.getElementById('play').onclick=e=>{
 };
 document.getElementById('cprev').onclick=()=>pageCharts(-1);
 document.getElementById('cnext').onclick=()=>pageCharts(1);
-// the overlay toggles, each independent
-[['forces',()=>showForces=!showForces, ()=>showForces],
- ['asline', ()=>showAS=!showAS,        ()=>showAS],
- ['arline', ()=>showAR=!showAR,        ()=>showAR],
- ['axpath', ()=>showPath=!showPath,    ()=>showPath]].forEach(([id,flip,read])=>{
+// the overlay and parts toggles, each independent
+[['forces',    ()=>showForces=!showForces,       ()=>showForces],
+ ['asline',    ()=>showAS=!showAS,               ()=>showAS],
+ ['arline',    ()=>showAR=!showAR,               ()=>showAR],
+ ['axpath',    ()=>showPath=!showPath,           ()=>showPath],
+ ['tglWheels', ()=>showWheels=!showWheels,       ()=>showWheels],
+ ['tglDrive',  ()=>showDrivetrain=!showDrivetrain, ()=>showDrivetrain],
+ ['tglCockpit',()=>showCockpit=!showCockpit,     ()=>showCockpit],
+ ['tglSaddle', ()=>showSaddle=!showSaddle,       ()=>showSaddle],
+ ['tglShock',  ()=>showShock=!showShock,         ()=>showShock],
+ ['tglFork',   ()=>showFork=!showFork,           ()=>showFork]].forEach(([id,flip,read])=>{
   const b=document.getElementById(id);
   b.onclick=()=>{ flip(); b.setAttribute('aria-pressed',read()); draw(); };
 });
