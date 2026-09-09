@@ -35,9 +35,10 @@ h2{font-size:11px;font-weight:650;color:var(--ink-soft);margin:18px 0 7px;
 h2:first-of-type{margin-top:4px}
 label{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:5px 0}
 label span{flex:1;min-width:0}
-input[type=number],select{width:64px;font:12px var(--mono);padding:3px 5px;
+input[type=number],input[type=text],select{width:64px;font:12px var(--mono);padding:3px 5px;
   border:1px solid var(--rule);border-radius:3px;background:#fff;color:var(--ink)}
-input[type=number]:focus,select:focus{outline:2px solid var(--rear);outline-offset:-1px}
+input[type=text]{width:140px;font-family:var(--sans)}
+input[type=number]:focus,input[type=text]:focus,select:focus{outline:2px solid var(--rear);outline-offset:-1px}
 select{width:auto}
 .pt{display:grid;grid-template-columns:1fr 60px 60px;gap:5px;align-items:center;margin:4px 0}
 .pt span{font-size:12px}
@@ -100,6 +101,14 @@ svg text{font-family:var(--mono)}
   <h1>Flex-stay kinematics</h1>
   <p class="sub">Single pivot with shock link. Seat stay carries the compliance.<br>
    <span id="build" style="font:11px var(--mono);color:var(--rear)">build 1.8</span></p>
+
+  <h2>Design</h2>
+  <label><span>Design name</span><input type="text" id="designName" placeholder="untitled"></label>
+  <label><span>Designer</span><input type="text" id="designer" placeholder="your name"></label>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <button id="exportJson" style="flex:1">Export</button>
+    <button id="importJson" style="flex:1">Import</button>
+  </div>
 
   <h2>Pivots and mounts</h2>
   <div id="points"></div>
@@ -498,7 +507,7 @@ function stayLoads(deg, path, od, wall, axial, bendA, dropZ, yokeZ, leanEnd, lea
 
 /* ---------- state ---------- */
 const DEF={
-  geom:{ MP:{x:-2.5,y:66.4}, SP:{x:52.8,y:112.5}, FP:{x:-452.5,y:29.4},
+  geom:{ MP:{x:-2.5,y:66.4}, SP:{x:66.7,y:140.5}, FP:{x:-452.5,y:29.4},
          LP:{x:6.9,y:271.8}, SE:{x:1.6,y:293.9}, SG:{x:229.8,y:322.1},
          AX:{x:-452.5,y:29.4} },
   cfg:{ eye:230, stroke:65, zone:531, bendR:115, bendA:42, bendStart:50, leanEnd:55, leanA:8, dropW:148, shockW:33, peakG:3, od:16, wall:0.9, ring:32, cog:21,
@@ -510,6 +519,9 @@ const DEF={
 };
 let G=structuredClone(DEF.geom), C=structuredClone(DEF.cfg);
 let result=null, posT=0, playing=false, holdSag=false;
+// Free text, so it lives outside C: fillCfg() reads every field with parseFloat,
+// which would permanently NaN-reject a name the moment it looks up the box.
+let META={name:'', designer:''};
 
 const PTS=[
   ['MP','Main pivot','var(--rear)'], ['SP','Second pivot','var(--link)'],
@@ -1412,6 +1424,49 @@ document.getElementById('reset').onclick=()=>{
   G=structuredClone(DEF.geom); C=structuredClone(DEF.cfg);
   syncGeom(); fillPoints(); fillCfg(); posT=0; holdSag=false; syncPos(); recompute();
 };
+
+/* ---------- design name / export / import ----------
+   Same shape as DEF (geom + cfg) so a saved file can be dropped straight into
+   G/C on import, then run through the exact startup sequence the reset button
+   and page load already use. */
+document.getElementById('designName').oninput=e=>META.name=e.target.value;
+document.getElementById('designer').oninput=e=>META.designer=e.target.value;
+
+function exportJSON(){
+  const out={
+    _meta:{ name:META.name, designer:META.designer,
+            date:new Date().toISOString(), version:'1.0' },
+    geom:G, cfg:C
+  };
+  const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  const slug=(META.name||'flexstay-design').trim().replace(/[^a-z0-9]+/gi,'-').replace(/^-+|-+$/g,'')||'flexstay-design';
+  a.href=URL.createObjectURL(blob); a.download=slug+'.json'; a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importJSON(){
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json';
+  inp.onchange=e=>{
+    const file=e.target.files[0]; if(!file) return;
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const data=JSON.parse(ev.target.result);
+        if(!data.geom||!data.cfg) throw new Error('missing geom/cfg');
+        G=structuredClone(data.geom); C=structuredClone(data.cfg);
+        META.name=(data._meta&&data._meta.name)||'';
+        META.designer=(data._meta&&data._meta.designer)||'';
+        document.getElementById('designName').value=META.name;
+        document.getElementById('designer').value=META.designer;
+        syncGeom(); fillPoints(); fillCfg(); posT=0; holdSag=false; syncPos(); recompute();
+      }catch(err){ alert('Invalid JSON: '+err.message); }
+    };
+    r.readAsText(file);
+  };
+  inp.click();
+}
+document.getElementById('exportJson').onclick=exportJSON;
+document.getElementById('importJson').onclick=importJSON;
 let raf=null, dir=1;
 document.getElementById('play').onclick=e=>{
   playing=!playing;
