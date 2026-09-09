@@ -874,14 +874,14 @@ function draw(){
   for(let y=gy0;y<=gy1;y+=100)
     el('line',{x1:gx0,y1:y,x2:gx1,y2:y,stroke:'var(--grid)','stroke-width':mmPerPx},grid);
 
-  // 'square' rather than 'round': flat, square-cut tube ends like the frame
-  // designer tool, but still extending half the stroke width past the given
-  // point (same as a round cap would) so two tubes drawn to the same joint
-  // still overlap enough to blend into one silhouette instead of leaving a
-  // notch — a flat cap has none of a round cap's forgiveness for the angle
-  // they meet at.
+  // Round, not square: a round cap extends a full radius in every direction,
+  // so it blends two tubes into one silhouette whatever angle they meet at.
+  // Tried square (frame-designer's flat-cut look) and it held up at the simple
+  // two-tube joints, but a square cap only extends along the tube's own axis —
+  // no sideways forgiveness — so it left visible seams at the bottom bracket,
+  // where three tubes converge, and along the multi-segment rear stay.
   const line=(a,b,col,w,dash)=>el('line',{x1:a.x,y1:a.y,x2:b.x,y2:b.y,stroke:col,
-      'stroke-width':w,'stroke-linecap':'square',fill:'none',
+      'stroke-width':w,'stroke-linecap':'round',fill:'none',
       ...(dash?{'stroke-dasharray':dash}:{})},g);
   const ring=(c,r,col,w)=>el('circle',{cx:c.x,cy:c.y,r:r,fill:'none',stroke:col,
       'stroke-width':w},g);
