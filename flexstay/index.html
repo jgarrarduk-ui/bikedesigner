@@ -69,16 +69,24 @@ select{width:auto}
 .warn b{color:var(--flex)}
 .good b{color:var(--ok)}
 .note{font-size:11px;color:var(--ink-soft);margin:6px 0 0}
-#bar{display:flex;align-items:center;gap:6px;padding:7px 14px;border-top:1px solid var(--rule);
+/* space-between spreads every control from the left edge to the right edge
+   with equal gaps, rather than clumping the playback controls left and the
+   toggles right with dead space in between. But space-between on a wrapped
+   line stretches whatever is left over that line's full width too, which
+   looks broken when a short trailing row is the result — so it only applies
+   once fitBar() (below) has confirmed everything actually fits on one line;
+   otherwise the bar falls back to plain left-aligned wrapping. */
+#bar{display:flex;align-items:center;justify-content:flex-start;gap:8px;
+  padding:7px 14px;border-top:1px solid var(--rule);
   background:var(--panel);flex-wrap:wrap}
+#bar.spread{justify-content:space-between}
 #bar label{margin:0;gap:6px}
-#poslabel{font:12px var(--mono);color:var(--ink-soft);min-width:30px}
-/* The toggles read as one cluster rather than loose buttons, marked by the
-   divider rather than a text label so the whole bar reads as one row. Overlay
-   and part buttons sit in the same group now — colour tells them apart, so a
-   second divider between them would be redundant. */
-.bargroup{display:flex;gap:3px;align-items:center;padding-left:7px;
-  margin-left:auto;border-left:1px solid var(--rule);flex-wrap:wrap}
+#poslabel{font:12px var(--mono);color:var(--ink-soft);white-space:nowrap}
+/* .bargroup is a semantic/ARIA grouping only now — display:contents drops its
+   own box so its buttons become direct flex children of #bar and take part in
+   the same space-between spacing as everything else, instead of being
+   distributed only among themselves inside a sub-box. */
+.bargroup{display:contents}
 #bar input[type=checkbox]{accent-color:var(--rear)}
 input[type=number]:disabled{background:#eef1f3;color:var(--ink-soft)}
 button{font:11.5px var(--sans);padding:4px 6px;border:1px solid var(--rule);border-radius:3px;
@@ -86,9 +94,9 @@ button{font:11.5px var(--sans);padding:4px 6px;border:1px solid var(--rule);bord
 button:hover{background:#e9eef1}
 button[aria-pressed=true]{background:var(--rear);border-color:var(--rear);color:#fff}
 /* Parts toggles get their own colour — teal against the overlays' blue — so the
-   two kinds of pressed button read apart at a glance without a second divider. */
+   two kinds of pressed button read apart at a glance without a divider. */
 .partbtn[aria-pressed=true]{background:var(--link);border-color:var(--link);color:#fff}
-input[type=range]{width:130px;accent-color:var(--rear)}
+input[type=range]{width:220px;accent-color:var(--rear)}
 /* One chart at a time, full width, so it is as large as the stage allows; the
    arrows page through all four. */
 #charts{display:grid;grid-template-columns:26px 1fr 26px;gap:1px;background:var(--rule);
@@ -120,9 +128,6 @@ svg text{font-family:var(--mono)}
   input[type=range]{width:auto;flex:1 1 90px;min-width:90px}
   #bar{gap:8px 10px}
   .pt{grid-template-columns:1fr 72px 72px}
-  /* the overlays get their own row rather than trailing off the end of the first */
-  .bargroup{margin-left:0;padding-left:0;border-left:none;border-top:1px solid var(--rule);
-    padding-top:8px;width:100%}
 }
 </style>
 </head>
@@ -1531,8 +1536,18 @@ function syncPos(){
   s.value=Math.round(posT*1000);
   const f=currentFrame();
   const lbl=document.getElementById('poslabel');
-  lbl.textContent = f? `${f.rise.toFixed(0)}mm · ${f.stroke.toFixed(1)}mm` : '';
-  lbl.title = f? `${f.rise.toFixed(0)}mm wheel travel · ${f.stroke.toFixed(1)}mm shock stroke` : '';
+  if(!f){ lbl.textContent=''; lbl.title=''; return; }
+  // Current value alongside the total so the slider reads as a fraction of
+  // travel, not just a bare position — total wheel travel is the last swept
+  // frame's rise; total shock stroke is the typed spec, C.stroke.
+  const frames=result&&result.frames?result.frames:[];
+  const wheelMax=frames.length?frames[frames.length-1].rise:null;
+  const wheelTxt=wheelMax!=null?`${f.rise.toFixed(0)}/${wheelMax.toFixed(0)}mm`:`${f.rise.toFixed(0)}mm`;
+  const shockTxt=`${f.stroke.toFixed(1)}/${C.stroke.toFixed(1)}mm`;
+  lbl.textContent=`${wheelTxt} wheel · ${shockTxt} shock`;
+  lbl.title=wheelMax!=null
+    ? `${f.rise.toFixed(0)} of ${wheelMax.toFixed(0)}mm wheel travel · ${f.stroke.toFixed(1)} of ${C.stroke.toFixed(1)}mm shock stroke`
+    : `${f.rise.toFixed(0)}mm wheel travel · ${f.stroke.toFixed(1)} of ${C.stroke.toFixed(1)}mm shock stroke`;
 }
 
 document.getElementById('pos').oninput=e=>{
@@ -1636,16 +1651,31 @@ document.getElementById('cnext').onclick=()=>pageCharts(1);
 });
 /* Both panels fit themselves to their own pixel box, and the first paint can run
    before the flex layout has settled, so watch the boxes rather than the window. */
-window.addEventListener('resize',()=>{draw(); charts();});
+window.addEventListener('resize',()=>{draw(); charts(); fitBar();});
 if(window.ResizeObserver){
   let ro=null;
   const refit=()=>{ if(ro) return; ro=requestAnimationFrame(()=>{ro=null; draw(); charts();}); };
   new ResizeObserver(refit).observe(document.getElementById('canvas'));
   new ResizeObserver(refit).observe(document.getElementById('charts'));
+  new ResizeObserver(fitBar).observe(document.getElementById('bar'));
+}
+// .bargroup is display:contents, so its buttons are already direct flex
+// children as far as layout goes — expand it here too, rather than measuring
+// its own (zero-size) box.
+function fitBar(){
+  const bar=document.getElementById('bar');
+  const items=[];
+  [...bar.children].forEach(k=>
+    getComputedStyle(k).display==='contents' ? items.push(...k.children) : items.push(k));
+  const cs=getComputedStyle(bar);
+  const gap=parseFloat(cs.columnGap)||0;
+  const available=bar.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+  const needed=items.reduce((s,k)=>s+k.getBoundingClientRect().width,0)+gap*(items.length-1);
+  bar.classList.toggle('spread', needed<=available);
 }
 
 try{
-  syncGeom(); fillPoints(); fillCfg(); fillTyreWidths(); initDrag(); recompute(false); syncPos();
+  syncGeom(); fillPoints(); fillCfg(); fillTyreWidths(); initDrag(); recompute(false); syncPos(); fitBar();
 }catch(err){
   const m=document.getElementById('msg');
   m.textContent='Start-up failed: '+err.message; m.className='on';
