@@ -289,18 +289,17 @@ logic (it moves the far eye to hold `C.eye`), it just used to start disarmed.
 
 ## Tube shape
 
-Frame tubes are drawn with `'stroke-linecap':'square'`, not `'round'` — flat,
-square-cut ends like the frame designer tool, not the pill-shaped ends a round
-cap gives a thick line. `square` still extends half the stroke width past the
-given point, same as `round` would, so two tubes that end at the same joint
-still overlap enough to blend into one silhouette rather than leaving a notch —
-a flat cap has none of a round cap's forgiveness for the angle the tubes happen
-to meet at. Checked at every joint in the front triangle and rear end, at both
-top-out and full compression, and it holds: the tubes still read as one solid
-shape with no seams, just with square corners instead of rounded ones. The one
-exception is `poly()`, the bent seat stay's own curve — that keeps `round`,
-since a real tube's bend needs a round `stroke-linejoin` to look smooth, and its
-two ends sit under pivot markers regardless of cap shape.
+Frame tubes use `'stroke-linecap':'round'`. **Tried `'square'` once** (flat,
+square-cut ends like the frame designer tool) and reverted it: a round cap
+extends a full radius in every direction, so it blends two tubes into one
+silhouette whatever angle they happen to meet at, but a square cap only
+extends along the tube's own axis — no sideways forgiveness. That held up fine
+at simple two-tube joints (head tube, seat top, shock link) but left visible
+seams at the bottom bracket, where down tube and seat tube converge from two
+different angles, and along the rear stay's multi-segment path. Don't retry
+this without also solving the BB and rear-stay joints — e.g. drawing them as
+one path so linejoin can round the internal corners, or overlaying a circle
+at the BB the width of a real bottom bracket shell.
 
 ## Artwork
 
