@@ -147,6 +147,7 @@ svg text{font-family:var(--mono)}
 
   <details class="grp" id="grp-frame">
     <summary>Frame geometry</summary>
+    <div class="btnrow"><button id="resetGeom">Reset geometry</button></div>
     <label><span>Reach</span><input type="number" id="reach" step="5"></label>
     <label><span>Stack</span><input type="number" id="stack" step="5"></label>
     <label><span>Head tube angle</span><input type="number" id="ha" step="0.5"></label>
@@ -162,10 +163,10 @@ svg text{font-family:var(--mono)}
     <label><span>Stem length</span><input type="number" id="stemL" step="5"></label>
     <label><span>Stem rise above head tube</span><input type="number" id="stemH" step="5"></label>
     <h3>Wheels</h3>
-    <label><span>Rear wheel</span><select id="rw"><option value="559">26 in</option><option value="584">27.5 in</option><option value="622">29 in</option><option value="686">32 in</option></select></label>
     <label><span>Front wheel</span><select id="fw"><option value="559">26 in</option><option value="584">27.5 in</option><option value="622">29 in</option><option value="686">32 in</option></select></label>
-    <label><span>Rear tyre height</span><input type="number" id="tyreR" step="1"></label>
-    <label><span>Front tyre height</span><input type="number" id="tyreF" step="1"></label>
+    <label><span>Rear wheel</span><select id="rw"><option value="559">26 in</option><option value="584">27.5 in</option><option value="622">29 in</option><option value="686">32 in</option></select></label>
+    <label><span>Front tyre width</span><select id="tyreFWidth"></select></label>
+    <label><span>Rear tyre width</span><select id="tyreRWidth"></select></label>
     <h3>Fork</h3>
     <label><span>Travel</span><input type="number" id="forkTravel" step="10"></label>
     <label><span>Standard axle to crown</span><input type="checkbox" id="a2cAuto"></label>
@@ -1457,6 +1458,31 @@ function fillCfg(){
   });
   refreshDerived();
 }
+// Tyre section height isn't typed directly — it tracks the width you'd actually
+// buy. MTB tyres run close to square in section, so height (mm) = width (in) x
+// 25.4 is a fair stand-in for a real tyre chart; 2.4in gives the 60.96mm this
+// tool has always used as its default. C.tyreR/C.tyreF stay the derived mm
+// figure the engine reads — the select just drives them.
+const TYRE_WIDTHS=[1.95,2.1,2.2,2.25,2.3,2.35,2.4,2.5,2.6,2.8,3.0];
+function fillTyreWidths(){
+  ['tyreR','tyreF'].forEach(k=>{
+    const sel=document.getElementById(k+'Width');
+    if(!sel) return;
+    const w=Math.round(C[k]/25.4*100)/100;
+    if(!sel.options.length){
+      sel.innerHTML=TYRE_WIDTHS.map(v=>`<option value="${v}">${v} in</option>`).join('');
+      sel.onchange=()=>{
+        C[k]=parseFloat(sel.value)*25.4;
+        syncGeom(k); refreshDerived(); fillPoints(); recompute(false);
+      };
+    }
+    if(![...sel.options].some(o=>Math.abs(+o.value-w)<0.005)){
+      const opt=document.createElement('option'); opt.value=w; opt.textContent=w+' in';
+      sel.appendChild(opt);
+    }
+    sel.value=w;
+  });
+}
 // A wheel over a focused number input silently edits it in most browsers,
 // which is an easy way to wreck the geometry without noticing.
 document.addEventListener('wheel',e=>{
@@ -1486,7 +1512,16 @@ document.getElementById('showsag').onclick=e=>{
 document.getElementById('datum').onchange=fillPoints;
 document.getElementById('reset').onclick=()=>{
   G=structuredClone(DEF.geom); C=structuredClone(DEF.cfg);
-  syncGeom(); fillPoints(); fillCfg(); posT=0; holdSag=false; syncPos(); recompute();
+  syncGeom(); fillPoints(); fillCfg(); fillTyreWidths(); posT=0; holdSag=false; syncPos(); recompute();
+};
+// Everything in the Frame geometry panel — reach through the fork — without
+// touching pivots, shock, stay section, drivetrain, rider or the design file.
+// Geometry gets set first and separately, so it gets its own way back to square one.
+const GEOM_KEYS=['reach','stack','ha','htl','sa','st','ttDrop','bbh','rc','csl','drop',
+  'stemL','stemH','rw','fw','tyreR','tyreF','forkTravel','a2cAuto','a2c','hsLower','offset','fsag'];
+document.getElementById('resetGeom').onclick=()=>{
+  GEOM_KEYS.forEach(k=>C[k]=DEF.cfg[k]);
+  syncGeom(); fillPoints(); fillCfg(); fillTyreWidths(); recompute(false);
 };
 
 /* ---------- design name / export / import ----------
@@ -1522,7 +1557,7 @@ function importJSON(){
         META.designer=(data._meta&&data._meta.designer)||'';
         document.getElementById('designName').value=META.name;
         document.getElementById('designer').value=META.designer;
-        syncGeom(); fillPoints(); fillCfg(); posT=0; holdSag=false; syncPos(); recompute();
+        syncGeom(); fillPoints(); fillCfg(); fillTyreWidths(); posT=0; holdSag=false; syncPos(); recompute();
       }catch(err){ alert('Invalid JSON: '+err.message); }
     };
     r.readAsText(file);
@@ -1566,7 +1601,7 @@ if(window.ResizeObserver){
 }
 
 try{
-  syncGeom(); fillPoints(); fillCfg(); initDrag(); recompute(false); syncPos();
+  syncGeom(); fillPoints(); fillCfg(); fillTyreWidths(); initDrag(); recompute(false); syncPos();
 }catch(err){
   const m=document.getElementById('msg');
   m.textContent='Start-up failed: '+err.message; m.className='on';
