@@ -102,6 +102,21 @@ untick it to enter a length no catalogue fork has.
 The seat stay spacings are entered as full widths — rear dropout spacing and shock
 mount width — and halved at the call, because `stayLoads` works in half widths.
 
+Tyre section height isn't typed directly. The select offers width in inches —
+what you'd actually buy — and `fillTyreWidths()` turns that into the `tyreR`/
+`tyreF` millimetre figure the engine reads, on the approximation that an MTB
+tyre's section is close to square: height = width x 25.4. 2.4in reproduces the
+60.96mm this tool has always defaulted to. A width read back from an odd
+`tyreR` (an older export, a hand-edited file) that doesn't match one of the
+listed sizes gets its own option appended rather than silently snapping to the
+nearest listed one.
+
+Frame geometry has its own reset (`resetGeom`, `GEOM_KEYS`), separate from the
+whole-tool reset in the Design file panel — everything in the Frame geometry
+panel, reach through the fork, without touching pivots, shock, stay section,
+drivetrain, rider or the design file. Geometry is normally set once, first,
+and separately from the kinematics, so it gets its own way back to the default.
+
 ## Save / load
 
 Design name and designer are free text, so they live in `META`, outside `C` —
