@@ -287,6 +287,21 @@ so dragging one shock mount moves the frame around a fixed shock length by
 default rather than silently stretching it; the drag handler already had this
 logic (it moves the far eye to hold `C.eye`), it just used to start disarmed.
 
+## Tube shape
+
+Frame tubes are drawn with `'stroke-linecap':'square'`, not `'round'` — flat,
+square-cut ends like the frame designer tool, not the pill-shaped ends a round
+cap gives a thick line. `square` still extends half the stroke width past the
+given point, same as `round` would, so two tubes that end at the same joint
+still overlap enough to blend into one silhouette rather than leaving a notch —
+a flat cap has none of a round cap's forgiveness for the angle the tubes happen
+to meet at. Checked at every joint in the front triangle and rear end, at both
+top-out and full compression, and it holds: the tubes still read as one solid
+shape with no seams, just with square corners instead of rounded ones. The one
+exception is `poly()`, the bent seat stay's own curve — that keeps `round`,
+since a real tube's bend needs a round `stroke-linejoin` to look smooth, and its
+two ends sit under pivot markers regardless of cap shape.
+
 ## Artwork
 
 Placed by an affine matrix built from two anchor points. The shock is sliced four
