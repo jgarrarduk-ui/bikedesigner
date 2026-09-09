@@ -23,6 +23,31 @@ For anything touching the drawing, render it and look at it before shipping.
 `jsdom` + `cairosvg` will rasterise the SVG offline; several bugs in this tool
 were only visible in a rendered image.
 
+## Layout
+
+Three columns: inputs left, drawing and graph in the middle, outputs right.
+
+The left rail is ordered by how often you touch it. Pivots and shock sit open at
+the top because they are what you drag while watching the graph; frame geometry,
+stay section, transmission, rider and the design file are `<details class="grp">`
+folds, because geometry is normally set once, first, and then left alone. The
+right rail leads with travel, balance and spring — the things a pivot move
+changes — and folds the pivot loads and the stay stress calculation away, with
+the twelve intermediate workings behind a second fold inside the stress panel.
+
+Collapsed, both rails fit a 950px viewport without scrolling; before this they
+scrolled 2191px and 1441px. Mobile went from 4237px of document to 1900px.
+
+One chart at a time, full strip width, paged by the arrows and the four dots.
+Axis ticks are rounded to 1, 2 or 5 times a power of ten (`niceAxis`) and the
+decimals come from the step, not from the quantity — a 0.5 step under a
+whole-number format printed 109, 110, 110, 111 on the anti-rise axis.
+
+**The canvas has to stay landscape.** `fitView` crops the width to fill the box,
+which is harmless on a wide canvas and takes the wheels clean off a square one.
+The allowed crop now tapers to zero as the box gets square, and the mobile canvas
+is `min(46vh,66vw)` so it stays roughly 1.6 wide.
+
 ## The model
 
 Four-bar, one degree of freedom.

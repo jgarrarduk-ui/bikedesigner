@@ -15,7 +15,7 @@
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;background:var(--paper);color:var(--ink);font:13px/1.45 var(--sans)}
-#app{display:grid;grid-template-columns:250px minmax(560px,1fr) 268px;height:100vh}
+#app{display:grid;grid-template-columns:292px minmax(560px,1fr) 268px;height:100vh}
 .rail{overflow-y:auto;background:var(--panel);padding:14px 14px 40px}
 .rail.left{border-right:1px solid var(--rule)}
 .rail.right{border-left:1px solid var(--rule)}
@@ -33,6 +33,25 @@ h1{font-size:14px;margin:0 0 2px;font-weight:650;letter-spacing:.2px}
 h2{font-size:11px;font-weight:650;color:var(--ink-soft);margin:18px 0 7px;
    padding-bottom:4px;border-bottom:1px solid var(--rule)}
 h2:first-of-type{margin-top:4px}
+h3{font-size:10px;font-weight:650;color:var(--ink-soft);text-transform:uppercase;
+   letter-spacing:.7px;margin:15px 0 4px}
+/* Collapsed groups read as a stacked list of headings: setup you open when you
+   want it, out of the way of the pivots and the graph the rest of the time. */
+.grp{border-bottom:1px solid var(--rule)}
+.grp:first-of-type{border-top:1px solid var(--rule);margin-top:16px}
+.grp[open]{padding-bottom:10px}
+.grp>summary{position:relative;list-style:none;cursor:pointer;user-select:none;
+  font-size:11px;font-weight:650;color:var(--ink-soft);padding:9px 0 9px 15px}
+.grp>summary::-webkit-details-marker{display:none}
+.grp>summary::after{content:"";position:absolute;left:2px;top:calc(50% - 3px);
+  width:5px;height:5px;border-right:1.5px solid currentColor;
+  border-bottom:1.5px solid currentColor;transform:rotate(-45deg);transition:transform .12s}
+.grp[open]>summary::after{transform:rotate(45deg) translate(-1px,-1px)}
+.grp>summary:hover,.grp[open]>summary{color:var(--ink)}
+.grp.sub{border:none;border-top:1px dotted var(--rule);margin-top:10px;padding-bottom:0}
+.grp.sub>summary{font-weight:500;padding:7px 0 7px 15px}
+.btnrow{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 2px}
+.btnrow button{flex:1;min-width:70px}
 label{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:5px 0}
 label span{flex:1;min-width:0}
 input[type=number],input[type=text],select{width:64px;font:12px var(--mono);padding:3px 5px;
@@ -40,7 +59,7 @@ input[type=number],input[type=text],select{width:64px;font:12px var(--mono);padd
 input[type=text]{width:140px;font-family:var(--sans)}
 input[type=number]:focus,input[type=text]:focus,select:focus{outline:2px solid var(--rear);outline-offset:-1px}
 select{width:auto}
-.pt{display:grid;grid-template-columns:1fr 60px 60px;gap:5px;align-items:center;margin:4px 0}
+.pt{display:grid;grid-template-columns:1fr 72px 72px;gap:5px;align-items:center;margin:4px 0}
 .pt span{font-size:12px}
 .pt input{width:100%}
 .pt .sw{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:1px}
@@ -53,9 +72,11 @@ select{width:auto}
 #bar{display:flex;align-items:center;gap:14px;padding:8px 14px;border-top:1px solid var(--rule);
   background:var(--panel);flex-wrap:wrap}
 #bar label{margin:0;gap:6px}
+#poslabel{font:12px var(--mono);color:var(--ink-soft);min-width:46px}
 /* the view overlays read as one cluster rather than four loose buttons */
 .bargroup{display:flex;gap:6px;align-items:center;padding-left:12px;
-  margin-left:2px;border-left:1px solid var(--rule);flex-wrap:wrap}
+  margin-left:auto;border-left:1px solid var(--rule);flex-wrap:wrap}
+.barlabel{font-size:11px;color:var(--ink-soft)}
 #bar input[type=checkbox]{accent-color:var(--rear)}
 input[type=number]:disabled{background:#eef1f3;color:var(--ink-soft)}
 button{font:12px var(--sans);padding:4px 11px;border:1px solid var(--rule);border-radius:3px;
@@ -63,11 +84,12 @@ button{font:12px var(--sans);padding:4px 11px;border:1px solid var(--rule);borde
 button:hover{background:#e9eef1}
 button[aria-pressed=true]{background:var(--rear);border-color:var(--rear);color:#fff}
 input[type=range]{width:190px;accent-color:var(--rear)}
-/* Two charts at a time so each gets half the width; arrows page between pairs. */
-#charts{display:grid;grid-template-columns:26px 1fr 1fr 26px;gap:1px;background:var(--rule);
-  border-top:1px solid var(--rule);height:270px;flex:none;position:relative}
+/* One chart at a time, full width, so it is as large as the stage allows; the
+   arrows page through all four. */
+#charts{display:grid;grid-template-columns:26px 1fr 26px;gap:1px;background:var(--rule);
+  border-top:1px solid var(--rule);height:320px;flex:none;position:relative}
 .chart{background:var(--panel);position:relative;min-width:0;margin:0}
-.chart figcaption{position:absolute;top:6px;left:12px;font-size:12px;font-weight:600;color:var(--ink-soft)}
+.chart figcaption{position:absolute;top:8px;left:14px;font-size:12px;font-weight:650;color:var(--ink-soft)}
 .chart svg{width:100%;height:100%;display:block}
 .pager{background:var(--panel);border:none;border-radius:0;font-size:17px;color:var(--ink-soft);
   padding:0;cursor:pointer}
@@ -87,10 +109,15 @@ svg text{font-family:var(--mono)}
   .rail{overflow-y:visible;max-height:none}
   .rail.left{border-right:none;border-top:1px solid var(--rule)}
   .rail.right{border-left:none;border-top:1px solid var(--rule)}
-  #canvas{height:44vh;min-height:260px;flex:none}
-  #charts{grid-template-columns:24px 1fr 1fr 24px;height:260px}
-  input[type=range]{width:140px}
+  /* keep the canvas landscape: a square one crops the wheels off the ends */
+  #canvas{height:min(46vh,66vw);min-height:210px;flex:none}
+  #charts{grid-template-columns:24px 1fr 24px;height:250px}
+  input[type=range]{width:auto;flex:1 1 90px;min-width:90px}
+  #bar{gap:8px 10px}
   .pt{grid-template-columns:1fr 72px 72px}
+  /* the overlays get their own row rather than trailing off the end of the first */
+  .bargroup{margin-left:0;padding-left:0;border-left:none;border-top:1px solid var(--rule);
+    padding-top:8px;width:100%}
 }
 </style>
 </head>
@@ -99,17 +126,10 @@ svg text{font-family:var(--mono)}
 
 <div class="rail left">
   <h1>Flex-stay kinematics</h1>
-  <p class="sub">Single pivot with shock link. Seat stay carries the compliance.<br>
-   <span id="build" style="font:11px var(--mono);color:var(--rear)">build 1.8</span></p>
+  <p class="sub">Single pivot with shock link. Seat stay carries the compliance.</p>
 
-  <h2>Design</h2>
-  <label><span>Design name</span><input type="text" id="designName" placeholder="untitled"></label>
-  <label><span>Designer</span><input type="text" id="designer" placeholder="your name"></label>
-  <div style="display:flex;gap:8px;margin-top:8px">
-    <button id="exportJson" style="flex:1">Export</button>
-    <button id="importJson" style="flex:1">Import</button>
-  </div>
-
+  <!-- The working set: what you move while watching the graph. Everything else
+       is setup, folded away until it is wanted. -->
   <h2>Pivots and mounts</h2>
   <div id="points"></div>
   <p class="note">Drag points on the drawing or type coordinates. Datum:
@@ -125,62 +145,78 @@ svg text{font-family:var(--mono)}
   <label><span>Stroke</span><input type="number" id="stroke" step="0.5"></label>
   <label><span>Rear sag, % of travel</span><input type="number" id="sag" step="1"></label>
 
-  <h2>Seat stay</h2>
-  <label><span>Tube outside dia.</span><input type="number" id="od" step="0.5"></label>
-  <label><span>Bend radius</span><input type="number" id="bendR" step="10"></label>
-  <label><span>Bend angle</span><input type="number" id="bendA" step="1"></label>
-  <label><span>Straight before bend</span><input type="number" id="bendStart" step="5"></label>
-  <label><span>Lean bend from shock mount</span><input type="number" id="leanEnd" step="5"></label>
-  <label><span>Lean bend angle</span><input type="number" id="leanA" step="1"></label>
-  <label><span>Rear dropout spacing</span><input type="number" id="dropW" step="1"></label>
-  <label><span>Shock mount width</span><input type="number" id="shockW" step="1"></label>
-  <label><span>Wall thickness</span><input type="number" id="wall" step="0.05"></label>
+  <details class="grp" id="grp-frame">
+    <summary>Frame geometry</summary>
+    <label><span>Reach</span><input type="number" id="reach" step="5"></label>
+    <label><span>Stack</span><input type="number" id="stack" step="5"></label>
+    <label><span>Head tube angle</span><input type="number" id="ha" step="0.5"></label>
+    <label><span>Head tube length</span><input type="number" id="htl" step="5"></label>
+    <label><span>Seat tube angle</span><input type="number" id="sa" step="0.5"></label>
+    <label><span>Seat tube length</span><input type="number" id="st" step="5"></label>
+    <label><span>Top tube drop at seat tube</span><input type="number" id="ttDrop" step="5"></label>
+    <label><span>Bottom bracket height</span><input type="number" id="bbh" step="1"></label>
+    <label><span>Rear centre</span><input type="number" id="rc" step="5"></label>
+    <label><span>Chainstay length</span><input type="number" id="csl" step="5"></label>
+    <label><span>Bottom bracket drop</span><input type="number" id="drop" step="1"></label>
+    <h3>Cockpit</h3>
+    <label><span>Stem length</span><input type="number" id="stemL" step="5"></label>
+    <label><span>Stem rise above head tube</span><input type="number" id="stemH" step="5"></label>
+    <h3>Wheels</h3>
+    <label><span>Rear wheel</span><select id="rw"><option value="559">26 in</option><option value="584">27.5 in</option><option value="622">29 in</option><option value="686">32 in</option></select></label>
+    <label><span>Front wheel</span><select id="fw"><option value="559">26 in</option><option value="584">27.5 in</option><option value="622">29 in</option><option value="686">32 in</option></select></label>
+    <label><span>Rear tyre height</span><input type="number" id="tyreR" step="1"></label>
+    <label><span>Front tyre height</span><input type="number" id="tyreF" step="1"></label>
+    <h3>Fork</h3>
+    <label><span>Travel</span><input type="number" id="forkTravel" step="10"></label>
+    <label><span>Standard axle to crown</span><input type="checkbox" id="a2cAuto"></label>
+    <label><span>Axle to crown, extended</span><input type="number" id="a2c" step="5"></label>
+    <label><span>Lower headset stack</span><input type="number" id="hsLower" step="0.5"></label>
+    <label><span>Offset</span><input type="number" id="offset" step="1"></label>
+    <label><span>Front sag, % of travel</span><input type="number" id="fsag" step="1"></label>
+    <h3>As drawn</h3>
+    <div id="out-geom"></div>
+  </details>
 
-  <h2>Fork</h2>
-  <label><span>Travel</span><input type="number" id="forkTravel" step="10"></label>
-  <label><span>Standard axle to crown</span><input type="checkbox" id="a2cAuto"></label>
-  <label><span>Axle to crown, extended</span><input type="number" id="a2c" step="5"></label>
-  <label><span>Lower headset stack</span><input type="number" id="hsLower" step="0.5"></label>
-  <label><span>Offset</span><input type="number" id="offset" step="1"></label>
-  <label><span>Front sag, % of travel</span><input type="number" id="fsag" step="1"></label>
-  <p class="note">Axle to crown is measured to the crown race seat, so the lower
-  headset stack sits between it and the head tube. External cup 12&ndash;13mm, zero
-  stack a few mm for the crown race alone.</p>
+  <details class="grp" id="grp-stay">
+    <summary>Seat stay section</summary>
+    <label><span>Tube outside dia.</span><input type="number" id="od" step="0.5"></label>
+    <label><span>Wall thickness</span><input type="number" id="wall" step="0.05"></label>
+    <label><span>Bend radius</span><input type="number" id="bendR" step="10"></label>
+    <label><span>Bend angle</span><input type="number" id="bendA" step="1"></label>
+    <label><span>Straight before bend</span><input type="number" id="bendStart" step="5"></label>
+    <label><span>Lean bend from shock mount</span><input type="number" id="leanEnd" step="5"></label>
+    <label><span>Lean bend angle</span><input type="number" id="leanA" step="1"></label>
+    <label><span>Rear dropout spacing</span><input type="number" id="dropW" step="1"></label>
+    <label><span>Shock mount width</span><input type="number" id="shockW" step="1"></label>
+  </details>
 
-  <h2>Frame</h2>
-  <label><span>Reach</span><input type="number" id="reach" step="5"></label>
-  <label><span>Stack</span><input type="number" id="stack" step="5"></label>
-  <label><span>Head tube angle</span><input type="number" id="ha" step="0.5"></label>
-  <label><span>Head tube length</span><input type="number" id="htl" step="5"></label>
-  <label><span>Seat tube angle</span><input type="number" id="sa" step="0.5"></label>
-  <label><span>Seat tube length</span><input type="number" id="st" step="5"></label>
-  <label><span>Top tube drop at seat tube</span><input type="number" id="ttDrop" step="5"></label>
-  <label><span>Bottom bracket height</span><input type="number" id="bbh" step="1"></label>
-  <label><span>Rear centre</span><input type="number" id="rc" step="5"></label>
-  <label><span>Chainstay length</span><input type="number" id="csl" step="5"></label>
-  <label><span>Bottom bracket drop</span><input type="number" id="drop" step="1"></label>
+  <details class="grp" id="grp-drive">
+    <summary>Transmission</summary>
+    <label><span>Chainring teeth</span><input type="number" id="ring" step="1"></label>
+    <label><span>Sprocket teeth</span><input type="number" id="cog" step="1"></label>
+    <label><span>Chain links</span><input type="number" id="links" step="2"></label>
+    <label><span>Mech cage length</span><input type="number" id="cage" step="2"></label>
+  </details>
 
-  <h2>Cockpit</h2>
-  <label><span>Stem length</span><input type="number" id="stemL" step="5"></label>
-  <label><span>Stem rise above head tube</span><input type="number" id="stemH" step="5"></label>
+  <details class="grp" id="grp-rider">
+    <summary>Rider and load</summary>
+    <label><span>Rider plus kit, kg</span><input type="number" id="mass" step="1"></label>
+    <label><span>Peak load, g</span><input type="number" id="peakG" step="0.5"></label>
+    <label><span>Rear wheel share, %</span><input type="number" id="bias" step="1"></label>
+    <label><span>Centre of mass height</span><input type="number" id="cogh" step="10"></label>
+  </details>
 
-  <h2>Wheels</h2>
-  <label><span>Rear wheel</span><select id="rw"><option value="559">26 in</option><option value="584">27.5 in</option><option value="622">29 in</option><option value="686">32 in</option></select></label>
-  <label><span>Front wheel</span><select id="fw"><option value="559">26 in</option><option value="584">27.5 in</option><option value="622">29 in</option><option value="686">32 in</option></select></label>
-  <label><span>Rear tyre height</span><input type="number" id="tyreR" step="1"></label>
-  <label><span>Front tyre height</span><input type="number" id="tyreF" step="1"></label>
-
-  <h2>Transmission</h2>
-  <label><span>Chainring teeth</span><input type="number" id="ring" step="1"></label>
-  <label><span>Sprocket teeth</span><input type="number" id="cog" step="1"></label>
-  <label><span>Chain links</span><input type="number" id="links" step="2"></label>
-  <label><span>Mech cage length</span><input type="number" id="cage" step="2"></label>
-
-  <h2>Rider and load</h2>
-  <label><span>Rider plus kit, kg</span><input type="number" id="mass" step="1"></label>
-  <label><span>Peak load, g</span><input type="number" id="peakG" step="0.5"></label>
-  <label><span>Rear wheel share, %</span><input type="number" id="bias" step="1"></label>
-  <label><span>Centre of mass height</span><input type="number" id="cogh" step="10"></label>
+  <details class="grp" id="grp-design">
+    <summary>Design file</summary>
+    <label><span>Design name</span><input type="text" id="designName" placeholder="untitled"></label>
+    <label><span>Designer</span><input type="text" id="designer" placeholder="your name"></label>
+    <div class="btnrow">
+      <button id="exportJson">Export</button>
+      <button id="importJson">Import</button>
+      <button id="reset">Reset</button>
+    </div>
+    <p class="note" id="build">build 2.0</p>
+  </details>
 </div>
 
 <div id="stage">
@@ -194,43 +230,56 @@ svg text{font-family:var(--mono)}
   </div>
   <div id="msg"></div>
   <div id="bar">
-    <button id="play">Cycle suspension</button>
-    <label><span>Position</span><input type="range" id="pos" min="0" max="1000" value="0"></label>
-    <span id="poslabel" style="font:12px var(--mono);color:var(--ink-soft)"></span>
-    <button id="showsag" aria-pressed="false">Hold at sag</button>
-    <button id="locklen" aria-pressed="false">Lock shock length</button>
-    <button id="reset">Reset geometry</button>
-    <span class="bargroup">
-      <button id="asline" aria-pressed="false">Anti-squat</button>
-      <button id="arline" aria-pressed="false">Anti-rise</button>
-      <button id="axpath" aria-pressed="true">Axle path</button>
-      <button id="forces" aria-pressed="false">Force vectors</button>
+    <button id="play">Cycle</button>
+    <input type="range" id="pos" min="0" max="1000" value="0" aria-label="Suspension position">
+    <span id="poslabel"></span>
+    <button id="showsag" aria-pressed="false">Sag</button>
+    <button id="locklen" aria-pressed="false">Lock shock</button>
+    <span class="bargroup" role="group" aria-label="Overlays">
+      <span class="barlabel">show</span>
+      <button id="axpath" aria-pressed="true">axle path</button>
+      <button id="asline" aria-pressed="false">anti-squat</button>
+      <button id="arline" aria-pressed="false">anti-rise</button>
+      <button id="forces" aria-pressed="false">forces</button>
     </span>
   </div>
   <div id="charts">
-    <button class="pager" id="cprev" aria-label="Previous pair">&lsaquo;</button>
+    <button class="pager" id="cprev" aria-label="Previous chart">&lsaquo;</button>
     <figure class="chart"><figcaption id="cap-a"></figcaption><svg id="c-a"></svg></figure>
-    <figure class="chart"><figcaption id="cap-b"></figcaption><svg id="c-b"></svg></figure>
-    <button class="pager" id="cnext" aria-label="Next pair">&rsaquo;</button>
-    <div id="cdots"><i></i><i></i></div>
+    <button class="pager" id="cnext" aria-label="Next chart">&rsaquo;</button>
+    <div id="cdots"><i></i><i></i><i></i><i></i></div>
   </div>
 </div>
 
 <div class="rail right">
+  <!-- Ordered by what a pivot move actually changes. Verification detail folds away. -->
   <h2>Travel and rate</h2>
   <div id="out-rate"></div>
-  <h2>Seat stay flex</h2>
-  <div id="out-flex"></div>
-  <p class="note">Steel tubing, constant section, load shared by two stays. Out of
-     plane bending from the lean does not cancel against the flex, so the two are
-     combined as a resultant moment.</p>
-  <h2>Axle path</h2>
-  <div id="out-path"></div>
+
+  <h2>Balance</h2>
+  <div id="out-balance"></div>
+
   <h2>Spring</h2>
   <div id="out-spring"></div>
-  <h2>Pivot loads at sag</h2>
-  <div id="out-force"></div>
-  <p class="note">Static, in plane, from the rear wheel load alone. No braking or cornering case yet.</p>
+
+  <details class="grp">
+    <summary>Pivot loads at sag</summary>
+    <div id="out-force"></div>
+    <p class="note">Static, in plane, from the rear wheel load alone. No braking or
+       cornering case yet.</p>
+  </details>
+
+  <details class="grp">
+    <summary>Seat stay stress</summary>
+    <div id="out-flex"></div>
+    <p class="note">Steel tubing, constant section, load shared by two stays. Out of
+       plane bending from the lean does not cancel against the flex, so the two are
+       combined as a resultant moment.</p>
+    <details class="grp sub">
+      <summary>Workings</summary>
+      <div id="out-flexdetail"></div>
+    </details>
+  </details>
 </div>
 </div>
 
@@ -524,9 +573,9 @@ let result=null, posT=0, playing=false, holdSag=false;
 let META={name:'', designer:''};
 
 const PTS=[
-  ['MP','Main pivot','var(--rear)'], ['SP','Second pivot','var(--link)'],
+  ['MP','Main pivot','var(--rear)'], ['SP','Link to frame','var(--link)'],
   ['LP','Link to stay','var(--link)'],
-  ['SE','Shock eye','var(--shock)'], ['SG','Shock, frame','var(--shock)'],
+  ['SE','Shock eye','var(--shock)'], ['SG','Shock mount','var(--shock)'],
   ['AX','Rear axle','var(--rear)']
 ];
 
@@ -728,7 +777,10 @@ function fitView(svg,box){
   // Fill the canvas, cropping the wheels a little. Always — the overlays do not
   // get to change the framing.
   const hCover=Math.min(box.h, box.w/aspect);
-  const hCap  =box.w*(1-MAXCROP)/aspect;               // never crop most of the width
+  // A wide canvas can lose a sliver of tyre without anyone minding. A tall narrow
+  // one cannot: there the same fraction takes the wheels off, so taper it away.
+  const crop=Math.max(0,Math.min(MAXCROP,(aspect-1.1)*0.36));
+  const hCap  =box.w*(1-crop)/aspect;                  // never crop most of the width
   const h=Math.max(hCover,hCap)*1.07/zoomK;            // margin so the ground line clears the edge
   const w=h*aspect;
   mmPerPx=r.width>4 ? w/r.width : 1;
@@ -1168,8 +1220,8 @@ function readouts(){
   const f=result&&result.frames?result.frames:[];
   const lrs=f.map(k=>k.lr).filter(v=>v!==null&&v!==undefined&&Number.isFinite(v));
   if(f.length<3 || lrs.length<2){          // jammed or partial: no numbers to report
-    ['out-rate','out-flex','out-path','out-spring','out-force'].forEach(id=>
-      R(id).innerHTML=row('no solution','—'));
+    ['out-rate','out-balance','out-spring','out-force','out-flex','out-flexdetail']
+      .forEach(id=>{if(R(id)) R(id).innerHTML=row('no solution','—')});
     return;
   }
   const last=f[f.length-1], first=f[0];
@@ -1183,13 +1235,13 @@ function readouts(){
     row('Leverage, bottom out', lrBot.toFixed(2))+
     row('Progression', prog.toFixed(1)+' %', prog>8?'good':'warn')+
     row('Shock eye to eye, drawn', eyeNow.toFixed(1)+' mm',
-        Math.abs(eyeNow-C.eye)>2?'warn':'')+
-    row('Swingarm rotation', (Math.abs(last.phi)*180/Math.PI).toFixed(1)+'°')+
-    row('Rear centre', Math.abs(first.AX.x).toFixed(0)+' mm')+
-    row('Bottom bracket height', C.bbh.toFixed(0)+' mm')+
-    row('Wheelbase', (frame(0).FA.x-first.AX.x).toFixed(0)+' mm')+
-    row('Stack, derived', C.stack.toFixed(1)+' mm')+
-    row('Bottom bracket drop', C.drop.toFixed(1)+' mm');
+        Math.abs(eyeNow-C.eye)>2?'warn':'');
+  // the geometry the chain derived, shown beside the inputs that set it
+  if(R('out-geom')) R('out-geom').innerHTML=
+    row('Stack', C.stack.toFixed(1)+' mm')+
+    row('Bottom bracket drop', C.drop.toFixed(1)+' mm')+
+    row('Chainstay length', C.csl.toFixed(1)+' mm')+
+    row('Wheelbase', (frame(0).FA.x-first.AX.x).toFixed(0)+' mm');
 
   const fl=f.map(k=>k.flex);
   const peak=fl.reduce((a,b)=>Math.abs(b)>Math.abs(a)?b:a,0);
@@ -1205,7 +1257,12 @@ function readouts(){
   const st=stayLoads(peak,stayGeo,C.od,C.wall,axialAt(1),C.bendA,C.dropW/2,C.shockW/2,C.leanEnd,C.leanA);
   const pk=stayLoads(peak,stayGeo,C.od,C.wall,axialAt(C.peakG),C.bendA,C.dropW/2,C.shockW/2,C.leanEnd,C.leanA);
   R('out-flex').innerHTML=
+    row('Resultant at sag', st.combined.toFixed(0)+' MPa', st.combined>250?'warn':'good')+
+    row('Resultant at '+C.peakG+' g', pk.combined.toFixed(0)+' MPa',
+        pk.combined>350?'warn':'good')+
     row('Flex pivot rotation', peak.toFixed(2)+'°')+
+    row('Bend and flex', st.oppose?'oppose':'add', st.oppose?'good':'warn');
+  R('out-flexdetail').innerHTML=
     row('Developed length', stayGeo.total.toFixed(0)+' mm')+
     row('Offset from chord, in plane', st.eccentricity.toFixed(1)+' mm')+
     row('Offset from chord, out of plane', st.eOop.toFixed(1)+' mm')+
@@ -1217,22 +1274,17 @@ function readouts(){
     row('P-delta amplification, sag', st.amp.toFixed(2))+
     row('Axial stress, in plane', st.sAx.toFixed(0)+' MPa')+
     row('Axial stress, out of plane', st.sOop.toFixed(0)+' MPa')+
-    row('Resultant at sag', st.combined.toFixed(0)+' MPa', st.combined>250?'warn':'good')+
-    row('Axial force per stay, '+C.peakG+' g', pk.axial.toFixed(0)+' N')+
-    row('Resultant at '+C.peakG+' g', pk.combined.toFixed(0)+' MPa',
-        pk.combined>350?'warn':'good')+
-    row('Bend and flex', st.oppose?'oppose':'add', st.oppose?'good':'warn');
+    row('Axial force per stay, '+C.peakG+' g', pk.axial.toFixed(0)+' N');
 
   const xs=f.map(k=>k.AX.x);
-  R('out-path').innerHTML=
+  R('out-balance').innerHTML=
+    row('Anti-squat at sag', pick(f,'as').toFixed(0)+' %')+
+    row('Anti-rise at sag', pick(f,'ar').toFixed(0)+' %')+
     row('Rearward at full travel', (first.AX.x-last.AX.x).toFixed(1)+' mm')+
     row('Peak rearward', (first.AX.x-Math.min(...xs)).toFixed(1)+' mm')+
     row('Chain shortening', (last.kick??0).toFixed(1)+'°')+
-    row('Mech cage, top out', first.cageDeg.toFixed(1)+'°')+
     row('Mech cage swing', (first.cageDeg-last.cageDeg).toFixed(1)+'°',
-        f.some(k=>k.cageClamp)?'warn':'')+
-    row('Anti-squat at sag', pick(f,'as').toFixed(0)+' %')+
-    row('Anti-rise at sag', pick(f,'ar').toFixed(0)+' %');
+        f.some(k=>k.cageClamp)?'warn':'');
 
   const sagF=at(f,C.sag/100);
   const W=C.mass*9.81*C.bias/100;
@@ -1243,8 +1295,7 @@ function readouts(){
     row('Sprung load on rear', W.toFixed(0)+' N')+
     row('Leverage at sag', lrSag.toFixed(2))+
     row('Shock force at sag', Fs.toFixed(0)+' N')+
-    row('Coil rate needed', rate.toFixed(1)+' N/mm')+
-    row('', (rate*5.7101).toFixed(0)+' lb/in');
+    row('Coil rate', rate.toFixed(1)+' N/mm · '+(rate*5.7101).toFixed(0)+' lb/in');
 
   const P2=pivotForces(G,sagF,W);
   R('out-force').innerHTML = P2 ?
@@ -1258,16 +1309,28 @@ function at(f,t){return f[Math.min(f.length-1,Math.max(0,Math.round(t*(f.length-
 function pick(f,k){const v=at(f,C.sag/100)[k];return v===null||v===undefined?0:v}
 
 /* ---------- charts ----------
-   Two at a time so each one is half the strip wide. The viewBox is rebuilt from
-   the element's own pixel box every render, so one user unit is one pixel: text
-   stays 12px whatever the chart size, and nothing is letterboxed. */
-const CHART_PAIRS=[
-  [{key:'lr',   title:'Leverage ratio',        fmt:v=>v.toFixed(2)},
-   {key:'kick', title:'Chain shortening, deg', fmt:v=>v.toFixed(1)}],
-  [{key:'as',   title:'Anti-squat, %',         fmt:v=>v.toFixed(0)},
-   {key:'ar',   title:'Anti-rise, %',          fmt:v=>v.toFixed(0)}]
+   One at a time, full strip width, paged by the arrows. The viewBox is rebuilt
+   from the element's own pixel box every render, so one user unit is one pixel:
+   text stays 12px whatever the chart size, and nothing is letterboxed. */
+// `dec` is the fewest decimals worth showing; a fine axis step can raise it.
+const CHART_VIEWS=[
+  {key:'lr',   title:'Leverage ratio',        dec:2},
+  {key:'as',   title:'Anti-squat, %',         dec:0},
+  {key:'ar',   title:'Anti-rise, %',          dec:0},
+  {key:'kick', title:'Chain shortening, deg', dec:1}
 ];
 let chartPage=0;
+
+// Axis bounds and step rounded to 1, 2 or 5 times a power of ten, so the
+// gridline labels are numbers you can read off rather than 2.41 / 2.29 / 2.16.
+// No 2.5 in the set: a percentage axis formats to whole numbers and would then
+// print 100, 103, 105, 108 for an evenly spaced ladder.
+function niceAxis(lo,hi,want){
+  if(hi-lo<1e-9){hi=lo+0.5;lo-=0.5}
+  const raw=(hi-lo)/want, mag=Math.pow(10,Math.floor(Math.log10(raw)));
+  const step=([1,2,5,10].find(m=>m*mag>=raw-1e-12)||10)*mag;
+  return {lo:Math.floor(lo/step)*step, hi:Math.ceil(hi/step)*step, step};
+}
 
 function chart(id,spec){
   const svg=document.getElementById(id);
@@ -1276,25 +1339,28 @@ function chart(id,spec){
   const W=Math.max(180,Math.round(r.width)), H=Math.max(120,Math.round(r.height));
   svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
   if(!result||!result.frames.length) return;
-  const key=spec.key, fmt=spec.fmt;
+  const key=spec.key;
   const f=result.frames.filter(k=>Number.isFinite(k[key]));
   if(f.length<2) return;
   const L=54,B=34,T=28,Rp=16;
   const xs=f.map(k=>k.rise), ys=f.map(k=>k[key]);
   const x0=Math.min(...xs), x1=Math.max(...xs);
-  let y0=Math.min(...ys), y1=Math.max(...ys);
-  if(y1-y0<1e-6){y0-=1;y1+=1}
-  const pad=(y1-y0)*0.12; y0-=pad; y1+=pad;
+  const ax=niceAxis(Math.min(...ys),Math.max(...ys),H>240?5:4);
+  const y0=ax.lo, y1=ax.hi;
+  // a 0.5 step under a whole-number format prints 109, 110, 110, 111 — so the
+  // step, not just the quantity, decides how many decimals the ladder needs
+  const dec=Math.max(spec.dec, Math.min(3,Math.max(0,-Math.floor(Math.log10(ax.step)+1e-9))));
+  const fmt=v=>v.toFixed(dec);
   const X=v=>L+(v-x0)/(x1-x0||1)*(W-L-Rp);
   const Y=v=>H-B-(v-y0)/(y1-y0)*(H-B-T);
   const gg=el('g',{},svg);
-  [0,.25,.5,.75,1].forEach(t=>{
-    const yv=y0+(y1-y0)*t;
+  for(let i=0,n=Math.round((y1-y0)/ax.step);i<=n;i++){
+    const yv=y0+i*ax.step;
     el('line',{x1:L,y1:Y(yv),x2:W-Rp,y2:Y(yv),stroke:'var(--grid2)','stroke-width':.8},gg);
     const tx=el('text',{x:L-7,y:Y(yv)+4,'text-anchor':'end','font-size':12,
       fill:'var(--ink-soft)'},gg);
     tx.textContent=fmt(yv);
-  });
+  }
   (W>340?[0,.5,1]:[0,1]).forEach(t=>{                   // travel ticks along the bottom
     const xv=x0+(x1-x0)*t;
     el('line',{x1:X(xv),y1:H-B,x2:X(xv),y2:H-B+4,stroke:'var(--grid2)','stroke-width':.8},gg);
@@ -1313,16 +1379,14 @@ function chart(id,spec){
       'stroke-width':1.2,'stroke-dasharray':'3 3'},gg);
 }
 function charts(){
-  const pair=CHART_PAIRS[chartPage];
-  document.getElementById('cap-a').textContent=pair[0].title;
-  document.getElementById('cap-b').textContent=pair[1].title;
-  chart('c-a',pair[0]);
-  chart('c-b',pair[1]);
+  const v=CHART_VIEWS[chartPage];
+  document.getElementById('cap-a').textContent=v.title;
+  chart('c-a',v);
   document.querySelectorAll('#cdots i').forEach((d,i)=>
     d.classList.toggle('on',i===chartPage));
 }
 function pageCharts(d){
-  chartPage=(chartPage+d+CHART_PAIRS.length)%CHART_PAIRS.length;
+  chartPage=(chartPage+d+CHART_VIEWS.length)%CHART_VIEWS.length;
   charts();
 }
 
