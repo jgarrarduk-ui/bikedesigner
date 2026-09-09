@@ -69,25 +69,26 @@ select{width:auto}
 .warn b{color:var(--flex)}
 .good b{color:var(--ok)}
 .note{font-size:11px;color:var(--ink-soft);margin:6px 0 0}
-#bar{display:flex;align-items:center;gap:14px;padding:8px 14px;border-top:1px solid var(--rule);
+#bar{display:flex;align-items:center;gap:6px;padding:7px 14px;border-top:1px solid var(--rule);
   background:var(--panel);flex-wrap:wrap}
 #bar label{margin:0;gap:6px}
-#poslabel{font:12px var(--mono);color:var(--ink-soft);min-width:46px}
-/* Each group of toggles reads as one cluster rather than loose buttons. Only
-   the first group needs to push right; a second auto margin would have no
-   space left to claim, but zero it explicitly so it can't do anything odd
-   if the bar ever reflows with just one group visible. */
-.bargroup{display:flex;gap:6px;align-items:center;padding-left:12px;
+#poslabel{font:12px var(--mono);color:var(--ink-soft);min-width:30px}
+/* The toggles read as one cluster rather than loose buttons, marked by the
+   divider rather than a text label so the whole bar reads as one row. Overlay
+   and part buttons sit in the same group now — colour tells them apart, so a
+   second divider between them would be redundant. */
+.bargroup{display:flex;gap:3px;align-items:center;padding-left:7px;
   margin-left:auto;border-left:1px solid var(--rule);flex-wrap:wrap}
-.bargroup+.bargroup{margin-left:0}
-.barlabel{font-size:11px;color:var(--ink-soft)}
 #bar input[type=checkbox]{accent-color:var(--rear)}
 input[type=number]:disabled{background:#eef1f3;color:var(--ink-soft)}
-button{font:12px var(--sans);padding:4px 11px;border:1px solid var(--rule);border-radius:3px;
+button{font:11.5px var(--sans);padding:4px 6px;border:1px solid var(--rule);border-radius:3px;
   background:#fff;color:var(--ink);cursor:pointer}
 button:hover{background:#e9eef1}
 button[aria-pressed=true]{background:var(--rear);border-color:var(--rear);color:#fff}
-input[type=range]{width:190px;accent-color:var(--rear)}
+/* Parts toggles get their own colour — teal against the overlays' blue — so the
+   two kinds of pressed button read apart at a glance without a second divider. */
+.partbtn[aria-pressed=true]{background:var(--link);border-color:var(--link);color:#fff}
+input[type=range]{width:130px;accent-color:var(--rear)}
 /* One chart at a time, full width, so it is as large as the stage allows; the
    arrows page through all four. */
 #charts{display:grid;grid-template-columns:26px 1fr 26px;gap:1px;background:var(--rule);
@@ -240,21 +241,17 @@ svg text{font-family:var(--mono)}
     <span id="poslabel"></span>
     <button id="showsag" aria-pressed="false">Sag</button>
     <button id="locklen" aria-pressed="true" title="Keep the shock eye to eye fixed while dragging its mounts">Lock shock</button>
-    <span class="bargroup" role="group" aria-label="Overlays">
-      <span class="barlabel">show</span>
+    <span class="bargroup" role="group" aria-label="Overlays and parts drawn">
       <button id="axpath" aria-pressed="true">axle path</button>
       <button id="asline" aria-pressed="false">anti-squat</button>
       <button id="arline" aria-pressed="false">anti-rise</button>
       <button id="forces" aria-pressed="false">forces</button>
-    </span>
-    <span class="bargroup" role="group" aria-label="Parts drawn">
-      <span class="barlabel">parts</span>
-      <button id="tglWheels"    aria-pressed="true">wheels</button>
-      <button id="tglDrive"     aria-pressed="true">drivetrain</button>
-      <button id="tglCockpit"   aria-pressed="true">cockpit</button>
-      <button id="tglSaddle"    aria-pressed="true">saddle</button>
-      <button id="tglShock"     aria-pressed="true">shock</button>
-      <button id="tglFork"      aria-pressed="true">fork</button>
+      <button class="partbtn" id="tglWheels"    aria-pressed="true">wheels</button>
+      <button class="partbtn" id="tglDrive"     aria-pressed="true">drivetrain</button>
+      <button class="partbtn" id="tglCockpit"   aria-pressed="true">cockpit</button>
+      <button class="partbtn" id="tglSaddle"    aria-pressed="true">saddle</button>
+      <button class="partbtn" id="tglShock"     aria-pressed="true">shock</button>
+      <button class="partbtn" id="tglFork"      aria-pressed="true">fork</button>
     </span>
   </div>
   <div id="charts">
@@ -1527,8 +1524,9 @@ function syncPos(){
   const s=document.getElementById('pos');
   s.value=Math.round(posT*1000);
   const f=currentFrame();
-  document.getElementById('poslabel').textContent =
-    f? `${f.rise.toFixed(0)} mm wheel · ${f.stroke.toFixed(1)} mm shock` : '';
+  const lbl=document.getElementById('poslabel');
+  lbl.textContent = f? `${f.rise.toFixed(0)}mm · ${f.stroke.toFixed(1)}mm` : '';
+  lbl.title = f? `${f.rise.toFixed(0)}mm wheel travel · ${f.stroke.toFixed(1)}mm shock stroke` : '';
 }
 
 document.getElementById('pos').oninput=e=>{

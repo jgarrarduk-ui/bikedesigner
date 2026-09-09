@@ -258,11 +258,20 @@ stay and over the spokes, so as a thin `#134463` line it was invisible against a
 
 ## Parts toggles
 
-A second row of buttons — wheels, drivetrain, cockpit, saddle, shock, fork — hides
-one piece of artwork each, all on by default (`showWheels` etc.). The frame itself
-(front triangle, rear stay, shock link) is never one of them; only bolt-on product
+Six buttons — wheels, drivetrain, cockpit, saddle, shock, fork — hide one piece
+of artwork each, all on by default (`showWheels` etc.). They share the bar's one
+toggle cluster with the overlays (axle path, anti-squat, anti-rise, forces)
+rather than getting a second divider: `.partbtn` gives them `--link` teal against
+the overlays' `--rear` blue, so the two kinds of pressed button read apart by
+colour instead of by a text label or a second border. The frame itself (front
+triangle, rear stay, shock link) is never one of them; only bolt-on product
 artwork is. This is where a future crank image replaces the chainring/cog rings
 under the drivetrain flag, without touching anything else.
+
+Fitting sixteen buttons plus the position slider on one line took the bar's
+padding and gaps down close to the limit, and shortened the position readout
+from "0 mm wheel · 0.0 mm shock" to "0mm · 0.0mm" with the full wording moved to
+its `title`. Still fits at 1366px; below that it wraps a row at a time.
 
 `drivetrain` covers the chainring and cog rings, the chain line, and the rear
 derailleur — `guide`/`tension`/`up` are still computed unconditionally because the
