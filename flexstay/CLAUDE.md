@@ -77,6 +77,17 @@ untick it to enter a length no catalogue fork has.
 The seat stay spacings are entered as full widths — rear dropout spacing and shock
 mount width — and halved at the call, because `stayLoads` works in half widths.
 
+## Save / load
+
+Design name and designer are free text, so they live in `META`, outside `C` —
+`fillCfg()` runs every field in `C` through `parseFloat` when it wires up its
+input, which would permanently reject a name the moment it looked at the box.
+Export writes `{_meta:{name, designer, date, version}, geom:G, cfg:C}`; import
+parses that same shape, replaces `G`/`C` wholesale, and then runs the exact
+startup sequence the reset button uses — `syncGeom(); fillPoints(); fillCfg();`
+— so a file with an old or partial `cfg` still comes out through the same
+derivation the app applies on every other input change.
+
 ## Validated against Linkage X3
 
 The validation belongs to the **solver**, not to whatever the app ships as its
