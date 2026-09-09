@@ -268,10 +268,23 @@ triangle, rear stay, shock link) is never one of them; only bolt-on product
 artwork is. This is where a future crank image replaces the chainring/cog rings
 under the drivetrain flag, without touching anything else.
 
-Fitting sixteen buttons plus the position slider on one line took the bar's
-padding and gaps down close to the limit, and shortened the position readout
-from "0 mm wheel · 0.0 mm shock" to "0mm · 0.0mm" with the full wording moved to
-its `title`. Still fits at 1366px; below that it wraps a row at a time.
+The position readout shows current alongside total for both numbers — wheel
+travel and shock stroke — so the slider reads as a fraction of travel, not a
+bare position: "70/139mm wheel · 30.9/65.0mm shock". Total wheel travel is the
+last swept frame's `rise`; total shock stroke is the typed spec, `C.stroke`.
+Full wording is still in the `title` for a hover.
+
+**`#bar` spreads its controls only when they actually fit one line.**
+`justify-content:space-between` looks right full-width, but on a wrapped line
+it stretches whatever's left over that line's own width too — a short trailing
+row of leftover buttons ends up spread edge to edge with huge gaps, which reads
+as broken rather than tidy. `fitBar()` measures the real content width (walking
+into `.bargroup`, which is `display:contents` so its own `getBoundingClientRect`
+is empty) against the bar's, and only then adds the `spread` class; otherwise
+the bar falls back to plain left-aligned wrapping. Sixteen buttons plus a
+220px slider need roughly 1890px of window before they fit one line — call it
+a wide monitor, not a laptop — so most sessions will see it wrap, evenly
+spread only within whatever line it lands on.
 
 `drivetrain` covers the chainring and cog rings, the chain line, and the rear
 derailleur — `guide`/`tension`/`up` are still computed unconditionally because the
