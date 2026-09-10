@@ -141,6 +141,7 @@ svg text{font-family:var(--mono)}
   <!-- The working set: what you move while watching the graph. Everything else
        is setup, folded away until it is wanted. -->
   <h2>Pivots and mounts</h2>
+  <div class="btnrow"><button id="resetPoints">Reset points &amp; mounts</button></div>
   <div id="points"></div>
   <p class="note">Drag points on the drawing or type coordinates. Datum:
     <select id="datum">
@@ -1575,6 +1576,18 @@ const GEOM_KEYS=['reach','stack','ha','htl','sa','st','ttDrop','bbh','rc','csl',
 document.getElementById('resetGeom').onclick=()=>{
   GEOM_KEYS.forEach(k=>C[k]=DEF.cfg[k]);
   syncGeom(); fillPoints(); fillCfg(); fillTyreWidths(); recompute(false);
+};
+// The four-bar's own points: main pivot, link, shock eye/mount — the levers
+// you actually drag while watching the graph. AX and FP are excluded: AX is
+// derived from rear centre and BB height (frame geometry, reset above), and
+// FP is set to wherever AX currently is so the flex pivot lands back on the
+// axle — concentric by default — rather than at a coordinate frozen at
+// shipped frame geometry that might not be current.
+const POINT_KEYS=['MP','SP','LP','SE','SG'];
+document.getElementById('resetPoints').onclick=()=>{
+  POINT_KEYS.forEach(k=>G[k]=structuredClone(DEF.geom[k]));
+  G.FP={...G.AX};
+  syncGeom(); fillPoints(); recompute(false);
 };
 
 /* ---------- design name / export / import ----------
