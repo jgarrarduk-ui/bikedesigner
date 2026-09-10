@@ -60,6 +60,7 @@ input[type=text]{width:140px;font-family:var(--sans)}
 input[type=number]:focus,input[type=text]:focus,select:focus{outline:2px solid var(--rear);outline-offset:-1px}
 select{width:auto}
 .pt{display:grid;grid-template-columns:1fr 72px 72px;gap:5px;align-items:center;margin:4px 0}
+.pt[hidden]{display:none}          /* display:grid would otherwise beat the hidden attribute */
 .pt span{font-size:12px}
 .pt input{width:100%}
 .pt .sw{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:1px}
@@ -208,6 +209,12 @@ svg text{font-family:var(--mono)}
     <label><span>Sprocket teeth</span><input type="number" id="cog" step="1"></label>
     <label><span>Chain links</span><input type="number" id="links" step="2"></label>
     <label><span>Mech cage length</span><input type="number" id="cage" step="2"></label>
+    <h3>Idler</h3>
+    <label><span>Run chain over idler</span><input type="checkbox" id="idlerOn"></label>
+    <label><span>Idler teeth</span><input type="number" id="idlerTeeth" step="1"></label>
+    <label><span>Mounted to</span><select id="idlerMount">
+      <option value="0">main frame</option><option value="1">swingarm</option>
+    </select></label>
   </details>
 
   <details class="grp" id="grp-rider">
@@ -395,6 +402,54 @@ function chainRun(BB,rc,AXp,rg){
   return {p1,p2,length:dist(p1,p2)};
 }
 
+/* ---------- idler routing ----------
+   A tangent between any two pulleys. External (both wrapped the same way) uses
+   r1-r2 and one shared normal; crossed (wrapped opposite ways) uses r1+r2 and
+   opposite normals. `side` picks between the two solutions of each. chainRun
+   above is the one special case this tool has always used, and is left alone so
+   its numbers cannot move. */
+function beltRun(c1,r1,c2,r2,crossed,side){
+  const d=sub(c2,c1), L=len(d);
+  const dr=crossed ? r1+r2 : r1-r2;
+  if(L<=Math.abs(dr)) return null;
+  const ang=Math.atan2(d.y,d.x)+side*Math.acos(dr/L);
+  const n={x:Math.cos(ang),y:Math.sin(ang)};
+  const p1=add(c1,mul(n,r1)), p2=add(c2,mul(crossed?mul(n,-1):n,r2));
+  return {p1,p2,length:dist(p1,p2)};
+}
+// which way the chain travels round a pulley: +1 anticlockwise, -1 clockwise
+const wrapSense=(c,p,dir)=>Math.sign(cross(sub(p,c),dir));
+// arc swept from a to b about c, measured along the direction of travel
+function arcFrom(c,a,b,sense){
+  let t=(Math.atan2(b.y-c.y,b.x-c.x)-Math.atan2(a.y-c.y,a.x-c.x))*sense;
+  while(t<0) t+=2*Math.PI;
+  while(t>=2*Math.PI) t-=2*Math.PI;
+  return t;
+}
+/* Route the top run over an idler. Two hard constraints pick the tangents: the
+   chain must wrap the idler the same way going in as coming out, and the
+   chainring and the cog must turn the same way as each other — a chain that
+   wrapped them oppositely would have to cross itself. Between them they leave
+   exactly one of the four candidates. That matters, because with the idler
+   directly above the chainring the "over the top" rule chainRun uses is
+   degenerate: both of its candidates have the same normal y, so the pick is a
+   coin flip and can route the chain over the wrong side of the chainring. */
+function routeIdler(BB,rc,IDp,ri,AXp,rg){
+  const out=chainRun(IDp,ri,AXp,rg);          // idler to cog, over the top of the cog
+  if(!out) return null;
+  const dOut=unit(sub(out.p2,out.p1));
+  const sIdler=wrapSense(IDp,out.p1,dOut), sCog=wrapSense(AXp,out.p2,dOut);
+  for(const crossed of [false,true]) for(const side of [1,-1]){
+    const r=beltRun(BB,rc,IDp,ri,crossed,side);
+    if(!r) continue;
+    const d=unit(sub(r.p2,r.p1));
+    if(wrapSense(IDp,r.p2,d)!==sIdler) continue;   // wrap must not reverse at the idler
+    if(wrapSense(BB,r.p1,d)!==sCog) continue;      // chainring and cog turn together
+    return {runs:[r,out], sense:sIdler, arc:ri*arcFrom(IDp,r.p2,out.p1,sIdler)};
+  }
+  return null;
+}
+
 function lineHit(p1,p2,p3,p4){
   const d=cross(sub(p2,p1),sub(p4,p3));
   if(Math.abs(d)<1e-9) return null;
@@ -419,15 +474,21 @@ const CHAINCAL=9.8;
    forward to give that length back. Straight runs are taken centre to centre and
    the wraps as half circumferences, which is close enough to drive the drawing
    but is not a chain-length calculator. */
-function chainPath(theta, BB, rc, AXp, rg, guide, cage){
+/* `route` is the idler routing when there is one. Its two runs replace the single
+   top run and its wrap arc is added to the others. The chainring's own wrap also
+   changes when an idler is fitted, but the half-circumference term is already an
+   approximation soaked up by CHAINCAL, so it is left as it is. */
+function chainPath(theta, BB, rc, AXp, rg, guide, cage, route){
   const tension={x:guide.x-Math.sin(theta)*cage, y:guide.y-Math.cos(theta)*cage};
-  const up=chainRun(BB,rc,AXp,rg);
-  const straight=(up?up.length:dist(BB,AXp)) + dist(AXp,guide) + cage + dist(tension,BB);
-  return {len: straight + Math.PI*(rc+rg+2*RJ) + CHAINCAL, tension};
+  const up=route ? null : chainRun(BB,rc,AXp,rg);
+  const top=route ? route.runs[0].length+route.runs[1].length
+                  : (up?up.length:dist(BB,AXp));
+  const straight=top + dist(AXp,guide) + cage + dist(tension,BB);
+  return {len: straight + Math.PI*(rc+rg+2*RJ) + (route?route.arc:0) + CHAINCAL, tension};
 }
-function solveCage(BB, rc, AXp, rg, guide, cage, total){
+function solveCage(BB, rc, AXp, rg, guide, cage, total, route){
   const lo=-0.35, hi=1.31;             // cage travel limits, about -20 to 75 degrees
-  const f=t=>chainPath(t,BB,rc,AXp,rg,guide,cage).len-total;
+  const f=t=>chainPath(t,BB,rc,AXp,rg,guide,cage,route).len-total;
   const flo=f(lo), fhi=f(hi);
   if(flo>0) return {theta:lo, clamped:'chain too short'};
   if(fhi<0) return {theta:hi, clamped:'chain too long'};
@@ -436,10 +497,32 @@ function solveCage(BB, rc, AXp, rg, guide, cage, total){
   return {theta:(a+b)/2, clamped:null};
 }
 
+/* Where the idler sits in a given frame. Bolted to the main frame it never moves;
+   bolted to the swingarm it rides round the main pivot with the stay, exactly as
+   the derailleur guide pulley does. */
+function idlerAt(g,cfg,phi){
+  if(!cfg.idlerOn || !g.ID) return null;
+  return cfg.idlerMount ? rot(g.ID,g.MP,phi) : g.ID;
+}
+/* The chain force line is whichever run crosses from the frame to the swingarm,
+   because that is the only segment that can carry chain tension across the
+   suspension. No idler: chainring to cog. Idler on the frame: idler to cog, and
+   the chainring-to-idler run is frame to frame and cannot pull on anything.
+   Idler on the swingarm: the other way about. The run that is not the force line
+   is constant through the travel either way, so chain growth is just the force
+   run's own change and needs no special case. */
+function topRun(g,cfg,rc,rg,ri,IDp,AXp){
+  const route=IDp ? routeIdler({x:0,y:0},rc,IDp,ri,AXp,rg) : null;
+  const force=route ? route.runs[cfg.idlerMount?0:1]
+                    : chainRun({x:0,y:0},rc,AXp,rg);
+  return {route,force};
+}
+
 function sweep(g,cfg,n=61){
   const rc=cfg.ring*P/(2*Math.PI), rg=cfg.cog*P/(2*Math.PI);
+  const ri=(cfg.idlerTeeth||14)*P/(2*Math.PI);
   const Rr=cfg.rw/2 + cfg.tyreR;  // rim bead diameter plus tyre height
-  const base=chainRun({x:0,y:0},rc,g.AX,rg);
+  const base=topRun(g,cfg,rc,rg,ri,idlerAt(g,cfg,0),g.AX).force;
   /* The wheel rolls on the ground; it is the frame that moves down onto it. The
      contact patch therefore stays at ground level through the travel instead of
      riding up with the axle, which is what the anti-squat datum is measured from.
@@ -454,16 +537,17 @@ function sweep(g,cfg,n=61){
     const CP={x:s.AX.x, y:ground};
     const IC=g.MP;                                   // wheel carrier is pinned to the frame
     const guide=rot({x:g.AX.x+GDX, y:g.AX.y+GDY}, g.MP, s.phi);
-    const cg=solveCage({x:0,y:0},rc,s.AX,rg,guide,cfg.cage,cfg.links*P);
-    const cr=chainRun({x:0,y:0},rc,s.AX,rg);
+    const ID=idlerAt(g,cfg,s.phi);
+    const {route,force:cr}=topRun(g,cfg,rc,rg,ri,ID,s.AX);
+    const cg=solveCage({x:0,y:0},rc,s.AX,rg,guide,cfg.cage,cfg.links*P,route);
     let as=null, ifc=null, asH=null;
     if(cr){
       ifc=lineHit(cr.p1,cr.p2,s.AX,IC);
       if(ifc){asH=heightAt(CP,ifc,cfg.fax); if(asH!==null) as=(asH-CP.y)/cfg.cogh*100}
     }
     const hb=heightAt(CP,IC,cfg.fax);
-    out.push({...s, stroke:cfg.stroke*i/n, CP, guide, ifc, asH, arH:hb,
-      tension:chainPath(cg.theta,{x:0,y:0},rc,s.AX,rg,guide,cfg.cage).tension,
+    out.push({...s, stroke:cfg.stroke*i/n, CP, guide, idler:ID, ifc, asH, arH:hb,
+      tension:chainPath(cg.theta,{x:0,y:0},rc,s.AX,rg,guide,cfg.cage,route).tension,
       cageDeg:cg.theta*180/Math.PI, cageClamp:cg.clamped,
       as, ar: hb===null?null:(hb-CP.y)/cfg.cogh*100,
       kick: cr&&base ? (cr.length-base.length)/rc*180/Math.PI : null,
@@ -575,13 +659,14 @@ function stayLoads(deg, path, od, wall, axial, bendA, dropZ, yokeZ, leanEnd, lea
 const DEF={
   geom:{ MP:{x:-2.5,y:66.4}, SP:{x:66.7,y:140.5}, FP:{x:-452.5,y:29.4},
          LP:{x:6.9,y:271.8}, SE:{x:1.6,y:293.9}, SG:{x:229.8,y:322.1},
-         AX:{x:-452.5,y:29.4} },
+         AX:{x:-452.5,y:29.4}, ID:{x:0,y:125} },
   cfg:{ eye:230, stroke:65, zone:531, bendR:115, bendA:42, bendStart:50, leanEnd:55, leanA:8, dropW:148, shockW:33, peakG:3, od:16, wall:0.9, ring:32, cog:21,
         mass:85, bias:58, cogh:1057, sag:30, fsag:20, fax:844.4,
         rw:622, fw:622, tyreR:60.96, tyreF:60.96, reach:485, stack:654.5, ha:63.3, htl:130,
         sa:76, st:430, ttDrop:90, bbh:334, drop:38, rc:450, csl:451.6,
         a2c:571, a2cAuto:1, hsLower:13, offset:44, forkTravel:160,
-        stemL:10, stemH:70, links:124, cage:62 }
+        stemL:10, stemH:70, links:124, cage:62,
+        idlerOn:0, idlerTeeth:14, idlerMount:0 }   // mount 0 = main frame, 1 = swingarm
 };
 let G=structuredClone(DEF.geom), C=structuredClone(DEF.cfg);
 let result=null, posT=0, playing=false, holdSag=false;
@@ -593,7 +678,8 @@ const PTS=[
   ['MP','Main pivot','var(--rear)'], ['SP','Link to frame','var(--link)'],
   ['LP','Link to stay','var(--link)'],
   ['SE','Shock eye','var(--shock)'], ['SG','Shock mount','var(--shock)'],
-  ['AX','Rear axle','var(--rear)']
+  ['AX','Rear axle','var(--rear)'],
+  ['ID','Idler','var(--ok)']                       // row hides itself when idler is off
 ];
 
 /* ---------- the geometry chain ----------
@@ -920,14 +1006,43 @@ function draw(){
      guide/tension are computed regardless of the toggle: the rear derailleur
      drawing further down needs them whether or not this pass renders anything. */
   const rc=C.ring*P/(2*Math.PI), rg=C.cog*P/(2*Math.PI);
+  const ri=C.idlerTeeth*P/(2*Math.PI);         // NB C.rc is rear centre; rc here is the ring
   const guide=f.guide||rot({x:G.AX.x+GDX,y:G.AX.y+GDY},G.MP,f.phi);
   const tension=f.tension||{x:guide.x,y:guide.y-C.cage};
-  const up=chainRun(BB,rc,f.AX,rg);
+  // topFrame() supplies no idler, so fall back the same way guide does
+  const IDp=f.idler!==undefined?f.idler:idlerAt(G,C,f.phi||0);
+  const route=IDp?routeIdler(BB,rc,IDp,ri,f.AX,rg):null;
+  const runs=route?route.runs:[chainRun(BB,rc,f.AX,rg)].filter(Boolean);
+  /* The top run, drawn as its own step so it can be deferred. Without an idler
+     it goes here, under the frame, exactly as it always has. An idler above the
+     bottom bracket puts the chainring-to-idler run straight through the seat and
+     down tubes, which are painted later and would bury it, so that case is drawn
+     last instead — on top, like the rear mech, which is also the right side of
+     the frame for it to be on. */
+  const drawTop=()=>{
+    runs.forEach(r=>line(r.p1,r.p2,'#39424a',7));
+    if(!route) return;
+    ring(IDp,ri,'#5c6b78',7);
+    /* The wrap over the idler, so the chain reads as one continuous loop.
+       Sampled rather than an SVG arc: the drawing group is y-flipped, which
+       inverts the sense of an arc's sweep flag but not of plain points. */
+    const a=route.runs[0].p2, b=route.runs[1].p1;
+    const t0=Math.atan2(a.y-IDp.y,a.x-IDp.x);
+    const sw=arcFrom(IDp,a,b,route.sense)*route.sense;
+    const n=Math.max(2,Math.ceil(Math.abs(sw)/0.2));
+    const pts=[];
+    for(let i=0;i<=n;i++){
+      const t=t0+sw*i/n;
+      pts.push(`${(IDp.x+ri*Math.cos(t)).toFixed(1)},${(IDp.y+ri*Math.sin(t)).toFixed(1)}`);
+    }
+    el('polyline',{points:pts.join(' '),fill:'none',stroke:'#39424a',
+      'stroke-width':7,'stroke-linejoin':'round'},g);
+  };
   if(showDrivetrain){
     ring(BB,rc,'#5c6b78',7); ring(f.AX,rg,'#5c6b78',7);
     el('circle',{cx:0,cy:0,r:13,fill:'#5c6b78'},g);           // bottom bracket
-    if(up){
-      line(up.p1,up.p2,'#39424a',7);
+    if(!route) drawTop();
+    if(runs.length){
       el('polyline',{points:[{x:f.AX.x-rg*0.5,y:f.AX.y-rg*0.87},guide,tension,
           {x:BB.x,y:BB.y-rc}].map(p=>`${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' '),
         fill:'none',stroke:'#39424a','stroke-width':5},g);
@@ -1028,6 +1143,7 @@ function draw(){
 
   /* ---- rear derailleur, carried on the dropout ---- */
   if(showDrivetrain){
+    if(route) drawTop();                                 // see drawTop: idler runs go on top
     tubes([[f.AX,guide,15]],'#6b747c','#39424a');        // b-knuckle and body
     tubes([[guide,tension,30]],'#4a5158','#2a3138');     // cage
     ring(guide,RJ,'#b6bec5',7); ring(tension,RJ,'#b6bec5',7);
@@ -1122,7 +1238,12 @@ function draw(){
   const marks=[[G.MP,'var(--rear)','MP'],[G.SP,'var(--link)','SP'],[G.SG,'var(--shock)','SG'],
                [f.LP,'var(--link)',top?'LP':null],[f.SE,'var(--shock)',top?'SE':null],
                [f.AX,'var(--rear)',top?'AX':null]];
+  /* G.ID holds the top-out position, so a swingarm idler is only grabbable at top
+     out — dragging the rotated marker would write rotated coordinates back. Bolted
+     to the frame it never moves, so it is always grabbable. */
+  if(IDp) marks.push([IDp,'var(--ok)',(C.idlerMount&&!top)?null:'ID']);
   const ghosts = top?[] : [['LP','var(--link)'],['SE','var(--shock)'],['AX','var(--rear)']];
+  if(IDp&&C.idlerMount&&!top) ghosts.push(['ID','var(--ok)']);
   const grabPts=[...marks.filter(m=>m[2]).map(m=>m[0]), ...ghosts.map(([k])=>G[k])];
   // Each target is capped at half the gap to its own nearest neighbour, so a
   // crowded pair like the shock eye and the link stays tight while everything
@@ -1445,6 +1566,8 @@ function fillPoints(){
   const host=document.getElementById('points');
   const o=datumOffset();
   if(host.dataset.built){
+    // the idler only has a row when there is an idler
+    host.querySelector('[data-k="ID"]').hidden=!C.idlerOn;
     PTS.forEach(([k])=>{
       host.querySelector(`[data-f="${k}-x"]`).value=(G[k].x-o.x).toFixed(1);
       host.querySelector(`[data-f="${k}-y"]`).value=(G[k].y-o.y).toFixed(1);
@@ -1452,7 +1575,7 @@ function fillPoints(){
     return;
   }
   host.innerHTML=PTS.map(([k,label,col])=>
-    `<div class="pt"><span><i class="sw" style="background:${col}"></i>${label}</span>
+    `<div class="pt" data-k="${k}"><span><i class="sw" style="background:${col}"></i>${label}</span>
      <input type="number" step="1" data-f="${k}-x"><input type="number" step="1" data-f="${k}-y"></div>`
   ).join('');
   host.dataset.built='1';
@@ -1583,7 +1706,7 @@ document.getElementById('resetGeom').onclick=()=>{
 // FP is set to wherever AX currently is so the flex pivot lands back on the
 // axle — concentric by default — rather than at a coordinate frozen at
 // shipped frame geometry that might not be current.
-const POINT_KEYS=['MP','SP','LP','SE','SG'];
+const POINT_KEYS=['MP','SP','LP','SE','SG','ID'];
 document.getElementById('resetPoints').onclick=()=>{
   POINT_KEYS.forEach(k=>G[k]=structuredClone(DEF.geom[k]));
   G.FP={...G.AX};
@@ -1618,7 +1741,12 @@ function importJSON(){
       try{
         const data=JSON.parse(ev.target.result);
         if(!data.geom||!data.cfg) throw new Error('missing geom/cfg');
-        G=structuredClone(data.geom); C=structuredClone(data.cfg);
+        /* Layered over the defaults rather than replacing them, so a file saved
+           before a field existed still opens: it simply keeps that field's
+           default. Without this an older design has no G.ID and fillPoints
+           throws on the idler row. */
+        G=Object.assign(structuredClone(DEF.geom), structuredClone(data.geom));
+        C=Object.assign(structuredClone(DEF.cfg), structuredClone(data.cfg));
         META.name=(data._meta&&data._meta.name)||'';
         META.designer=(data._meta&&data._meta.designer)||'';
         document.getElementById('designName').value=META.name;

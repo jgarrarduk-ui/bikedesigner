@@ -1,7 +1,8 @@
 import fs from 'node:fs';
 const src=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const eng=src.split('// ==ENGINE-START==')[1].replace(/^[^\n]*/,'').split('// ==ENGINE-END==')[0];
-const m=new Function(eng+'\nreturn {solve,sweep,pivotForces,stayLoads,dist,circles,chainRun};')();
+const m=new Function(eng+'\nreturn {solve,sweep,pivotForces,stayLoads,dist,circles,chainRun,'+
+  'routeIdler,beltRun,idlerAt};')();
 const defs=src.split('const DEF=')[1].split('};')[0]+'}';
 const DEF=new Function('return '+defs)();
 
@@ -124,9 +125,6 @@ let cageMono=true;
 for(let i=1;i<cg.length;i++) if(cg[i]>cg[i-1]+1e-6) cageMono=false;
 ok('cage motion is monotonic through the stroke', cageMono);
 
-console.log(fails? '\n'+fails+' FAILURES' : '\nall checks pass');
-process.exit(fails?1:0);
-
 /* The frozen reference above is what the Linkage numbers are checked against, so
    the shipped defaults need their own check that they still solve at all. */
 const shipped=m.sweep(structuredClone(DEF.geom),structuredClone(DEF.cfg));
@@ -135,4 +133,73 @@ ok('shipped defaults give sane travel',
    shipped.frames.length>2 && shipped.frames[shipped.frames.length-1].rise>50
    && shipped.frames[shipped.frames.length-1].rise<250,
    shipped.frames.length>2?shipped.frames[shipped.frames.length-1].rise.toFixed(1)+' mm':'no frames');
+
+/* ---------- idler ---------- */
+const ridge=t=>t*12.7/(2*Math.PI);           // pitch radius from a tooth count
+// the idler is off in REF, so switching it on must be the only thing that changes
+const plain=m.sweep(structuredClone(REF.geom),structuredClone(REF.cfg)).frames;
+ok('idler off leaves every frame untouched',
+   plain.length===f.length && plain.every((k,i)=>
+     Math.abs(k.as-f[i].as)<1e-12 && Math.abs(k.rise-f[i].rise)<1e-12 &&
+     Math.abs((k.kick??0)-(f[i].kick??0))<1e-12));
+
+const idlerCase=(idler,mount,mpy)=>{
+  const g=structuredClone(REF.geom), c=structuredClone(REF.cfg);
+  if(mpy!==undefined) g.MP={x:-2.5,y:mpy};
+  g.ID=idler; c.idlerOn=1; c.idlerMount=mount; c.idlerTeeth=14;
+  return m.sweep(g,c);
+};
+
+/* Both runs must actually touch both pulleys, and the chain must wrap the idler
+   the same way going in as coming out. That continuity test is what resolves the
+   degenerate case where the idler sits directly above the chainring and the
+   "over the top" rule has two equally good answers. */
+let tangentBad=0, wrapBad=0, routed=0;
+for(const x of [-60,-30,0,30]) for(const y of [90,120,150,200]){
+  const rt=m.routeIdler({x:0,y:0},ridge(32),{x,y},ridge(14),{x:-452.5,y:29.4},ridge(21));
+  if(!rt){ continue }
+  routed++;
+  const [r1,r2]=rt.runs;
+  const near=(p,c,r)=>Math.abs(Math.hypot(p.x-c.x,p.y-c.y)-r)<1e-9;
+  if(!(near(r1.p1,{x:0,y:0},ridge(32)) && near(r1.p2,{x,y},ridge(14)) &&
+       near(r2.p1,{x,y},ridge(14)) && near(r2.p2,{x:-452.5,y:29.4},ridge(21)))) tangentBad++;
+  const sense=(c,p,d)=>Math.sign((p.x-c.x)*d.y-(p.y-c.y)*d.x);
+  const dir=(a,b)=>{const L=Math.hypot(b.x-a.x,b.y-a.y);return {x:(b.x-a.x)/L,y:(b.y-a.y)/L}};
+  if(sense({x,y},r1.p2,dir(r1.p1,r1.p2))!==sense({x,y},r2.p1,dir(r2.p1,r2.p2))) wrapBad++;
+}
+ok('routed runs are tangent to every pulley', tangentBad===0, routed+' positions');
+ok('chain wraps the idler consistently in and out', wrapBad===0,
+   'including the idler directly above the chainring');
+
+/* An idler concentric with the main pivot cannot change the chain run length,
+   whichever body it is bolted to — the exact zero is the check. */
+const idConc=idlerCase({x:-2.5,y:66.4},0);
+ok('frame idler on the main pivot gives zero chain growth',
+   Math.abs(idConc.frames[idConc.frames.length-1].kick)<1e-9,
+   idConc.frames[idConc.frames.length-1].kick.toExponential(1)+' deg');
+const idConcSw=idlerCase({x:-2.5,y:66.4},1);
+ok('swingarm idler on the main pivot gives zero chain growth',
+   Math.abs(idConcSw.frames[idConcSw.frames.length-1].kick)<1e-9,
+   idConcSw.frames[idConcSw.frames.length-1].kick.toExponential(1)+' deg');
+
+/* The classic high-pivot recipe: pivot high, idler a little below it. Anti-squat
+   should land in a usable band rather than inverting. */
+const hp=idlerCase({x:-2.5,y:120},0,140);
+ok('high pivot with the idler below it gives usable anti-squat',
+   hp.frames[0].as>90 && hp.frames[0].as<160, hp.frames[0].as.toFixed(1)+' %');
+// and moving the idler down from the pivot must raise anti-squat monotonically
+const asAt=y=>idlerCase({x:-2.5,y},0,140).frames[0].as;
+ok('lowering the idler raises anti-squat', asAt(130)<asAt(120) && asAt(120)<asAt(110),
+   [asAt(130),asAt(120),asAt(110)].map(v=>v.toFixed(0)).join(' < '));
+
+// a swingarm idler carries round the main pivot; a frame one does not
+const swept=idlerCase({x:-2.5,y:120},1,140).frames;
+ok('swingarm idler rides with the stay',
+   m.dist(swept[0].idler,swept[swept.length-1].idler)>5,
+   m.dist(swept[0].idler,swept[swept.length-1].idler).toFixed(1)+' mm of travel');
+const fixed=idlerCase({x:-2.5,y:120},0,140).frames;
+ok('frame idler stays put', m.dist(fixed[0].idler,fixed[fixed.length-1].idler)<1e-12);
+
+console.log(fails? '\n'+fails+' FAILURES' : '\nall checks pass');
+process.exit(fails?1:0);
 
