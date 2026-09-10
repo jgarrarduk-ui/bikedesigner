@@ -14,7 +14,7 @@ Open `index.html`, or serve the folder. It is deployed to GitHub Pages alongside
 cd test && node flexstay-tests.mjs
 ```
 
-41 checks, no install required. The engine sits between the `// ==ENGINE-START==`
+46 checks, no install required. The engine sits between the `// ==ENGINE-START==`
 and `// ==ENGINE-END==` markers and contains **no DOM references**, so the test
 file extracts that block with `new Function()` and runs it headlessly. Keep it
 that way — if DOM code leaks into the engine block the tests stop working.
@@ -381,9 +381,9 @@ bikes put the main pivot high and the idler *below* it — pivot at 150, idler a
 115 gives a sane ~110%, and lowering the idler from the pivot raises anti-squat
 monotonically.
 
-**An idler needs a longer chain.** Switching it on with the default 124 links trips
-the existing "chain too short" clamp warning, which is correct and actionable. Do
-not auto-bump `C.links`.
+**An idler needs a longer chain** — about 12 links more. That used to mean
+switching it on immediately tripped the clamp warning; the chain is now fitted
+instead (see below), so it just goes from ~122 links to ~134.
 
 **The idler's chain has to be drawn last.** An idler above the bottom bracket puts
 the chainring-to-idler run straight through the seat and down tubes, which are
@@ -391,6 +391,54 @@ painted later and bury it. `drawTop()` is therefore deferred to the rear-mech st
 when there is an idler, and left where it was when there is not — so the no-idler
 drawing is unchanged, and the idler chain sits on top like the mech, which is the
 correct side of the frame for it anyway.
+
+## Chain length
+
+`C.chainAuto` (on by default) makes the link count a **derived** field, on the
+`a2cAuto` pattern: `refreshDerived` disables the box, and `sweep` returns the
+fitted count as `result.links` for `recompute` to write back into `C.links`.
+`fitChain` picks the length that leaves the cage furthest from either stop —
+every frame can absorb a total between its `chainPath` at the two cage limits, so
+it takes the highest floor and the lowest ceiling across the travel and aims at
+the middle, rounded to an even number of links. Untick it to type your own count
+and get the clamp warning back.
+
+The cage is therefore solved in a **second pass** inside `sweep`, after the frame
+loop, because fitting needs every frame before it can choose a length. Chain
+length only ever feeds the cage, never the linkage, so nothing above that line
+depends on it — which is what makes the two-pass split safe.
+
+**The mech's capacity is set by cage length, not by the angular stops.** The
+window of link counts that does not clamp is only five or six wide, and that is
+honest: a 62mm cage is worth about 90mm of chain. Widening `CAGE_HI` does not
+help — past about 90 degrees the tension pulley swings past its furthest point
+from the chainring, `chainPath` starts *falling* with cage angle, and `solveCage`'s
+bisection silently breaks because it assumes the opposite. `CAGE_LO`/`CAGE_HI` are
+already at the widest monotonic bracket, and a test asserts take-up rises across
+all of it. If you want more capacity, lengthen the cage.
+
+**The clamp warning is only judged on a full sweep.** Mid-drag the coarse 15-step
+sweep steps straight over the frames that clamp, so the warning blinked on and off
+as a point was dragged — noise, about a number the user was not even editing.
+`recompute(quick)` now passes `null` for the clamp when `quick`, so the verdict
+lands on release. A solver jam still reports immediately: that one is about the
+linkage itself.
+
+## Main pivot on the idler axis
+
+`C.idlerLock` makes the main pivot and the idler one point — the concentric layout
+that gives exactly zero chain growth. `recompute` slaves `G.MP` to `G.ID` next to
+the line that already slaves `G.FP` to `G.AX`, which catches every write path at
+once: drag, typed coordinate, reset and import. The drag and typed handlers also
+write both points so whichever you grab carries the other, and `draw` gives the
+main pivot a null key while locked so the two coincident markers do not fight over
+the hit target — the green idler marker is the one you grab.
+
+Unticking has to leave them tellable apart. The main pivot stays exactly where it
+is, since the linkage hangs off it, and the idler moves up by `IDLER_SPLIT` (40mm).
+That number comes from `hitFor`: the hit target has a 14mm floor, so anything under
+28mm apart leaves one of the pair unreachable behind the other, and the visible ring
+is 16.5mm of artwork.
 
 ## Artwork
 
