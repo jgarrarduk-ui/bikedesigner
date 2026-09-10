@@ -14,7 +14,7 @@ Open `index.html`, or serve the folder. It is deployed to GitHub Pages alongside
 cd test && node flexstay-tests.mjs
 ```
 
-30 checks, no install required. The engine sits between the `// ==ENGINE-START==`
+41 checks, no install required. The engine sits between the `// ==ENGINE-START==`
 and `// ==ENGINE-END==` markers and contains **no DOM references**, so the test
 file extracts that block with `new Function()` and runs it headlessly. Keep it
 that way — if DOM code leaks into the engine block the tests stop working.
@@ -132,10 +132,17 @@ Design name and designer are free text, so they live in `META`, outside `C` —
 `fillCfg()` runs every field in `C` through `parseFloat` when it wires up its
 input, which would permanently reject a name the moment it looked at the box.
 Export writes `{_meta:{name, designer, date, version}, geom:G, cfg:C}`; import
-parses that same shape, replaces `G`/`C` wholesale, and then runs the exact
-startup sequence the reset button uses — `syncGeom(); fillPoints(); fillCfg();`
-— so a file with an old or partial `cfg` still comes out through the same
-derivation the app applies on every other input change.
+parses that same shape and then runs the exact startup sequence the reset button
+uses — `syncGeom(); fillPoints(); fillCfg();` — so a file with an old or partial
+`cfg` still comes out through the same derivation the app applies on every other
+input change.
+
+**Import layers the file over the defaults** (`Object.assign` onto a clone of
+`DEF`) rather than replacing `G`/`C` wholesale, so a design saved before a field
+existed keeps that field's default instead of losing it. It used to replace them
+outright, which meant an older file came back with no `G.ID` at all and
+`fillPoints` threw on the idler row. Any field added from here on is safe for the
+same reason.
 
 ## Validated against Linkage X3
 
@@ -146,6 +153,11 @@ defaults can be changed without quietly invalidating them. Do not edit `REF` to
 make a test pass. The shipped defaults get their own check that they still solve.
 
 These are regression tests — if a change moves them, the change is wrong.
+
+**Keep `process.exit` at the very bottom of the test file.** It used to sit just
+after the cage checks, which left the shipped-defaults block below it as dead code
+that never ran — two checks that silently did nothing. Anything appended after an
+early exit has the same problem.
 
 | | Linkage | Tool |
 |---|---|---|
@@ -322,6 +334,63 @@ different angles, and along the rear stay's multi-segment path. Don't retry
 this without also solving the BB and rear-stay joints — e.g. drawing them as
 one path so linejoin can round the internal corners, or overlaying a circle
 at the BB the width of a real bottom bracket shell.
+
+## Idler
+
+Off by default. `G.ID` holds the **top-out** position, `C.idlerOn` / `C.idlerTeeth`
+/ `C.idlerMount` the rest (mount 0 = main frame, 1 = swingarm, as a numeric-valued
+`<select>` so `fillCfg` picks it up on its ordinary `parseFloat` path). A swingarm
+idler is carried through the travel by `rot(g.ID, g.MP, s.phi)`, exactly as the
+derailleur guide pulley is; the rotated position is never written back.
+
+**The force line is whichever run crosses from the frame to the swingarm**, because
+that is the only segment that can carry chain tension across the suspension:
+
+| idler | force line | the other run |
+|---|---|---|
+| off | chainring → cog | — |
+| frame mount | idler → cog | chainring → idler, frame to frame |
+| swingarm mount | chainring → idler | idler → cog, rides the stay |
+
+The run that is *not* the force line is constant through the travel either way, so
+`kick` needs no special case — measuring the force run is enough. Two exact-zero
+results pin this down and are worth keeping as tests: an idler concentric with the
+main pivot gives **exactly** zero chain growth, on either mount.
+
+**Tangent selection is the whole difficulty.** `chainRun` picks between its two
+candidates by "whichever normal has the greater y", which is fine for a roughly
+horizontal chainring-to-cog run and wrong for an idler. With the idler directly
+above the chainring — which is where the shipped default (0,125) puts it — both
+candidates have the *same* normal y, so the pick is a coin flip that can route the
+chain over the front of the chainring. `beltRun` therefore computes both tangent
+families (external for pulleys wrapped the same way, crossed for opposite) and
+`routeIdler` picks among the four candidates using two hard constraints:
+
+1. the chain must wrap the idler the same way going in as coming out, and
+2. the chainring and the cog must turn the same way as each other — a chain that
+   wrapped them oppositely would have to cross itself.
+
+Together those leave exactly one candidate. `chainRun` itself is deliberately
+untouched so the Linkage numbers cannot move.
+
+**A high idler on a low pivot is genuinely pro-squat.** The shipped default idler
+position on the shipped (low) main pivot gives about −96% anti-squat. That is not a
+bug: raising the idler steepens the chain force line until it out-climbs the
+axle-to-pivot line, and the force centre flips behind the axle. Real high-pivot
+bikes put the main pivot high and the idler *below* it — pivot at 150, idler around
+115 gives a sane ~110%, and lowering the idler from the pivot raises anti-squat
+monotonically.
+
+**An idler needs a longer chain.** Switching it on with the default 124 links trips
+the existing "chain too short" clamp warning, which is correct and actionable. Do
+not auto-bump `C.links`.
+
+**The idler's chain has to be drawn last.** An idler above the bottom bracket puts
+the chainring-to-idler run straight through the seat and down tubes, which are
+painted later and bury it. `drawTop()` is therefore deferred to the rear-mech stage
+when there is an idler, and left where it was when there is not — so the no-idler
+drawing is unchanged, and the idler chain sits on top like the mech, which is the
+correct side of the frame for it anyway.
 
 ## Artwork
 
