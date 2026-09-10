@@ -2,7 +2,7 @@ import fs from 'node:fs';
 const src=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const eng=src.split('// ==ENGINE-START==')[1].replace(/^[^\n]*/,'').split('// ==ENGINE-END==')[0];
 const m=new Function(eng+'\nreturn {solve,sweep,pivotForces,stayLoads,dist,circles,chainRun,'+
-  'routeIdler,beltRun,idlerAt};')();
+  'routeIdler,beltRun,idlerAt,chainPath,CAGE_LO,CAGE_HI};')();
 const defs=src.split('const DEF=')[1].split('};')[0]+'}';
 const DEF=new Function('return '+defs)();
 
@@ -199,6 +199,41 @@ ok('swingarm idler rides with the stay',
    m.dist(swept[0].idler,swept[swept.length-1].idler).toFixed(1)+' mm of travel');
 const fixed=idlerCase({x:-2.5,y:120},0,140).frames;
 ok('frame idler stays put', m.dist(fixed[0].idler,fixed[fixed.length-1].idler)<1e-12);
+
+/* ---------- chain fitting ---------- */
+/* The cage take-up has to rise with cage angle across the whole bracket, because
+   solveCage bisects on that assumption. It stops rising somewhere past 90 degrees
+   — the tension pulley swings past its furthest point from the chainring — so
+   widening CAGE_HI to buy capacity silently breaks the solve instead. */
+let takeupMono=true, prevLen=null;
+for(let t=m.CAGE_LO;t<=m.CAGE_HI+1e-9;t+=0.05){
+  const L=m.chainPath(t,{x:0,y:0},C.ring*12.7/(2*Math.PI),{x:-450,y:38},
+                      C.cog*12.7/(2*Math.PI),{x:-454,y:-36},C.cage).len;
+  if(prevLen!==null && L<=prevLen) takeupMono=false;
+  prevLen=L;
+}
+ok('cage take-up rises across the whole bracket', takeupMono,
+   (m.CAGE_LO*180/Math.PI).toFixed(0)+' to '+(m.CAGE_HI*180/Math.PI).toFixed(0)+' deg');
+
+const fitFor=(on,ID,MP,mount)=>{
+  const g=structuredClone(REF.geom), c=structuredClone(REF.cfg);
+  if(MP) g.MP=MP;
+  g.ID=ID||{x:0,y:125}; c.idlerOn=on; c.idlerMount=mount||0; c.chainAuto=1;
+  return m.sweep(g,c);
+};
+const fits=[fitFor(0), fitFor(1), fitFor(1,null,null,1),
+            fitFor(1,{x:20,y:115},{x:-2.5,y:150}), fitFor(1,{x:-2.5,y:66.4})];
+ok('a fitted chain never clamps the cage',
+   fits.every(r=>!r.error && !r.frames.some(k=>k.cageClamp)),
+   fits.map(r=>r.links).join(', ')+' links');
+ok('fitted chains come out an even number of links',
+   fits.every(r=>r.links%2===0), fits.map(r=>r.links).join(', '));
+ok('an idler needs a longer chain than none', fits[1].links>fits[0].links,
+   fits[0].links+' without, '+fits[1].links+' with');
+// with fitting off the typed count is used verbatim
+const manual=structuredClone(REF.cfg); manual.chainAuto=0; manual.links=131;
+ok('chain fitting off leaves the typed link count alone',
+   m.sweep(structuredClone(REF.geom),manual).links===131);
 
 console.log(fails? '\n'+fails+' FAILURES' : '\nall checks pass');
 process.exit(fails?1:0);

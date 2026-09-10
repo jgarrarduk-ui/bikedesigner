@@ -207,6 +207,7 @@ svg text{font-family:var(--mono)}
     <summary>Transmission</summary>
     <label><span>Chainring teeth</span><input type="number" id="ring" step="1"></label>
     <label><span>Sprocket teeth</span><input type="number" id="cog" step="1"></label>
+    <label><span>Fit chain to geometry</span><input type="checkbox" id="chainAuto"></label>
     <label><span>Chain links</span><input type="number" id="links" step="2"></label>
     <label><span>Mech cage length</span><input type="number" id="cage" step="2"></label>
     <h3>Idler</h3>
@@ -215,6 +216,7 @@ svg text{font-family:var(--mono)}
     <label><span>Mounted to</span><select id="idlerMount">
       <option value="0">main frame</option><option value="1">swingarm</option>
     </select></label>
+    <label><span>Main pivot on idler axis</span><input type="checkbox" id="idlerLock"></label>
   </details>
 
   <details class="grp" id="grp-rider">
@@ -486,8 +488,15 @@ function chainPath(theta, BB, rc, AXp, rg, guide, cage, route){
   const straight=top + dist(AXp,guide) + cage + dist(tension,BB);
   return {len: straight + Math.PI*(rc+rg+2*RJ) + (route?route.arc:0) + CHAINCAL, tension};
 }
+/* Cage travel limits, about -34 to 86 degrees. Do not widen these hoping for
+   capacity: past roughly 90 degrees the tension pulley swings past its furthest
+   point from the chainring, the path length starts falling again and the
+   bisection below — which assumes length rises with angle — quietly breaks. What
+   a mech can actually absorb is set by the length of its cage, not by where the
+   stops are. A 62mm cage is worth about 90mm of chain, six or seven links. */
+const CAGE_LO=-0.6, CAGE_HI=1.5;
 function solveCage(BB, rc, AXp, rg, guide, cage, total, route){
-  const lo=-0.35, hi=1.31;             // cage travel limits, about -20 to 75 degrees
+  const lo=CAGE_LO, hi=CAGE_HI;
   const f=t=>chainPath(t,BB,rc,AXp,rg,guide,cage,route).len-total;
   const flo=f(lo), fhi=f(hi);
   if(flo>0) return {theta:lo, clamped:'chain too short'};
@@ -495,6 +504,22 @@ function solveCage(BB, rc, AXp, rg, guide, cage, total, route){
   let a=lo,b=hi;
   for(let i=0;i<48;i++){ const m=(a+b)/2; if(f(m)<0) a=m; else b=m; }
   return {theta:(a+b)/2, clamped:null};
+}
+
+/* The chain length that leaves the cage furthest from either stop. Each frame
+   can absorb a total somewhere between its chainPath at the two limits, so a
+   chain that never clamps has to lie inside every frame's window at once: take
+   the highest floor, the lowest ceiling, aim at the middle. If the travel asks
+   for more take-up than the cage has the windows do not overlap, the midpoint is
+   just the least bad compromise, and solveCage still reports the clamp. */
+function fitChain(frames, routes, rc, rg, cage){
+  let floor=-Infinity, ceil=Infinity;
+  frames.forEach((s,i)=>{
+    const at=t=>chainPath(t,{x:0,y:0},rc,s.AX,rg,s.guide,cage,routes[i]).len;
+    floor=Math.max(floor, at(CAGE_LO));
+    ceil =Math.min(ceil,  at(CAGE_HI));
+  });
+  return (floor+ceil)/2;
 }
 
 /* Where the idler sits in a given frame. Bolted to the main frame it never moves;
@@ -528,7 +553,7 @@ function sweep(g,cfg,n=61){
      riding up with the axle, which is what the anti-squat datum is measured from.
      The ground is wherever the un-compressed rear wheel touches. */
   const ground=g.AX.y-Rr;
-  const out=[]; let prev=null;
+  const out=[], routes=[]; let prev=null;
   for(let i=0;i<=n;i++){
     const s=atCompression(g, cfg.stroke*i/n, prev);
     if(!s) return {frames:out, error:'The linkage jams before the shock reaches full stroke. '+
@@ -539,7 +564,7 @@ function sweep(g,cfg,n=61){
     const guide=rot({x:g.AX.x+GDX, y:g.AX.y+GDY}, g.MP, s.phi);
     const ID=idlerAt(g,cfg,s.phi);
     const {route,force:cr}=topRun(g,cfg,rc,rg,ri,ID,s.AX);
-    const cg=solveCage({x:0,y:0},rc,s.AX,rg,guide,cfg.cage,cfg.links*P,route);
+    routes.push(route);
     let as=null, ifc=null, asH=null;
     if(cr){
       ifc=lineHit(cr.p1,cr.p2,s.AX,IC);
@@ -547,12 +572,22 @@ function sweep(g,cfg,n=61){
     }
     const hb=heightAt(CP,IC,cfg.fax);
     out.push({...s, stroke:cfg.stroke*i/n, CP, guide, idler:ID, ifc, asH, arH:hb,
-      tension:chainPath(cg.theta,{x:0,y:0},rc,s.AX,rg,guide,cfg.cage,route).tension,
-      cageDeg:cg.theta*180/Math.PI, cageClamp:cg.clamped,
       as, ar: hb===null?null:(hb-CP.y)/cfg.cogh*100,
       kick: cr&&base ? (cr.length-base.length)/rc*180/Math.PI : null,
       flex:0});
   }
+  /* The cage is solved in a second pass because fitting the chain needs every
+     frame first. Chain length only ever feeds the cage, never the linkage, so
+     nothing above this line depends on it. */
+  const links = cfg.chainAuto
+    ? Math.max(2, 2*Math.round(fitChain(out,routes,rc,rg,cfg.cage)/P/2))
+    : cfg.links;
+  out.forEach((f,i)=>{
+    const cg=solveCage({x:0,y:0},rc,f.AX,rg,f.guide,cfg.cage,links*P,routes[i]);
+    f.cageDeg=cg.theta*180/Math.PI;
+    f.cageClamp=cg.clamped;
+    f.tension=chainPath(cg.theta,{x:0,y:0},rc,f.AX,rg,f.guide,cfg.cage,routes[i]).tension;
+  });
   const a0=out[0].stayAngle;
   out.forEach(f=>f.flex=(f.stayAngle-a0)*180/Math.PI);
   // leverage by central difference on wheel rise against shock stroke
@@ -561,7 +596,7 @@ function sweep(g,cfg,n=61){
     const ds=q.stroke-p.stroke;
     f.lr = ds>1e-9 ? (q.rise-p.rise)/ds : null;
   });
-  return {frames:out, error:null};
+  return {frames:out, error:null, links};
 }
 
 // Static equilibrium. Unknowns: shock force, link force, flex-pivot force, main-pivot force.
@@ -666,7 +701,8 @@ const DEF={
         sa:76, st:430, ttDrop:90, bbh:334, drop:38, rc:450, csl:451.6,
         a2c:571, a2cAuto:1, hsLower:13, offset:44, forkTravel:160,
         stemL:10, stemH:70, links:124, cage:62,
-        idlerOn:0, idlerTeeth:14, idlerMount:0 }   // mount 0 = main frame, 1 = swingarm
+        chainAuto:1,
+        idlerOn:0, idlerTeeth:14, idlerMount:0, idlerLock:0 }  // mount 0 = frame, 1 = swingarm
 };
 let G=structuredClone(DEF.geom), C=structuredClone(DEF.cfg);
 let result=null, posT=0, playing=false, holdSag=false;
@@ -693,7 +729,19 @@ const PTS=[
    solves back: bottom bracket height against drop, and stack against head tube
    length. `driver` names the box that was just typed. */
 const A2C_REF={travel:160, a2c:571};           // a 160mm 29er fork, Fox 36 / Lyrik
+/* Far enough apart that the two markers do not overlap. The hit target has a
+   14mm floor, so anything under 28mm leaves one of the pair unreachable behind
+   the other, and the visible ring is 16.5mm of artwork. 40mm clears both. */
+const IDLER_SPLIT=40;
 function syncGeom(driver){
+  /* Ticking the lock puts the main pivot on the idler. Unticking has to put them
+     back somewhere you can tell apart: the main pivot stays exactly where it is —
+     it is what the whole linkage hangs off — and the idler is the one that moves,
+     straight up by enough to grab either. */
+  if(driver==='idlerLock'){
+    if(C.idlerLock) G.MP={...G.ID};
+    else G.ID={x:G.MP.x, y:G.MP.y+IDLER_SPLIT};
+  }
   // Standard forks gain a millimetre of axle to crown per millimetre of travel.
   // Untick the box to enter a length the catalogue does not have.
   if(C.a2cAuto) C.a2c=A2C_REF.a2c+(C.forkTravel-A2C_REF.travel);
@@ -746,12 +794,25 @@ function recompute(quick){
   try{
     C.fax=frame(0).FA.x;   // anti-squat referenced to the fork at full extension
     G.FP={...G.AX};                      // flex pivot is always the rear axle
+    // locked, the main pivot is the idler: every write path lands here in the end
+    if(C.idlerOn&&C.idlerLock) G.MP={...G.ID};
     C.zone=Math.round(stayLength());     // bending always spans the whole seat stay
     result=sweep(G,C,quick?15:61);        // coarse sweep while a point is moving
+    if(C.chainAuto&&result.links){
+      C.links=result.links;
+      // never while it is focused, or it would fight the cursor
+      const lk=document.getElementById('links');
+      if(lk&&document.activeElement!==lk) lk.value=C.links;
+    }
   }catch(err){
     result={frames:[],error:'Internal error: '+err.message};
   }
-  const clamp=result.frames&&result.frames.find(k=>k.cageClamp);
+  /* The cage clamp is only judged on a full sweep. Mid-drag the coarse 15-step
+     sweep steps straight over the frames that clamp, so the warning blinks on and
+     off as you move a point — noise, and about a number you are not even editing.
+     Releasing the point runs the full sweep and settles it. A solver jam still
+     reports at once: that one is about the linkage itself. */
+  const clamp=quick?null:result.frames&&result.frames.find(k=>k.cageClamp);
   if(result.error){m.textContent=result.error;m.className='on'}
   else if(clamp){m.textContent='Mech cage runs out of range: '+clamp.cageClamp+
     '. Adjust the chain links.'; m.className='on'}
@@ -1235,7 +1296,8 @@ function draw(){
      the pivot next door, or zoomed out you would grab the wrong one. */
   const HIT_PX=18;
   const top = !result.frames.length || f===result.frames[0];
-  const marks=[[G.MP,'var(--rear)','MP'],[G.SP,'var(--link)','SP'],[G.SG,'var(--shock)','SG'],
+  const locked=C.idlerOn&&C.idlerLock;
+  const marks=[[G.MP,'var(--rear)',locked?null:'MP'],[G.SP,'var(--link)','SP'],[G.SG,'var(--shock)','SG'],
                [f.LP,'var(--link)',top?'LP':null],[f.SE,'var(--shock)',top?'SE':null],
                [f.AX,'var(--rear)',top?'AX':null]];
   /* G.ID holds the top-out position, so a swingarm idler is only grabbable at top
@@ -1336,6 +1398,10 @@ function initDrag(){
     if(!dragKey) return;
     const p=toMM(e,svg);
     G[dragKey]={x:Math.round(p.x*10)/10, y:Math.round(p.y*10)/10};
+    // locked, the main pivot and the idler are one point: move either, move both
+    if(C.idlerOn&&C.idlerLock&&(dragKey==='MP'||dragKey==='ID')){
+      G.MP={...G[dragKey]}; G.ID={...G[dragKey]};
+    }
     // with the lock on, the far eye follows so the shock keeps its eye to eye
     if(lockLen && (dragKey==='SE'||dragKey==='SG')){
       const far = dragKey==='SE' ? 'SG' : 'SE';
@@ -1585,6 +1651,9 @@ function fillPoints(){
       const off=datumOffset();
       const v=parseFloat(inp.value); if(isNaN(v)) return;
       G[k][ax]=v+off[ax];
+      if(C.idlerOn&&C.idlerLock&&(k==='MP'||k==='ID')){      // as above, for typed coordinates
+        G.MP={...G[k]}; G.ID={...G[k]};
+      }
       recompute();
     });
   });
@@ -1593,13 +1662,15 @@ function fillPoints(){
 /* Write the solved-back side of each two-way pair into its box, but never the box
    being typed in — that would fight the cursor. */
 function refreshDerived(skip){
-  ['stack','htl','bbh','drop','rc','csl','a2c'].forEach(id=>{
+  ['stack','htl','bbh','drop','rc','csl','a2c','links'].forEach(id=>{
     if(id===skip) return;
     const e=document.getElementById(id);
     if(e) e.value=Math.round(C[id]*10)/10;
   });
   const a=document.getElementById('a2c');
   if(a) a.disabled=!!C.a2cAuto;               // derived while the box is ticked
+  const lk=document.getElementById('links');
+  if(lk) lk.disabled=!!C.chainAuto;
 }
 function fillCfg(){
   Object.keys(C).forEach(k=>{
