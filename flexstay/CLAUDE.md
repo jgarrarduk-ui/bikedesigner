@@ -117,6 +117,15 @@ panel, reach through the fork, without touching pivots, shock, stay section,
 drivetrain, rider or the design file. Geometry is normally set once, first,
 and separately from the kinematics, so it gets its own way back to the default.
 
+Pivots and mounts get the same treatment (`resetPoints`, `POINT_KEYS` —
+MP/SP/LP/SE/SG, the four-bar's own points). **AX and FP are deliberately left
+out of `POINT_KEYS`.** AX isn't a free point at all — `syncGeom()` derives it
+from rear centre and BB height every time, so resetting it here would just be
+overwritten on the next sync regardless. FP is set to wherever AX *currently*
+is (`G.FP={...G.AX}`) rather than to the frozen default coordinate, restoring
+the concentric flex pivot this bike is meant to have even if the frame
+geometry — and therefore the axle position — has since moved from default.
+
 ## Save / load
 
 Design name and designer are free text, so they live in `META`, outside `C` —
