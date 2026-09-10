@@ -216,7 +216,7 @@ svg text{font-family:var(--mono)}
     <label><span>Mounted to</span><select id="idlerMount">
       <option value="0">main frame</option><option value="1">swingarm</option>
     </select></label>
-    <label><span>Main pivot on idler axis</span><input type="checkbox" id="idlerLock"></label>
+    <label><span>Idler on main pivot axis</span><input type="checkbox" id="idlerLock"></label>
   </details>
 
   <details class="grp" id="grp-rider">
@@ -734,12 +734,12 @@ const A2C_REF={travel:160, a2c:571};           // a 160mm 29er fork, Fox 36 / Ly
    the other, and the visible ring is 16.5mm of artwork. 40mm clears both. */
 const IDLER_SPLIT=40;
 function syncGeom(driver){
-  /* Ticking the lock puts the main pivot on the idler. Unticking has to put them
-     back somewhere you can tell apart: the main pivot stays exactly where it is —
-     it is what the whole linkage hangs off — and the idler is the one that moves,
-     straight up by enough to grab either. */
+  /* The main pivot never moves on its own — it is what the whole linkage hangs
+     off, and shifting it would silently rewrite the kinematics. So the idler is
+     the one that moves both ways: onto the pivot when the lock goes on, and
+     straight up off it by enough to grab either when the lock comes off. */
   if(driver==='idlerLock'){
-    if(C.idlerLock) G.MP={...G.ID};
+    if(C.idlerLock) G.ID={...G.MP};
     else G.ID={x:G.MP.x, y:G.MP.y+IDLER_SPLIT};
   }
   // Standard forks gain a millimetre of axle to crown per millimetre of travel.
@@ -794,8 +794,8 @@ function recompute(quick){
   try{
     C.fax=frame(0).FA.x;   // anti-squat referenced to the fork at full extension
     G.FP={...G.AX};                      // flex pivot is always the rear axle
-    // locked, the main pivot is the idler: every write path lands here in the end
-    if(C.idlerOn&&C.idlerLock) G.MP={...G.ID};
+    // locked, the idler sits on the main pivot: every write path lands here in the end
+    if(C.idlerOn&&C.idlerLock) G.ID={...G.MP};
     C.zone=Math.round(stayLength());     // bending always spans the whole seat stay
     result=sweep(G,C,quick?15:61);        // coarse sweep while a point is moving
     if(C.chainAuto&&result.links){
@@ -1297,13 +1297,15 @@ function draw(){
   const HIT_PX=18;
   const top = !result.frames.length || f===result.frames[0];
   const locked=C.idlerOn&&C.idlerLock;
-  const marks=[[G.MP,'var(--rear)',locked?null:'MP'],[G.SP,'var(--link)','SP'],[G.SG,'var(--shock)','SG'],
+  const marks=[[G.MP,'var(--rear)','MP'],[G.SP,'var(--link)','SP'],[G.SG,'var(--shock)','SG'],
                [f.LP,'var(--link)',top?'LP':null],[f.SE,'var(--shock)',top?'SE':null],
                [f.AX,'var(--rear)',top?'AX':null]];
   /* G.ID holds the top-out position, so a swingarm idler is only grabbable at top
      out — dragging the rotated marker would write rotated coordinates back. Bolted
      to the frame it never moves, so it is always grabbable. */
-  if(IDp) marks.push([IDp,'var(--ok)',(C.idlerMount&&!top)?null:'ID']);
+  // locked they are one point, so it gets one marker — the main pivot's, since
+  // that is the one that stays put and the idler is only along for the ride
+  if(IDp&&!locked) marks.push([IDp,'var(--ok)',(C.idlerMount&&!top)?null:'ID']);
   const ghosts = top?[] : [['LP','var(--link)'],['SE','var(--shock)'],['AX','var(--rear)']];
   if(IDp&&C.idlerMount&&!top) ghosts.push(['ID','var(--ok)']);
   const grabPts=[...marks.filter(m=>m[2]).map(m=>m[0]), ...ghosts.map(([k])=>G[k])];

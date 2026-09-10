@@ -424,21 +424,29 @@ as a point was dragged — noise, about a number the user was not even editing.
 lands on release. A solver jam still reports immediately: that one is about the
 linkage itself.
 
-## Main pivot on the idler axis
+## Idler on the main pivot axis
 
-`C.idlerLock` makes the main pivot and the idler one point — the concentric layout
-that gives exactly zero chain growth. `recompute` slaves `G.MP` to `G.ID` next to
-the line that already slaves `G.FP` to `G.AX`, which catches every write path at
-once: drag, typed coordinate, reset and import. The drag and typed handlers also
-write both points so whichever you grab carries the other, and `draw` gives the
-main pivot a null key while locked so the two coincident markers do not fight over
-the hit target — the green idler marker is the one you grab.
+`C.idlerLock` makes the idler and the main pivot one point — the concentric layout
+that gives exactly zero chain growth.
 
-Unticking has to leave them tellable apart. The main pivot stays exactly where it
-is, since the linkage hangs off it, and the idler moves up by `IDLER_SPLIT` (40mm).
-That number comes from `hitFor`: the hit target has a 14mm floor, so anything under
-28mm apart leaves one of the pair unreachable behind the other, and the visible ring
-is 16.5mm of artwork.
+**The main pivot never moves on its own.** It is what the whole linkage hangs off,
+so relocating it silently rewrites travel, leverage and anti-squat all at once.
+The idler is therefore the one that moves in both directions: onto the pivot when
+the lock goes on, and straight up off it by `IDLER_SPLIT` (40mm) when the lock
+comes off. Both transitions live in `syncGeom` under `driver==='idlerLock'`, which
+is the hook `fillCfg`'s checkbox branch gives you.
+
+The standing constraint follows the same authority: `recompute` slaves `G.ID` to
+`G.MP`, next to the line that already slaves `G.FP` to `G.AX`, which catches every
+write path at once — drag, typed coordinate, reset and import. The drag and typed
+handlers write both points so whichever you grab carries the other; that is an
+explicit action and is allowed to move the pivot.
+
+While locked the pair get **one** marker, the main pivot's, because two coincident
+markers fight over the hit target. The idler is still plainly visible as its pulley
+ring with the chain wrapped over it. The 40mm split comes from `hitFor`: the target
+has a 14mm floor, so anything under 28mm apart leaves one of the pair unreachable
+behind the other, and the visible ring is 16.5mm of artwork.
 
 ## Artwork
 
