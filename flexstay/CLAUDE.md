@@ -14,7 +14,7 @@ Open `index.html`, or serve the folder. It is deployed to GitHub Pages alongside
 cd test && node flexstay-tests.mjs
 ```
 
-46 checks, no install required. The engine sits between the `// ==ENGINE-START==`
+51 checks, no install required. The engine sits between the `// ==ENGINE-START==`
 and `// ==ENGINE-END==` markers and contains **no DOM references**, so the test
 file extracts that block with `new Function()` and runs it headlessly. Keep it
 that way — if DOM code leaks into the engine block the tests stop working.
@@ -125,6 +125,66 @@ overwritten on the next sync regardless. FP is set to wherever AX *currently*
 is (`G.FP={...G.AX}`) rather than to the frozen default coordinate, restoring
 the concentric flex pivot this bike is meant to have even if the frame
 geometry — and therefore the axle position — has since moved from default.
+
+## Frame tubes and the mounts on them
+
+`frontTriangle()` is the single definition of where a tube is — centreline from,
+to, and outside diameter for the down, top, seat and head tubes — shared by `draw()`
+and the clearance readout so the picture and the numbers cannot disagree.
+
+**Both centrelines already start at the bottom bracket centre and need no
+parameter.** The down tube runs BB to the bottom of the head tube and the seat tube
+is placed by seat angle alone; `frame-designer.html` assumes exactly the same
+(`dt_ax = unit(ht_bot)`, line 1790), so the two tools agree. Do not "fix" this.
+What the tubes gained is real stock: `dtOD` 38.1, `stOD` 34.95, `ttOD` 32, `htOD`
+46.5, taken from frame-designer's `DEFAULTS` — they used to be hard-coded drawing
+widths of 40/38/32/52 with no relation to anything you could buy.
+
+`dtWeld` (12mm) and `ttWeld` (14mm) replace an `inset=0.10*C.htl` fudge that made
+the down tube move whenever head tube length changed. They are measured along the
+head tube axis and are **cosmetic only** — they move where a tube is drawn *to*,
+never its direction, so they cannot disturb the kinematics.
+
+### Standoffs, and why only two pivots get one
+
+The three frame pivots are not alike:
+
+| pivot | what it is | what the tool does |
+|---|---|---|
+| shock mount `SG` | welded-on bracket | `sgStand` / `sgLock` |
+| link to frame `SP` | welded-on bracket | `spStand` / `spLock` |
+| main pivot `MP` | printed housing tying ST to DT | **no lock, by design** |
+
+A welded-on bracket owns one dimension: its perpendicular standoff from the down
+tube centreline. That belongs to the part, not to the bike, so when you scale a
+design up a size and the down tube swings, the standoff has to survive. Locked, the
+mount slides along the tube keeping that one number — `recompute` re-places it with
+`onTube(dtU, alongOf(dtU,G[k]), C[off])`, which preserves the along-distance
+implicitly because it reads it back from wherever the point already is. Unlocked,
+the number simply reports.
+
+**The main pivot is deliberately excluded.** Its printed housing is unique to each
+frame — the down tube to seat tube angle changes with every size — so pinning it to
+a tube would be wrong. It gets the clearance check and a readout of the three
+numbers the part is actually made to instead: its offset from each tube and that
+included angle.
+
+**The standoff box is live when locked and greyed when not** — the reverse of
+`a2cAuto`, because here the lock turns a derived readout into an input. Easy to
+wire backwards; both the value and the `.disabled` flag live in `refreshDerived`.
+
+### Clearance
+
+A pivot is a boss, not a point: `pivotOD` (22mm) gives it a body, and clearance to a
+tube is `segDist(centre,a,b) - tubeOD/2 - pivotOD/2`, so negative means the boss is
+inside the tube. Checked for the pivots that are frame features — MP, SP, SG, and
+the idler when frame-mounted. The readout runs before the no-solution bail-out in
+`readouts()`, because it is pure frame geometry and is most wanted precisely when
+the linkage will not solve.
+
+**Known, and real: at the shipped defaults the main pivot boss overlaps the seat
+tube by about 15mm.** The tool flags it rather than hiding it. Either the pivot
+moves or the housing has to interrupt the tube.
 
 ## Save / load
 

@@ -144,6 +144,12 @@ svg text{font-family:var(--mono)}
   <h2>Pivots and mounts</h2>
   <div class="btnrow"><button id="resetPoints">Reset points &amp; mounts</button></div>
   <div id="points"></div>
+  <h3>Down tube mounts</h3>
+  <label><span>Lock shock mount standoff</span><input type="checkbox" id="sgLock"></label>
+  <label><span>Shock mount off down tube</span><input type="number" id="sgStand" step="1"></label>
+  <label><span>Lock link pivot standoff</span><input type="checkbox" id="spLock"></label>
+  <label><span>Link pivot off down tube</span><input type="number" id="spStand" step="1"></label>
+
   <p class="note">Drag points on the drawing or type coordinates. Datum:
     <select id="datum">
       <option value="BB">bottom bracket</option>
@@ -171,6 +177,14 @@ svg text{font-family:var(--mono)}
     <label><span>Rear centre</span><input type="number" id="rc" step="5"></label>
     <label><span>Chainstay length</span><input type="number" id="csl" step="5"></label>
     <label><span>Bottom bracket drop</span><input type="number" id="drop" step="1"></label>
+    <h3>Tubes</h3>
+    <label><span>Down tube OD</span><input type="number" id="dtOD" step="0.1"></label>
+    <label><span>Seat tube OD</span><input type="number" id="stOD" step="0.1"></label>
+    <label><span>Top tube OD</span><input type="number" id="ttOD" step="0.1"></label>
+    <label><span>Head tube OD</span><input type="number" id="htOD" step="0.1"></label>
+    <label><span>Down tube weld clearance</span><input type="number" id="dtWeld" step="1"></label>
+    <label><span>Top tube weld clearance</span><input type="number" id="ttWeld" step="1"></label>
+    <label><span>Pivot body dia.</span><input type="number" id="pivotOD" step="1"></label>
     <h3>Cockpit</h3>
     <label><span>Stem length</span><input type="number" id="stemL" step="5"></label>
     <label><span>Stem rise above head tube</span><input type="number" id="stemH" step="5"></label>
@@ -287,6 +301,15 @@ svg text{font-family:var(--mono)}
 
   <h2>Spring</h2>
   <div id="out-spring"></div>
+
+  <details class="grp">
+    <summary>Frame tubes</summary>
+    <div id="out-tubes"></div>
+    <p class="note">Gap from each pivot body to the nearest tube wall, so a boss
+       does not end up inside a tube. The main pivot's two offsets and the down
+       tube to seat tube angle are what its printed housing is made to, and change
+       with every frame size.</p>
+  </details>
 
   <details class="grp">
     <summary>Pivot loads at sag</summary>
@@ -462,6 +485,22 @@ const heightAt=(a,b,x)=>{
   if(Math.abs(b.x-a.x)<1e-9) return null;
   return a.y+(b.y-a.y)*(x-a.x)/(b.x-a.x);
 };
+
+/* ---------- tube-relative geometry ----------
+   `u` is a tube's unit direction from the bottom bracket. A point either side of
+   it resolves into how far along the tube it sits and how far off to one side —
+   the standoff, which is the dimension a welded-on mount actually owns, since it
+   belongs to the bracket rather than to the bike. Positive is the side the shock
+   mount and the link pivot are both on. */
+const alongOf   =(u,p)=>u.x*p.x+u.y*p.y;
+const standoffOf=(u,p)=>u.x*p.y-u.y*p.x;
+const onTube=(u,along,off)=>({x:u.x*along-u.y*off, y:u.y*along+u.x*off});
+// closest approach from a point to a finite segment, for tube clearance
+function segDist(p,a,b){
+  const ab=sub(b,a), L2=ab.x*ab.x+ab.y*ab.y;
+  const t=L2>1e-9 ? Math.max(0,Math.min(1,((p.x-a.x)*ab.x+(p.y-a.y)*ab.y)/L2)) : 0;
+  return dist(p, add(a,mul(ab,t)));
+}
 
 /* Rear mech geometry, fixed relative to the dropout so it swings with the chainstay. */
 const GDX=-4, GDY=-74, RJ=22;          // guide pulley offset from the axle, jockey radius
@@ -701,6 +740,8 @@ const DEF={
         sa:76, st:430, ttDrop:90, bbh:334, drop:38, rc:450, csl:451.6,
         a2c:571, a2cAuto:1, hsLower:13, offset:44, forkTravel:160,
         stemL:10, stemH:70, links:124, cage:62,
+        dtOD:38.1, stOD:34.95, ttOD:32, htOD:46.5, dtWeld:12, ttWeld:14, pivotOD:22,
+        sgStand:67.1, sgLock:0, spStand:52.9, spLock:0,
         chainAuto:1,
         idlerOn:0, idlerTeeth:14, idlerMount:0, idlerLock:0 }  // mount 0 = frame, 1 = swingarm
 };
@@ -787,6 +828,27 @@ function frame(comp){
     ST:{x:-Math.cos(C.sa*Math.PI/180)*C.st, y:Math.sin(C.sa*Math.PI/180)*C.st}};
 }
 
+/* The front triangle as real tubes — one definition of where a tube is, shared by
+   the drawing and the clearance check rather than written out twice.
+
+   Both the down tube and the seat tube start at the bottom bracket centre, and the
+   down tube runs at the bottom of the head tube; that is what the frame designer
+   assumes as well (`dt_ax = unit(ht_bot)`), so the two tools agree and neither
+   centreline needs a parameter. The weld clearances only move where a tube is
+   *drawn to* along the head tube axis — they never touch its direction, so they
+   cannot disturb the kinematics. Head tube position is independent of fork
+   compression, so frame(0) is the right frame to ask. */
+function frontTriangle(){
+  const F=frame(0), BB={x:0,y:0}, seatTop=F.ST;
+  const stU=unit(sub(seatTop,BB)), dtU=unit(sub(F.htBot,BB));
+  const ttJoin=sub(seatTop, mul(stU, Math.min(C.ttDrop, dist(BB,seatTop)-120)));
+  const dt=['down tube', BB, sub(F.htBot, mul(F.axis,C.dtWeld)), C.dtOD];
+  const tt=['top tube',  ttJoin, add(F.htTop, mul(F.axis,C.ttWeld)), C.ttOD];
+  const st=['seat tube', BB, seatTop, C.stOD];
+  const ht=['head tube', F.htBot, F.htTop, C.htOD];
+  return {BB, F, seatTop, ttJoin, dtU, stU, dt, tt, st, ht, all:[dt,tt,st,ht]};
+}
+
 // Arc length of the drawn seat stay, dropout to shock eye.
 function stayLength(){ return stayPath(G.FP,G.SE).total; }
 function recompute(quick){
@@ -796,6 +858,17 @@ function recompute(quick){
     G.FP={...G.AX};                      // flex pivot is always the rear axle
     // locked, the idler sits on the main pivot: every write path lands here in the end
     if(C.idlerOn&&C.idlerLock) G.ID={...G.MP};
+    /* The shock mount and the link pivot are welded-on parts, so what they own is
+       the standoff from the down tube, not an absolute position: locked, the tube
+       can swing under them and they keep that one dimension, sliding along to
+       wherever they already were. Unlocked the number simply reports. The main
+       pivot is deliberately absent — its printed housing is unique to each frame
+       size, so pinning it to a tube would be wrong. */
+    const dtU=unit(sub(frame(0).htBot,{x:0,y:0}));
+    for(const [k,lock,off] of [['SG','sgLock','sgStand'],['SP','spLock','spStand']]){
+      if(C[lock]) G[k]=onTube(dtU, alongOf(dtU,G[k]), C[off]);
+      else        C[off]=Math.round(standoffOf(dtU,G[k])*10)/10;
+    }
     C.zone=Math.round(stayLength());     // bending always spans the whole seat stay
     result=sweep(G,C,quick?15:61);        // coarse sweep while a point is moving
     if(C.chainAuto&&result.links){
@@ -1129,17 +1202,17 @@ function draw(){
   // cockpit
   if(showCockpit) tubes([[F.htTop,F.steerTop,22]],'#b9c0c6','#7b848c');   // headset/steerer stack
 
-  /* ---- front triangle ---- */
-  const dtU=unit(sub(F.htBot,BB)), stU=unit(sub(seatTop,BB));
-  const foot=mul(dtU, Math.max(60,(G.SG.x*dtU.x+G.SG.y*dtU.y)));   // shock mount brace
-  const ttJoin=sub(seatTop, mul(stU, Math.min(C.ttDrop, dist(BB,seatTop)-120)));
-  const boss=mul(dtU, Math.max(50,(G.SP.x*dtU.x+G.SP.y*dtU.y)));   // second pivot boss
-  const inset=0.10*C.htl;
-  const dtEnd=sub(F.htBot, mul(F.axis,inset));      // down tube meets below the crown race
-  const ttEnd=add(F.htTop, mul(F.axis,inset));      // top tube meets below the top cup
-  tubes([[BB,dtEnd,40],[ttJoin,ttEnd,32],[BB,seatTop,38],
+  /* ---- front triangle ----
+     Tube segments come from frontTriangle() so the drawing and the clearance
+     readout cannot disagree about where a tube is. Head tube last, as before, so
+     it covers the down and top tube ends. */
+  const FT=frontTriangle(), dtU=FT.dtU;
+  const seg=t=>[t[1],t[2],t[3]];
+  const foot=mul(dtU, Math.max(60,alongOf(dtU,G.SG)));   // shock mount brace
+  const boss=mul(dtU, Math.max(50,alongOf(dtU,G.SP)));   // second pivot boss
+  tubes([seg(FT.dt),seg(FT.tt),seg(FT.st),
          [foot,G.SG,26],[boss,G.SP,30],
-         [F.htBot,F.htTop,52]],'#ded4bd','#8a8069');
+         seg(FT.ht)],'#ded4bd','#8a8069');
   el('circle',{cx:G.SP.x,cy:G.SP.y,r:34,fill:'#ded4bd',stroke:'#8a8069',
     'stroke-width':7},g);
   tubes([[seatTop,post,26]],'#b9c0c6','#7b848c');
@@ -1448,8 +1521,37 @@ function initDrag(){
 
 /* ---------- readouts ---------- */
 const row=(k,v,cls='')=>`<div class="readout ${cls}"><span>${k}</span><b>${v}</b></div>`;
+/* Where the pivots sit relative to the real tubes. Pure frame geometry, so it runs
+   before the no-solution bail-out below and keeps reporting even when the linkage
+   will not solve — which is exactly when you are moving a pivot about. */
+function tubeReadout(){
+  const host=document.getElementById('out-tubes');
+  if(!host) return;
+  const FT=frontTriangle(), r=C.pivotOD/2;
+  const pts=[['Main pivot',G.MP],['Link pivot',G.SP],['Shock mount',G.SG]];
+  if(C.idlerOn && !C.idlerMount) pts.push(['Idler',G.ID]);
+  let html='';
+  for(const [name,p] of pts){
+    let best=Infinity, at='';
+    for(const [tube,a,b,od] of FT.all){
+      const gap=segDist(p,a,b)-od/2-r;               // wall to wall, not centre to centre
+      if(gap<best){best=gap; at=tube}
+    }
+    html+=row(name+' to '+at, best.toFixed(1)+' mm',
+              best<=0?'warn':(best>=5?'good':''));
+  }
+  /* The main pivot's printed housing is bespoke to each frame, so these are the
+     three numbers it gets made to rather than anything the tool should pin. */
+  const dot=FT.dtU.x*FT.stU.x+FT.dtU.y*FT.stU.y;
+  html+=row('Main pivot off down tube', Math.abs(standoffOf(FT.dtU,G.MP)).toFixed(1)+' mm')+
+        row('Main pivot off seat tube', Math.abs(standoffOf(FT.stU,G.MP)).toFixed(1)+' mm')+
+        row('Down tube to seat tube',
+            (Math.acos(Math.max(-1,Math.min(1,dot)))*180/Math.PI).toFixed(1)+'°');
+  host.innerHTML=html;
+}
 function readouts(){
   const R=id=>document.getElementById(id);
+  tubeReadout();
   const f=result&&result.frames?result.frames:[];
   const lrs=f.map(k=>k.lr).filter(v=>v!==null&&v!==undefined&&Number.isFinite(v));
   if(f.length<3 || lrs.length<2){          // jammed or partial: no numbers to report
@@ -1664,7 +1766,7 @@ function fillPoints(){
 /* Write the solved-back side of each two-way pair into its box, but never the box
    being typed in — that would fight the cursor. */
 function refreshDerived(skip){
-  ['stack','htl','bbh','drop','rc','csl','a2c','links'].forEach(id=>{
+  ['stack','htl','bbh','drop','rc','csl','a2c','links','sgStand','spStand'].forEach(id=>{
     if(id===skip) return;
     const e=document.getElementById(id);
     if(e) e.value=Math.round(C[id]*10)/10;
@@ -1673,6 +1775,12 @@ function refreshDerived(skip){
   if(a) a.disabled=!!C.a2cAuto;               // derived while the box is ticked
   const lk=document.getElementById('links');
   if(lk) lk.disabled=!!C.chainAuto;
+  /* Reverse of a2c: the lock makes a standoff an input, so the box is live when
+     ticked and a read-only report of the measured value when not. */
+  for(const [lock,off] of [['sgLock','sgStand'],['spLock','spStand']]){
+    const e=document.getElementById(off);
+    if(e) e.disabled=!C[lock];
+  }
 }
 function fillCfg(){
   Object.keys(C).forEach(k=>{
@@ -1768,7 +1876,8 @@ document.getElementById('reset').onclick=()=>{
 // touching pivots, shock, stay section, drivetrain, rider or the design file.
 // Geometry gets set first and separately, so it gets its own way back to square one.
 const GEOM_KEYS=['reach','stack','ha','htl','sa','st','ttDrop','bbh','rc','csl','drop',
-  'stemL','stemH','rw','fw','tyreR','tyreF','forkTravel','a2cAuto','a2c','hsLower','offset','fsag'];
+  'stemL','stemH','rw','fw','tyreR','tyreF','forkTravel','a2cAuto','a2c','hsLower','offset','fsag',
+  'dtOD','stOD','ttOD','htOD','dtWeld','ttWeld','pivotOD'];
 document.getElementById('resetGeom').onclick=()=>{
   GEOM_KEYS.forEach(k=>C[k]=DEF.cfg[k]);
   syncGeom(); fillPoints(); fillCfg(); fillTyreWidths(); recompute(false);

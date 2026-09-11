@@ -2,7 +2,8 @@ import fs from 'node:fs';
 const src=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const eng=src.split('// ==ENGINE-START==')[1].replace(/^[^\n]*/,'').split('// ==ENGINE-END==')[0];
 const m=new Function(eng+'\nreturn {solve,sweep,pivotForces,stayLoads,dist,circles,chainRun,'+
-  'routeIdler,beltRun,idlerAt,chainPath,CAGE_LO,CAGE_HI};')();
+  'routeIdler,beltRun,idlerAt,chainPath,CAGE_LO,CAGE_HI,'+
+  'alongOf,standoffOf,onTube,segDist,unit,sub};')();
 const defs=src.split('const DEF=')[1].split('};')[0]+'}';
 const DEF=new Function('return '+defs)();
 
@@ -234,6 +235,37 @@ ok('an idler needs a longer chain than none', fits[1].links>fits[0].links,
 const manual=structuredClone(REF.cfg); manual.chainAuto=0; manual.links=131;
 ok('chain fitting off leaves the typed link count alone',
    m.sweep(structuredClone(REF.geom),manual).links===131);
+
+/* ---------- tube-relative mounts ---------- */
+const dtDir=m.unit({x:500,y:495});          // a representative down tube direction
+// the two coordinates have to survive a round trip, or a locked mount drifts
+let rtOK=true;
+for(const along of [45,150,390]) for(const off of [-30,0,52.9,67.1]){
+  const p=m.onTube(dtDir,along,off);
+  if(Math.abs(m.alongOf(dtDir,p)-along)>1e-9) rtOK=false;
+  if(Math.abs(m.standoffOf(dtDir,p)-off)>1e-9) rtOK=false;
+}
+ok('along and standoff round trip through onTube', rtOK);
+
+/* The whole point of the lock: swing the down tube under a mount and the standoff
+   it was built to must not move, nor how far along the tube it sits. */
+const before=m.onTube(dtDir,390,67.1);
+const swung=m.unit({x:540,y:470});                       // as if reach grew a size
+const after=m.onTube(swung, m.alongOf(dtDir,before), 67.1);
+ok('a locked standoff survives the down tube moving',
+   Math.abs(m.standoffOf(swung,after)-67.1)<1e-9 &&
+   Math.abs(m.alongOf(swung,after)-m.alongOf(dtDir,before))<1e-9 &&
+   m.dist(before,after)>1,                               // the point itself did move
+   'moved '+m.dist(before,after).toFixed(1)+'mm, standoff held');
+
+// clearance is wall to wall, so a boss on the centreline is buried by both radii
+const onLine=m.segDist({x:100,y:100},{x:0,y:0},{x:200,y:200});
+ok('a point on a tube centreline has zero distance', Math.abs(onLine)<1e-9);
+ok('a 22mm boss 20mm off a 38.1mm tube reads as buried',
+   Math.abs((20-38.1/2-22/2)-(-10.05))<1e-9, '-10.05 mm');
+// and the segment is finite: past the end it measures to the end, not the line
+ok('clearance past a tube end measures to the end',
+   Math.abs(m.segDist({x:0,y:-50},{x:0,y:0},{x:0,y:100})-50)<1e-9);
 
 console.log(fails? '\n'+fails+' FAILURES' : '\nall checks pass');
 process.exit(fails?1:0);
