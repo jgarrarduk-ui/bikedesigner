@@ -741,7 +741,7 @@ const DEF={
         a2c:571, a2cAuto:1, hsLower:13, offset:44, forkTravel:160,
         stemL:10, stemH:70, links:124, cage:62,
         dtOD:38.1, stOD:34.95, ttOD:32, htOD:46.5, dtWeld:12, ttWeld:14, pivotOD:22,
-        sgStand:67.1, sgLock:0, spStand:52.9, spLock:0,
+        sgStand:55, sgLock:1, spStand:55, spLock:1,
         chainAuto:1,
         idlerOn:0, idlerTeeth:14, idlerMount:0, idlerLock:0 }  // mount 0 = frame, 1 = swingarm
 };
@@ -1204,15 +1204,17 @@ function draw(){
 
   /* ---- front triangle ----
      Tube segments come from frontTriangle() so the drawing and the clearance
-     readout cannot disagree about where a tube is. Head tube last, as before, so
-     it covers the down and top tube ends. */
+     readout cannot disagree about where a tube is. Head tube drawn first
+     (underneath): its own round cap has a bigger radius than a typical weld
+     clearance, so drawn last it used to bury the down/top tube's clearance-
+     adjusted endpoint regardless of the actual dtWeld/ttWeld value. Drawn first,
+     the down and top tubes render on top and genuinely show the gap. */
   const FT=frontTriangle(), dtU=FT.dtU;
   const seg=t=>[t[1],t[2],t[3]];
   const foot=mul(dtU, Math.max(60,alongOf(dtU,G.SG)));   // shock mount brace
   const boss=mul(dtU, Math.max(50,alongOf(dtU,G.SP)));   // second pivot boss
-  tubes([seg(FT.dt),seg(FT.tt),seg(FT.st),
-         [foot,G.SG,26],[boss,G.SP,30],
-         seg(FT.ht)],'#ded4bd','#8a8069');
+  tubes([seg(FT.ht),seg(FT.dt),seg(FT.tt),seg(FT.st),
+         [foot,G.SG,26],[boss,G.SP,30]],'#ded4bd','#8a8069');
   el('circle',{cx:G.SP.x,cy:G.SP.y,r:34,fill:'#ded4bd',stroke:'#8a8069',
     'stroke-width':7},g);
   tubes([[seatTop,post,26]],'#b9c0c6','#7b848c');
@@ -1487,10 +1489,13 @@ function initDrag(){
       }
     }
     // The rear axle is derived from rear centre and bottom bracket height, so a
-    // drag has to write back into those or syncGeom would just undo it.
+    // drag has to write back into rc or syncGeom would just undo it. Vertical is
+    // the ground plane, not a free drag — bbh is never touched here, and syncGeom
+    // snaps G.AX.y back onto it (and re-derives everything hung off it, like the
+    // front wheel's height via stack) rather than letting the two wheels desync.
     if(dragKey==='AX'){
       C.rc=Math.max(200,-G.AX.x);
-      C.bbh=(C.rw/2+C.tyreR)-G.AX.y;
+      syncGeom();
       refreshDerived();
     }
     if(dragRaf) return;                    // at most one solve per frame
