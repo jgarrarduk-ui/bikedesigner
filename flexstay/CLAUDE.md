@@ -145,6 +145,19 @@ the down tube move whenever head tube length changed. They are measured along th
 head tube axis and are **cosmetic only** — they move where a tube is drawn *to*,
 never its direction, so they cannot disturb the kinematics.
 
+**The head tube has to be drawn first (underneath), or the weld clearance is
+invisible.** `tubes()` gives every segment a full-radius round cap at each
+endpoint, and the head tube's own cap (≈23mm at the shipped 46.5mm OD) is bigger
+than the shipped clearance values — drawn last, as it originally was, it buried
+the down/top tube's clearance-adjusted endpoint regardless of what `dtWeld`/
+`ttWeld` were actually set to, so editing the box appeared to do nothing even
+though `frontTriangle()` was moving the endpoint correctly the whole time. The
+`tubes([...])` call in `draw()` draws `seg(FT.ht)` first and everything else in
+its original relative order, so the down and top tubes render on top and the gap
+is genuinely visible. This is a paint-order fix only — cap shape is untouched, so
+it cannot reopen the multi-tube joint problems the square-cap experiment caused
+(see below); it only changes which tube is on top where two overlap.
+
 ### Standoffs, and why only two pivots get one
 
 The three frame pivots are not alike:
@@ -172,6 +185,16 @@ included angle.
 **The standoff box is live when locked and greyed when not** — the reverse of
 `a2cAuto`, because here the lock turns a derived readout into an input. Easy to
 wire backwards; both the value and the `.disabled` flag live in `refreshDerived`.
+
+**Both locks default on, at 55mm.** `DEF.geom.SG`/`DEF.geom.SP` are left at their
+old shipped coordinates — the lock glue in `recompute()` re-derives both from
+their current along-tube distance every time it runs, including the very first
+one at page load, so simply flipping the two flags is enough; no coordinate had
+to change by hand. This does move the shock mount from where it originally sat
+(the old standoff was 67.1mm, not 55) and the drawn eye-to-eye comes out around
+237.5mm against the typed 230mm spec — enough to trip the existing warn styling
+on "Shock eye to eye, drawn" on a fresh load. That is the honest consequence of
+locking the mount to 55mm rather than a bug; nothing was tuned to hide it.
 
 ### Clearance
 
@@ -287,7 +310,16 @@ pivot hit the decorative dot, which has no `dataset.key`, and silently did nothi
 `syncGeom()` rewrites `G.AX` from them on every input change and carries `G.FP`
 with it while the two are concentric, so a drag of that point has to write back
 into `C.rc` and `C.bbh` or the next sync silently undoes it. The drag handler
-does exactly that.
+does exactly that — but only for `C.rc`. **`bbh` is never written from an axle
+drag, because it is the ground-plane datum** (`ground=-C.bbh` in `draw()`), and
+`syncGeom()` builds the front wheel's height from it too, via `C.stack`. A drag
+used to back-solve `bbh` straight from the pointer's raw y and skip calling
+`syncGeom()` afterward, so a vertical drag silently moved the ground plane while
+leaving the front wheel's height stale — the two wheels would visibly desync.
+The axle marker is horizontal-drag-only now: the handler sets `C.rc` from the
+pointer's x and calls `syncGeom()`, which snaps `G.AX.y` back onto the unchanged
+ground and re-derives everything hung off it in the same pass. Vertical axle
+position only ever changes by typing bottom bracket height or drop.
 
 **Anti-squat reads `cfg.fax`, which `recompute()` overwrites** with
 `frame(0).FA.x`. Anything calling `sweep()` directly — the tests do — supplies its
