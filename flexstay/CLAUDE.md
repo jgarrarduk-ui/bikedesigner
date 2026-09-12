@@ -158,6 +158,27 @@ is genuinely visible. This is a paint-order fix only — cap shape is untouched,
 it cannot reopen the multi-tube joint problems the square-cap experiment caused
 (see below); it only changes which tube is on top where two overlap.
 
+**Retract each tube along its own axis, never the head tube's.** Making the
+clearance visible surfaced a second, real bug: `frontTriangle()` used to pull the
+down/top tube's drawn endpoint back along `F.axis` — the *head tube's* axis —
+which is roughly 108° away from the down tube's own axis at the shipped geometry,
+so the drawn tube kinked away from its true centreline as the clearance grew.
+Measured it: **11.4mm of kink at the shipped default** (`dtWeld=12`), 57.1mm at
+60. The standoff locks were never actually affected — `recompute()`'s `dtU` comes
+straight from `frame(0).htBot`, never from `C.dtWeld` — so a mount held at exactly
+55mm would visibly appear to drift as the clearance changed, because the *drawn*
+line was the wrong line, not because the number was wrong. Fixed by retracting
+along `dtU`/`ttU` (each tube's own axis) instead: since `htBot`/`htTop` already
+sit exactly on their own tube's line by construction, moving back along that same
+unit vector keeps the drawn segment perfectly straight for any clearance value —
+confirmed 0.0000mm deviation where it was 11.4/28.5/57.1mm before. This was a
+mistake carried over from `frame-designer.html`, which retracts along the head
+tube axis too but then clips the result against the head tube's cylindrical
+surface — a full mitre join. Only the retraction-axis half of that got borrowed
+here, without the clip that makes it correct there; that machinery would be
+disproportionate for this tool's simplified round-capped schematic tubes, so the
+fix taken is simpler than frame-designer's approach, not more of it.
+
 ### Standoffs, and why only two pivots get one
 
 The three frame pivots are not alike:

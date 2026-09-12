@@ -842,8 +842,17 @@ function frontTriangle(){
   const F=frame(0), BB={x:0,y:0}, seatTop=F.ST;
   const stU=unit(sub(seatTop,BB)), dtU=unit(sub(F.htBot,BB));
   const ttJoin=sub(seatTop, mul(stU, Math.min(C.ttDrop, dist(BB,seatTop)-120)));
-  const dt=['down tube', BB, sub(F.htBot, mul(F.axis,C.dtWeld)), C.dtOD];
-  const tt=['top tube',  ttJoin, add(F.htTop, mul(F.axis,C.ttWeld)), C.ttOD];
+  const ttU=unit(sub(F.htTop,ttJoin));
+  // Retract along each tube's own axis, not the head tube's — otherwise the
+  // drawn tube kinks away from the centreline the mount standoffs (and the
+  // clearance readout) are measured against as the weld clearance grows, making
+  // a correctly-held standoff look wrong on screen. Since htBot/htTop already
+  // sit exactly on their tube's own line by construction, moving back along
+  // that same unit vector keeps the drawn segment perfectly straight for any
+  // clearance value — no clamp needed at today's scale (clearance would have to
+  // exceed the ~600-800mm tube length to matter).
+  const dt=['down tube', BB, sub(F.htBot, mul(dtU,C.dtWeld)), C.dtOD];
+  const tt=['top tube',  ttJoin, sub(F.htTop, mul(ttU,C.ttWeld)), C.ttOD];
   const st=['seat tube', BB, seatTop, C.stOD];
   const ht=['head tube', F.htBot, F.htTop, C.htOD];
   return {BB, F, seatTop, ttJoin, dtU, stU, dt, tt, st, ht, all:[dt,tt,st,ht]};
