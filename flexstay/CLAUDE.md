@@ -158,26 +158,53 @@ is genuinely visible. This is a paint-order fix only — cap shape is untouched,
 it cannot reopen the multi-tube joint problems the square-cap experiment caused
 (see below); it only changes which tube is on top where two overlap.
 
-**Retract each tube along its own axis, never the head tube's.** Making the
-clearance visible surfaced a second, real bug: `frontTriangle()` used to pull the
-down/top tube's drawn endpoint back along `F.axis` — the *head tube's* axis —
-which is roughly 108° away from the down tube's own axis at the shipped geometry,
-so the drawn tube kinked away from its true centreline as the clearance grew.
-Measured it: **11.4mm of kink at the shipped default** (`dtWeld=12`), 57.1mm at
-60. The standoff locks were never actually affected — `recompute()`'s `dtU` comes
-straight from `frame(0).htBot`, never from `C.dtWeld` — so a mount held at exactly
-55mm would visibly appear to drift as the clearance changed, because the *drawn*
-line was the wrong line, not because the number was wrong. Fixed by retracting
-along `dtU`/`ttU` (each tube's own axis) instead: since `htBot`/`htTop` already
-sit exactly on their own tube's line by construction, moving back along that same
-unit vector keeps the drawn segment perfectly straight for any clearance value —
-confirmed 0.0000mm deviation where it was 11.4/28.5/57.1mm before. This was a
-mistake carried over from `frame-designer.html`, which retracts along the head
-tube axis too but then clips the result against the head tube's cylindrical
-surface — a full mitre join. Only the retraction-axis half of that got borrowed
-here, without the clip that makes it correct there; that machinery would be
-disproportionate for this tool's simplified round-capped schematic tubes, so the
-fix taken is simpler than frame-designer's approach, not more of it.
+**Weld clearance slides the meeting point along the head tube; it never opens a
+gap.** This took two attempts to get right, and the reasoning from both attempts
+is worth keeping so it isn't relitigated a third time.
+
+Originally `frontTriangle()` slid the down/top tube's drawn endpoint along
+`F.axis` — the head tube's own axis, `sub(F.htBot, mul(F.axis,C.dtWeld))` — which
+is correct: a bigger tube's mitre reaches further along the head tube, it doesn't
+detach from it. But `recompute()`'s mount lock computed its own, separate `dtU`
+straight from `frame(0).htBot`, fixed and blind to `C.dtWeld`. Since the head tube
+and down tube axes are roughly 108° apart at the shipped geometry, the *drawn*
+tube (correctly sliding along the head tube) diverged from that *fixed* reference
+axis as clearance grew — 11.4mm apart already at the shipped default, 57.1mm at
+60mm — so a mount correctly held at 55mm off the fixed axis looked like it was
+drifting off the tube actually on screen.
+
+The first fix attempt solved that divergence by making the drawn tube retract
+along its *own* fixed axis instead of the head tube's — eliminating the kink, but
+at the cost of reintroducing a gap between the tube and the head tube that grows
+with clearance, which is not what weld clearance means and was reported back
+immediately.
+
+**The actual fix: derive the reference axis from the live drawn point, instead of
+giving the drawing and the lock two different axes to agree on.** `dtU` is now
+`unit(dtMeet-BB)`, where `dtMeet=sub(F.htBot, mul(F.axis,C.dtWeld))` is the same
+sliding point the tube is drawn to — so there is only one axis, and both the
+drawing and `recompute()`'s mount lock (`const dtU=frontTriangle().dtU;`) read it.
+The down tube's own axis rotates slightly as clearance changes (0.85° at the
+shipped default, 4.16° at 60mm) — small, physically sensible, and exactly what
+should happen when the far end of a fixed-length tube slides along a wall it's
+mitred into — and a locked mount rotates with it, staying exactly on the tube
+because it is measured against the same live value the tube is drawn from, not a
+frozen snapshot of it. Confirmed the meeting point stays on the actual head-tube
+segment (`distFromBot+distFromTop == C.htl`) through the realistic range, and that
+a locked standoff reads exactly its set value at every clearance tested.
+
+This is where `frame-designer.html` diverges from what makes sense for this tool,
+which is worth knowing before reaching for it as a reference again: it also slides
+along the head tube axis, but then clips the result against the head tube's
+cylindrical surface — a full mitre join — and keeps its own down-tube axis fixed
+throughout, because *its* tube is drawn as a true-width polygon where a fixed axis
+with a small mitre clip at the tip is barely visible at any distance. This tool's
+`tubes()` draws simplified round-capped centreline-and-width lines instead, where
+the same fixed-axis choice produces an obviously visible kink rather than an
+invisible one. Same input parameter, same source tool to borrow the idea from, but
+a different consequence given how each tool actually draws a tube — the fix that
+is right here (a live, shared axis) would be unnecessary complexity there, and the
+fixed axis that is right there would be visibly wrong here.
 
 ### Standoffs, and why only two pivots get one
 

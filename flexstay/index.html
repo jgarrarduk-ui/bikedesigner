@@ -840,19 +840,20 @@ function frame(comp){
    compression, so frame(0) is the right frame to ask. */
 function frontTriangle(){
   const F=frame(0), BB={x:0,y:0}, seatTop=F.ST;
-  const stU=unit(sub(seatTop,BB)), dtU=unit(sub(F.htBot,BB));
+  const stU=unit(sub(seatTop,BB));
   const ttJoin=sub(seatTop, mul(stU, Math.min(C.ttDrop, dist(BB,seatTop)-120)));
-  const ttU=unit(sub(F.htTop,ttJoin));
-  // Retract along each tube's own axis, not the head tube's — otherwise the
-  // drawn tube kinks away from the centreline the mount standoffs (and the
-  // clearance readout) are measured against as the weld clearance grows, making
-  // a correctly-held standoff look wrong on screen. Since htBot/htTop already
-  // sit exactly on their tube's own line by construction, moving back along
-  // that same unit vector keeps the drawn segment perfectly straight for any
-  // clearance value — no clamp needed at today's scale (clearance would have to
-  // exceed the ~600-800mm tube length to matter).
-  const dt=['down tube', BB, sub(F.htBot, mul(dtU,C.dtWeld)), C.dtOD];
-  const tt=['top tube',  ttJoin, sub(F.htTop, mul(ttU,C.ttWeld)), C.ttOD];
+  /* The down/top tube meet the head tube at a point slid along the HEAD TUBE's
+     own axis by the weld clearance — a bigger tube's mitre reaches further along
+     the head tube, it doesn't open a gap. dtU is therefore derived from wherever
+     the down tube is actually, currently drawn to, not a fixed BB-to-htBot line:
+     every consumer (the drawing, the mount lock in recompute(), the clearance
+     readout) reads this same live value, so a locked mount's standoff can never
+     disagree with the tube actually on screen, whatever dtWeld is set to. */
+  const dtMeet=sub(F.htBot, mul(F.axis,C.dtWeld));
+  const ttMeet=add(F.htTop, mul(F.axis,C.ttWeld));
+  const dtU=unit(sub(dtMeet,BB));
+  const dt=['down tube', BB, dtMeet, C.dtOD];
+  const tt=['top tube',  ttJoin, ttMeet, C.ttOD];
   const st=['seat tube', BB, seatTop, C.stOD];
   const ht=['head tube', F.htBot, F.htTop, C.htOD];
   return {BB, F, seatTop, ttJoin, dtU, stU, dt, tt, st, ht, all:[dt,tt,st,ht]};
@@ -872,8 +873,11 @@ function recompute(quick){
        can swing under them and they keep that one dimension, sliding along to
        wherever they already were. Unlocked the number simply reports. The main
        pivot is deliberately absent — its printed housing is unique to each frame
-       size, so pinning it to a tube would be wrong. */
-    const dtU=unit(sub(frame(0).htBot,{x:0,y:0}));
+       size, so pinning it to a tube would be wrong. dtU comes from frontTriangle()
+       rather than its own htBot-based line, so it is whatever axis the down tube
+       is actually drawn along right now (weld clearance slides it slightly) — the
+       lock can never disagree with what's on screen. */
+    const dtU=frontTriangle().dtU;
     for(const [k,lock,off] of [['SG','sgLock','sgStand'],['SP','spLock','spStand']]){
       if(C[lock]) G[k]=onTube(dtU, alongOf(dtU,G[k]), C[off]);
       else        C[off]=Math.round(standoffOf(dtU,G[k])*10)/10;
